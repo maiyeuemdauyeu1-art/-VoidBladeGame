@@ -1136,3 +1136,16 @@ function ultimateSkill() {
 }
       engine.setHardwareScalingLevel(1.5); // nhẹ hơn cho điện thoại
 Game 3d
+// Nhân vật chính (player)
+const player = BABYLON.MeshBuilder.CreateCapsule("player", {
+    height: 2,
+    radius: 0.5
+}, scene);
+
+player.position = new BABYLON.Vector3(0, 1, 0);
+
+// Vật liệu cho nhân vật
+const playerMat = new BABYLON.StandardMaterial("playerMat", scene);
+playerMat.diffuseColor = new BABYLON.Color3(0, 0.6, 1);
+player.material = playerMat;
+    
