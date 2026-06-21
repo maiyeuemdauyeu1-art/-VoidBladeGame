@@ -2,61 +2,210 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Void Blade Demo</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Void Blade Mini</title>
+
 <style>
 body{
 margin:0;
-background:#111;
-color:white;
+overflow:hidden;
+background:#6ec6ff;
 font-family:Arial;
-text-align:center;
 }
+
 #game{
+position:relative;
 width:100vw;
 height:100vh;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
+background:linear-gradient(#6ec6ff,#8fe388);
 }
-button{
-padding:15px 25px;
-margin:10px;
-font-size:20px;
-border:none;
+
+#ground{
+position:absolute;
+bottom:0;
+width:100%;
+height:120px;
+background:#2f8d2f;
+}
+
+#player{
+position:absolute;
+left:80px;
+bottom:120px;
+width:45px;
+height:45px;
+background:#00aaff;
+border-radius:8px;
+}
+
+#boss{
+position:absolute;
+right:80px;
+bottom:120px;
+width:70px;
+height:70px;
+background:red;
 border-radius:10px;
-background:#00bfff;
+}
+
+.bar{
+position:absolute;
+height:18px;
+background:#333;
+border-radius:10px;
+overflow:hidden;
+}
+
+.fill{
+height:100%;
+background:lime;
+}
+
+#playerBar{
+left:10px;
+top:10px;
+width:180px;
+}
+
+#bossBar{
+right:10px;
+top:10px;
+width:220px;
+}
+
+#controls{
+position:absolute;
+bottom:10px;
+left:0;
+right:0;
+display:flex;
+justify-content:center;
+gap:10px;
+flex-wrap:wrap;
+}
+
+button{
+font-size:18px;
+padding:12px 18px;
+border:none;
+border-radius:12px;
+background:#222;
 color:white;
 }
-#log{
-margin-top:20px;
+
+#text{
+position:absolute;
+top:45px;
+left:50%;
+transform:translateX(-50%);
 font-size:22px;
+font-weight:bold;
+color:white;
+text-shadow:1px 1px 4px black;
 }
 </style>
 </head>
+
 <body>
+
 <div id="game">
-<h1>⚔️ Void Blade Demo</h1>
-<p>HP: <span id="hp">100</span></p>
 
-<button onclick="skill1()">⚔️ Thiên Liệt Trảm</button>
-<button onclick="skill2()">🌠 Tinh Vẫn</button>
-<button onclick="transform()">🦍 Biến Hình Khỉ Đột Cơ Giáp</button>
+<div id="playerBar" class="bar">
+<div id="pfill" class="fill" style="width:100%"></div>
+</div>
 
-<div id="log">Sẵn sàng chiến đấu!</div>
+<div id="bossBar" class="bar">
+<div id="bfill" class="fill" style="width:100%"></div>
+</div>
+
+<div id="text">
+⚔️ Void Blade Mini
+</div>
+
+<div id="player"></div>
+
+<div id="boss"></div>
+
+<div id="ground"></div>
+
+<div id="controls">
+
+<button onclick="move(-25)">⬅️</button>
+
+<button onclick="move(25)">➡️</button>
+
+<button onclick="attack()">⚔️ Attack</button>
+
+<button onclick="transform()">🦍 Transform</button>
+
+</div>
+
 </div>
 
 <script>
-function skill1(){
-document.getElementById("log").innerHTML="⚔️ Thiên Liệt Trảm gây 250 sát thương!";
+
+let player=document.getElementById("player");
+let boss=document.getElementById("boss");
+
+let x=80;
+
+let bossHP=100;
+let power=10;
+
+function move(v){
+
+x+=v;
+
+if(x<0)x=0;
+if(x>window.innerWidth-60)x=window.innerWidth-60;
+
+player.style.left=x+"px";
+
 }
-function skill2(){
-document.getElementById("log").innerHTML="🌠 Tinh Vẫn triệu hồi kiếm từ trên trời!";
+
+function attack(){
+
+let bossX=window.innerWidth-150;
+
+if(Math.abs(x-bossX)<120){
+
+bossHP-=power;
+
+if(bossHP<0)bossHP=0;
+
+document.getElementById("bfill").style.width=bossHP+"%";
+
+if(bossHP==0){
+
+document.getElementById("text").innerHTML="🏆 Bạn đã đánh bại Boss!";
+
+boss.style.display="none";
+
 }
+
+}else{
+
+document.getElementById("text").innerHTML="Lại gần Boss hơn!";
+
+}
+
+}
+
 function transform(){
-document.getElementById("log").innerHTML="🦍 Bạn đã biến thành Khỉ Đột Cơ Giáp!";
+
+power=25;
+
+player.style.background="purple";
+
+player.style.width="70px";
+
+player.style.height="70px";
+
+document.getElementById("text").innerHTML="🦍 Khỉ Đột Cơ Giáp!";
+
 }
+
 </script>
+
 </body>
 </html>
