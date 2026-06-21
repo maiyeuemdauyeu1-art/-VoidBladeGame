@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Void Blade Demo</title>
+<style>
+body{
+margin:0;
+background:#111;
+color:white;
+font-family:Arial;
+text-align:center;
+}
+#game{
+width:100vw;
+height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+}
+button{
+padding:15px 25px;
+margin:10px;
+font-size:20px;
+border:none;
+border-radius:10px;
+background:#00bfff;
+color:white;
+}
+#log{
+margin-top:20px;
+font-size:22px;
+}
+</style>
+</head>
+<body>
+<div id="game">
+<h1>⚔️ Void Blade Demo</h1>
+<p>HP: <span id="hp">100</span></p>
+
+<button onclick="skill1()">⚔️ Thiên Liệt Trảm</button>
+<button onclick="skill2()">🌠 Tinh Vẫn</button>
+<button onclick="transform()">🦍 Biến Hình Khỉ Đột Cơ Giáp</button>
+
+<div id="log">Sẵn sàng chiến đấu!</div>
+</div>
+
+<script>
+function skill1(){
+document.getElementById("log").innerHTML="⚔️ Thiên Liệt Trảm gây 250 sát thương!";
+}
+function skill2(){
+document.getElementById("log").innerHTML="🌠 Tinh Vẫn triệu hồi kiếm từ trên trời!";
+}
+function transform(){
+document.getElementById("log").innerHTML="🦍 Bạn đã biến thành Khỉ Đột Cơ Giáp!";
+}
+</script>
+</body>
+</html>
