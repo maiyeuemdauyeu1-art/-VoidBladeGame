@@ -1086,4 +1086,145 @@ UIS.TouchTap:Connect(function(touchPositions, gameProcessed)
 		part.Parent.Humanoid:TakeDamage(10)
 	end
 end)
-    
+    local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local player = game.Players.LocalPlayer
+
+local char = player.Character or player.CharacterAdded:Wait()
+local root = char:WaitForChild("HumanoidRootPart")
+local humanoid = char:WaitForChild("Humanoid")
+
+-- GUI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+local base = Instance.new("Frame", gui)
+base.Size = UDim2.new(0, 120, 0, 120)
+base.Position = UDim2.new(0.1, 0, 0.7, 0)
+base.BackgroundTransparency = 0.3
+base.BackgroundColor3 = Color3.fromRGB(50,50,50)
+base.Active = true
+
+local corner1 = Instance.new("UICorner", base)
+corner1.CornerRadius = UDim.new(1,0)
+
+local knob = Instance.new("Frame", base)
+knob.Size = UDim2.new(0, 50, 0, 50)
+knob.Position = UDim2.new(0.3, 0, 0.3, 0)
+knob.BackgroundColor3 = Color3.fromRGB(200,200,200)
+knob.Active = true
+
+local corner2 = Instance.new("UICorner", knob)
+corner2.CornerRadius = UDim.new(1,0)
+
+-- MOVE
+local dragging = false
+local moveVector = Vector3.zero
+
+knob.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+	end
+end)
+
+knob.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+		moveVector = Vector3.zero
+		knob.Position = UDim2.new(0.3,0,0.3,0)
+	end
+end)
+
+UIS.TouchMoved:Connect(function(input)
+	if not dragging then return end
+
+	local delta = input.Position - base.AbsolutePosition - Vector2.new(60,60)
+
+	if delta.Magnitude > 40 then
+		delta = delta.Unit * 40
+	end
+
+	knob.Position = UDim2.new(0.5, delta.X - 25, 0.5, delta.Y - 25)
+
+	moveVector = Vector3.new(delta.X, 0, delta.Y) * 0.1
+end)
+
+-- APPLY MOVEMENT
+RunService.RenderStepped:Connect(function()
+	if moveVector.Magnitude > 0 then
+		local cam = workspace.CurrentCamera
+		local direction = cam.CFrame:VectorToWorldSpace(moveVector)
+
+		root.Velocity = Vector3.new(direction.X * 20, root.Velocity.Y, direction.Z * 20)
+	end
+end)
+	local player = game.Players.LocalPlayer
+
+player.CharacterAdded:Connect(function(char)
+	local humanoid = char:WaitForChild("Humanoid")
+
+	-- chỉnh nhẹ cho game combat
+	humanoid.WalkSpeed = 18
+	humanoid.JumpPower = 55
+end)
+	FireSkill (RemoteEvent)
+
+FireFruit
+
+local player = game.Players.LocalPlayer
+local tool = script.Parent
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local event = ReplicatedStorage:WaitForChild("FireSkill")
+
+-- khi cầm trái
+tool.Equipped:Connect(function()
+	print("Đã ăn trái lửa")
+end)
+
+-- bấm dùng chiêu
+tool.Activated:Connect(function()
+	event:FireServer()
+end)
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local event = ReplicatedStorage:WaitForChild("FireSkill")
+
+event.OnServerEvent:Connect(function(player)
+	local char = player.Character
+	if not char then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	-- hiệu ứng lửa đơn giản
+	local explosion = Instance.new("Explosion")
+	explosion.Position = root.Position + root.CFrame.LookVector * 5
+	explosion.BlastRadius = 6
+	explosion.BlastPressure = 0
+	explosion.Parent = workspace
+
+	-- damage gần
+	for _, obj in pairs(workspace:GetPartBoundsInRadius(root.Position, 8)) do
+		local hum = obj.Parent:FindFirstChild("Humanoid")
+		if hum and obj.Parent ~= char then
+			hum:TakeDamage(20)
+		end
+	end
+end)
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = game.Players.LocalPlayer
+
+local event = ReplicatedStorage:WaitForChild("FireSkill")
+
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+local btn = Instance.new("TextButton", gui)
+btn.Size = UDim2.new(0, 120, 0, 60)
+btn.Position = UDim2.new(0.8, 0, 0.75, 0)
+btn.Text = "🔥 Skill"
+
+btn.MouseButton1Click:Connect(function()
+	event:FireServer()
+end)
