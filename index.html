@@ -2,32 +2,145 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Void Blade 3D</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ocean Legends 3D</title>
+
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
 
 <style>
+
 html,body{
+margin:0;
+padding:0;
 width:100%;
 height:100%;
-margin:0;
 overflow:hidden;
+background:#6fcfff;
+touch-action:none;
 }
 
 #renderCanvas{
 width:100%;
 height:100%;
-touch-action:none;
 display:block;
 }
+
+#loading{
+position:absolute;
+left:0;
+top:0;
+width:100%;
+height:100%;
+display:flex;
+justify-content:center;
+align-items:center;
+background:#111;
+color:white;
+font-size:30px;
+font-family:Arial;
+z-index:100;
+}
+
+#hud{
+position:absolute;
+top:10px;
+left:10px;
+color:white;
+font-family:Arial;
+font-size:18px;
+background:rgba(0,0,0,.4);
+padding:10px;
+border-radius:10px;
+}
+
+.bar{
+width:220px;
+height:20px;
+background:#333;
+margin-top:6px;
+border-radius:20px;
+overflow:hidden;
+}
+
+.fill{
+height:100%;
+width:100%;
+background:#0f0;
+}
+
+.exp{
+background:#00aaff;
+}
+
+button{
+position:absolute;
+border:none;
+border-radius:50%;
+color:white;
+font-size:22px;
+}
+
+#attack{
+right:20px;
+bottom:20px;
+width:90px;
+height:90px;
+background:#ff4444;
+}
+
+#skill{
+right:130px;
+bottom:70px;
+width:70px;
+height:70px;
+background:#00bbff;
+}
+
+#dash{
+right:40px;
+bottom:130px;
+width:60px;
+height:60px;
+background:#ffaa00;
+}
+
 </style>
 
-<!-- Babylon.js -->
-<script src="https://cdn.babylonjs.com/babylon.js"></script>
 </head>
 
 <body>
 
+<div id="loading">
+Loading Ocean Legends...
+</div>
+
+<div id="hud">
+
+HP
+
+<div class="bar">
+<div class="fill" id="hpFill"></div>
+</div>
+
+EXP
+
+<div class="bar">
+<div class="fill exp" id="expFill"></div>
+</div>
+
+<div id="level">
+Level 1
+</div>
+
+</div>
+
 <canvas id="renderCanvas"></canvas>
+
+<button id="attack">⚔️</button>
+
+<button id="skill">💥</button>
+
+<button id="dash">⚡</button>
 
 <script>
 
@@ -35,43 +148,50 @@ const canvas=document.getElementById("renderCanvas");
 
 const engine=new BABYLON.Engine(canvas,true);
 
-const createScene=()=>{
-
 const scene=new BABYLON.Scene(engine);
 
-scene.clearColor=new BABYLON.Color3(
-0.53,
-0.81,
-0.98
+scene.clearColor=new BABYLON.Color4(
+0.55,
+0.82,
+1,
+1
 );
 
-// Camera
-
 const camera=new BABYLON.ArcRotateCamera(
-"camera",
+"Camera",
 -Math.PI/2,
 1.2,
-35,
-new BABYLON.Vector3(0,2,0),
+25,
+new BABYLON.Vector3(0,3,0),
 scene
 );
 
 camera.attachControl(canvas,true);
 
-// Ánh sáng
+camera.lowerRadiusLimit=8;
+camera.upperRadiusLimit=40;
 
 const light=new BABYLON.HemisphericLight(
-"light",
+"Light",
 new BABYLON.Vector3(0,1,0),
 scene
 );
 
 light.intensity=1.2;
 
-// Mặt đất
+const sun=new BABYLON.DirectionalLight(
+"Sun",
+new BABYLON.Vector3(-1,-2,-1),
+scene
+);
 
-const ground=BABYLON.MeshBuilder.CreateGround(
-"ground",
+sun.position=new BABYLON.Vector3(50,100,50);
+
+const groundMat=new BABYLON.StandardMaterial("groundMat",scene);
+groundMat.diffuseColor=new BABYLON.Color3(0.3,0.8,0.3);
+
+const island=BABYLON.MeshBuilder.CreateGround(
+"Island",
 {
 width:120,
 height:120
@@ -79,103 +199,113 @@ height:120
 scene
 );
 
-const groundMat=new BABYLON.StandardMaterial(
-"groundMat",
-scene
-);
+island.material=groundMat;
 
-groundMat.diffuseColor=new BABYLON.Color3(
-0.2,
-0.7,
-0.2
-);
-
-ground.material=groundMat;
-
-// Đảo nhỏ
-
-const island=BABYLON.MeshBuilder.CreateCylinder(
-"island",
+const sea=BABYLON.MeshBuilder.CreateGround(
+"Sea",
 {
-diameterTop:30,
-diameterBottom:40,
-height:6
+width:1000,
+height:1000
 },
 scene
 );
 
-island.position.y=-3;
+sea.position.y=-1;
 
-const islandMat=new BABYLON.StandardMaterial(
-"islandMat",
-scene
-);
+const seaMat=new BABYLON.StandardMaterial("SeaMat",scene);
 
-islandMat.diffuseColor=new BABYLON.Color3(
-0.45,
-0.3,
-0.15
-);
+seaMat.diffuseColor=new BABYLON.Color3(0,0.4,1);
 
-island.material=islandMat;
+sea.material=seaMat;
 
-// Nước
-
-const water=BABYLON.MeshBuilder.CreateGround(
-"water",
+const player=BABYLON.MeshBuilder.CreateCapsule(
+"Player",
 {
-width:400,
-height:400
+height:2,
+radius:.5
 },
 scene
 );
 
-water.position.y=-3.2;
+player.position.y=1;
 
-const waterMat=new BABYLON.StandardMaterial(
-"waterMat",
-scene
-);
+const playerMat=new BABYLON.StandardMaterial("PlayerMat",scene);
 
-waterMat.diffuseColor=new BABYLON.Color3(
-0,
-0.45,
-1
-);
+playerMat.diffuseColor=new BABYLON.Color3(1,0.2,0.2);
 
-water.material=waterMat;
+player.material=playerMat;
 
-// Bầu trời
+camera.target=player.position;
 
-const sky=BABYLON.MeshBuilder.CreateSphere(
-"sky",
-{
-diameter:800,
-sideOrientation:BABYLON.Mesh.BACKSIDE
-},
-scene
-);
+let hp=100;
+let exp=0;
+let level=1;
 
-const skyMat=new BABYLON.StandardMaterial(
-"skyMat",
-scene
-);
+document.getElementById("loading").style.display="none";
 
-skyMat.disableLighting=true;
+const keys={};
 
-skyMat.emissiveColor=new BABYLON.Color3(
-0.53,
-0.81,
-1
-);
+window.addEventListener("keydown",e=>{
+keys[e.key.toLowerCase()]=true;
+});
 
-sky.material=skyMat;
+window.addEventListener("keyup",e=>{
+keys[e.key.toLowerCase()]=false;
+});
 
-return scene;
+scene.onBeforeRenderObservable.add(()=>{
+
+const speed=0.15;
+
+if(keys["w"]) player.position.z+=speed;
+if(keys["s"]) player.position.z-=speed;
+if(keys["a"]) player.position.x-=speed;
+if(keys["d"]) player.position.x+=speed;
+
+camera.target.copyFrom(player.position);
+
+document.getElementById("hpFill").style.width=hp+"%";
+document.getElementById("expFill").style.width=exp+"%";
+document.getElementById("level").innerHTML="Level "+level;
+
+});
+
+document.getElementById("attack").onclick=function(){
+
+exp+=5;
+
+if(exp>=100){
+exp=0;
+level++;
+}
 
 };
 
-const scene=createScene();
+document.getElementById("skill").onclick=function(){
+
+let blast=BABYLON.MeshBuilder.CreateSphere(
+"blast",
+{diameter:3},
+scene
+);
+
+blast.position=player.position.clone();
+
+let mat=new BABYLON.StandardMaterial("blastMat",scene);
+mat.emissiveColor=new BABYLON.Color3(0,1,1);
+blast.material=mat;
+
+setTimeout(()=>{
+blast.dispose();
+},500);
+
+};
+
+document.getElementById("dash").onclick=function(){
+
+player.position.z+=3;
+
+};
 
 engine.runRenderLoop(function(){
 
@@ -193,959 +323,767 @@ engine.resize();
 
 </body>
 </html>
-// Nhân vật chính (player)
-const player = BABYLON.MeshBuilder.CreateCapsule("player", {
-    height: 2,
-    radius: 0.5
-}, scene);
 
-player.position = new BABYLON.Vector3(0, 1, 0);
+let level=1;
 
-// Vật liệu cho nhân vật
-const playerMat = new BABYLON.StandardMaterial("playerMat", scene);
-playerMat.diffuseColor = new BABYLON.Color3(0, 0.6, 1);
-player.material = playerMat;
-const camera = new BABYLON.ArcRotateCamera(
-    "camera",
-    Math.PI / 2,
-    Math.PI / 3,
-    8,
-    player.position,
-    scene
+// ===== JOYSTICK =====
+
+let move={
+x:0,
+z:0
+};
+
+let joyBase=document.createElement("div");
+joyBase.style.cssText=`
+position:fixed;
+left:30px;
+bottom:30px;
+width:120px;
+height:120px;
+border-radius:50%;
+background:rgba(255,255,255,.15);
+`;
+
+document.body.appendChild(joyBase);
+
+let joyStick=document.createElement("div");
+joyStick.style.cssText=`
+position:absolute;
+left:35px;
+top:35px;
+width:50px;
+height:50px;
+border-radius:50%;
+background:white;
+`;
+
+joyBase.appendChild(joyStick);
+
+let dragging=false;
+
+joyBase.addEventListener("touchstart",()=>{
+dragging=true;
+});
+
+joyBase.addEventListener("touchend",()=>{
+
+dragging=false;
+
+move.x=0;
+move.z=0;
+
+joyStick.style.left="35px";
+joyStick.style.top="35px";
+
+});
+
+joyBase.addEventListener("touchmove",e=>{
+
+if(!dragging)return;
+
+let t=e.touches[0];
+
+let r=joyBase.getBoundingClientRect();
+
+let x=t.clientX-r.left-60;
+let y=t.clientY-r.top-60;
+
+let d=Math.sqrt(x*x+y*y);
+
+if(d>40){
+
+x=x/d*40;
+y=y/d*40;
+
+}
+
+joyStick.style.left=(35+x)+"px";
+joyStick.style.top=(35+y)+"px";
+
+move.x=x/40;
+move.z=y/40;
+
+});
+
+const speed=0.15;
+
+player.position.x+=move.x*speed;
+player.position.z+=move.z*speed;
+
+if(keys["w"])player.position.z+=speed;
+if(keys["s"])player.position.z-=speed;
+if(keys["a"])player.position.x-=speed;
+if(keys["d"])player.position.x+=speed;
+
+camera.target.copyFrom(player.position);
+
+const enemies=[];
+
+for(let i=0;i<5;i++){
+
+let e=BABYLON.MeshBuilder.CreateBox(
+"enemy"+i,
+{size:2},
+scene
 );
 
-camera.attachControl(canvas, true);
-camera.lowerRadiusLimit = 5;
-camera.upperRadiusLimit = 15;
-const inputMap = {};
+e.position.x=Math.random()*60-30;
+e.position.z=Math.random()*60-30;
+e.position.y=1;
 
-scene.actionManager = new BABYLON.ActionManager(scene);
+let mat=new BABYLON.StandardMaterial(
+"m"+i,
+scene
+)
 
-scene.actionManager.registerAction(
-    new BABYLON.ExecuteCodeAction(
-        BABYLON.ActionManager.OnKeyDownTrigger,
-        (evt) => {
-            inputMap[evt.sourceEvent.key] = true;
-        }
-    )
+mat.diffuseColor=new BABYLON.Color3(
+0.8,
+0.1,
+0.1
 );
 
-scene.actionManager.registerAction(
-    new BABYLON.ExecuteCodeAction(
-        BABYLON.ActionManager.OnKeyUpTrigger,
-        (evt) => {
-            inputMap[evt.sourceEvent.key] = false;
-        }
-    )
+e.material=mat;
+
+enemies.push(e);
+
+for(let e of enemies){
+
+let dx=player.position.x-e.position.x;
+let dz=player.position.z-e.position.z;
+
+let d=Math.sqrt(dx*dx+dz*dz);
+
+if(d<20){
+
+e.position.x+=dx/d*0.03;
+e.position.z+=dz/d*0.03;
+
+}
+
+}
+
+document.getElementById("attack").onclick=function(){
+
+for(let i=enemies.length-1;i>=0;i--){
+
+let e=enemies[i];
+
+let d=BABYLON.Vector3.Distance(
+player.position,
+e.position
 );
-const speed = 0.1;
 
-scene.onBeforeRenderObservable.add(() => {
+if(d<4){
 
-    if (inputMap["w"]) {
-        player.position.z -= speed;
-    }
-    if (inputMap["s"]) {
-        player.position.z += speed;
-    }
-    if (inputMap["a"]) {
-        player.position.x -= speed;
-    }
-    if (inputMap["d"]) {
-        player.position.x += speed;
-    }
+e.dispose();
 
-    // camera luôn nhìn theo player
-    camera.target = player.position;
-});
-player.position.y = 1; // giữ trên mặt đất
-const camera = new BABYLON.FollowCamera(
-    "followCam",
-    new BABYLON.Vector3(0, 5, -10),
-    scene
+enemies.splice(i,1);
+
+exp+=20;
+
+}
+
+}
+
+if(exp>=100){
+
+exp=0;
+level++;
+
+}
+
+}
+    //=====================
+// TREES
+//=====================
+
+const trees=[];
+
+for(let i=0;i<40;i++){
+
+let trunk=BABYLON.MeshBuilder.CreateCylinder(
+"trunk",
+{
+height:3,
+diameter:0.6
+},
+scene
 );
-camera.lockedTarget = player;
-camera.radius = 8;          // khoảng cách
-camera.heightOffset = 3;    // độ cao camera
-camera.rotationOffset = 180; // quay sau lưng nhân vật
 
-camera.cameraAcceleration = 0.05; // độ mượt khi đuổi theo
-camera.maxCameraSpeed = 10;
-camera.attachControl(canvas, true);
-scene.onBeforeRenderObservable.add(() => {
-    camera.lockedTarget = player;
-});
-const sword = BABYLON.MeshBuilder.CreateBox("sword", {
-    height: 1.5,
-    width: 0.2,
-    depth: 0.5
-}, scene);
+trunk.position.x=Math.random()*90-45;
+trunk.position.z=Math.random()*90-45;
+trunk.position.y=1.5;
 
-sword.parent = player;
-sword.position = new BABYLON.Vector3(0.6, 0.5, 0);
+let trunkMat=new BABYLON.StandardMaterial(
+"trunkMat"+i,
+scene
+);
 
-const swordMat = new BABYLON.StandardMaterial("swordMat", scene);
-swordMat.emissiveColor = new BABYLON.Color3(0.6, 0, 1); // tím hư không
-sword.material = swordMat;
-let canAttack = true;
+trunkMat.diffuseColor=
+new BABYLON.Color3(.45,.25,.1);
 
-function attack() {
-    if (!canAttack) return;
+trunk.material=trunkMat;
 
-    canAttack = false;
+let leaf=BABYLON.MeshBuilder.CreateSphere(
+"leaf",
+{
+diameter:2.5
+},
+scene
+);
 
-    // vung kiếm
-    sword.rotation.z = Math.PI / 2;
+leaf.position=trunk.position.clone();
 
-    setTimeout(() => {
-        sword.rotation.z = 0;
-        canAttack = true;
-    }, 400);
+leaf.position.y+=2;
+
+let leafMat=new BABYLON.StandardMaterial(
+"leafMat"+i,
+scene
+);
+
+leafMat.diffuseColor=
+new BABYLON.Color3(.1,.8,.2);
+
+leaf.material=leafMat;
+
+trees.push(trunk);
+trees.push(leaf);
+
 }
-scene.onPointerDown = function () {
-    attack();
-    checkHit();
+
+//=====================
+// ROCKS
+//=====================
+
+for(let i=0;i<30;i++){
+
+let rock=
+BABYLON.MeshBuilder.CreateSphere(
+"rock",
+{
+diameter:
+Math.random()*2+1
+},
+scene
+);
+
+rock.position.x=
+Math.random()*100-50;
+
+rock.position.z=
+Math.random()*100-50;
+
+rock.position.y=.5;
+
+rock.scaling.y=.5;
+
+let mat=
+new BABYLON.StandardMaterial(
+"rockMat"+i,
+scene
+);
+
+mat.diffuseColor=
+new BABYLON.Color3(
+.5,
+.5,
+.5
+);
+
+rock.material=mat;
+
+}
+
+sea.position.y=
+Math.sin(
+performance.now()/400
+)*0.15;
+
+const sky=
+BABYLON.MeshBuilder.CreateBox(
+"sky",
+{
+size:4000
+},
+scene
+);
+
+let skyMat=
+new BABYLON.StandardMaterial(
+"skyMat",
+scene
+);
+
+skyMat.backFaceCulling=false;
+
+skyMat.disableLighting=true;
+
+skyMat.emissiveColor=
+new BABYLON.Color3(
+0.45,
+0.75,
+1
+);
+
+sky.material=skyMat;
+    const body=BABYLON.MeshBuilder.CreateCapsule(
+"body",
+{
+height:2.5,
+radius:0.45
+},
+scene
+);
+
+body.position.y=1.25;
+
+const head=BABYLON.MeshBuilder.CreateSphere(
+"head",
+{
+diameter:0.8
+},
+scene
+);
+
+head.position.y=2.8;
+
+head.parent=body;
+
+const player=body;
+
+const sword=BABYLON.MeshBuilder.CreateBox(
+"sword",
+{
+height:3,
+width:.15,
+depth:.3
+},
+scene
+);
+
+sword.parent=player;
+
+sword.position.x=.8;
+sword.position.y=.5;
+sword.position.z=0;
+
+let swordMat=
+new BABYLON.StandardMaterial(
+"swordMat",
+scene
+);
+
+swordMat.diffuseColor=
+new BABYLON.Color3(.9,.9,.9);
+
+sword.material=swordMat;
+
+scene.onBeforeRenderObservable
+
+let t=performance.now()/120;
+
+if(Math.abs(move.x)+Math.abs(move.z)>0){
+
+player.rotation.y=
+Math.atan2(
+move.x,
+move.z
+);
+
+player.position.y=
+1.25+
+Math.abs(Math.sin(t))*.08;
+
+}
+
+let combo=0;
+
+document
+.getElementById("attack")
+.onclick=function(){
+
+combo++;
+
+if(combo>3)
+combo=1;
+
+sword.rotation.z=
+-.8*combo;
+
+setTimeout(()=>{
+
+sword.rotation.z=0;
+
+},150);
+
 };
-const enemy = BABYLON.MeshBuilder.CreateBox("enemy", {
-    size: 1
-}, scene);
 
-enemy.position = new BABYLON.Vector3(3, 0.5, 0);
+let slash=
+BABYLON.MeshBuilder.CreateTorus(
+"slash",
+{
+diameter:3,
+thickness:.08
+},
+scene
+);
 
-enemy.hp = 100;
-function checkHit() {
-    const distance = BABYLON.Vector3.Distance(player.position, enemy.position);
+slash.position=
+player.position.clone();
 
-    if (distance < 2) {
-        enemy.hp -= 20;
-        console.log("Hit! HP còn:", enemy.hp);
+slash.rotation.x=
+Math.PI/2;
 
-        if (enemy.hp <= 0) {
-            enemy.dispose();
-        }
-    }
-}function voidEffect() {
-    const flash = BABYLON.MeshBuilder.CreateSphere("flash", {
-        diameter: 1
-    }, scene);
+let slashMat=
+new BABYLON.StandardMaterial(
+"slashMat",
+scene
+);
 
-    flash.position = player.position.clone();
-    
-    const mat = new BABYLON.StandardMaterial("fx", scene);
-    mat.emissiveColor = new BABYLON.Color3(0.8, 0, 1);
-    flash.material = mat;
+slashMat.emissiveColor=
+new BABYLON.Color3(
+1,
+1,
+0
+);
 
-    setTimeout(() => {
-        flash.dispose();
-    }, 200);
+slash.material=slashMat;
+
+setTimeout(()=>{
+
+slash.dispose();
+
+},180);
+    let joystickRadius = 50;
+
+function updateJoystick(x, y){
+
+let length = Math.sqrt(x*x+y*y);
+
+if(length>joystickRadius){
+
+x = x/length*joystickRadius;
+y = y/length*joystickRadius;
+
 }
-          attack();
-voidEffect();
-checkHit();
-let combo = 0;
-let lastAttackTime = 0;
-          function attack() {
-    const now = Date.now();
 
-    // reset combo nếu quá lâu
-    if (now - lastAttackTime > 1000) {
-        combo = 0;
-    }
+joyStick.style.left=(35+x)+"px";
+joyStick.style.top=(35+y)+"px";
 
-    lastAttackTime = now;
-    combo++;
+move.x=x/joystickRadius;
+move.z=y/joystickRadius;
 
-    if (combo > 3) combo = 1;
-
-    swordAttack(combo);
 }
-          function swordAttack(stage) {
 
-    canAttack = false;
+document.getElementById("dash").onclick=function(){
 
-    if (stage === 1) {
-        sword.rotation.z = 0.8;
-    }
-    if (stage === 2) {
-        sword.rotation.z = -0.8;
-    }
-    if (stage === 3) {
-        sword.rotation.z = 1.5;
-    }
+let dir=new BABYLON.Vector3(
+move.x,
+0,
+move.z
+);
 
-    voidEffect();
-    checkHit();
+if(dir.length()>0){
 
-    setTimeout(() => {
-        sword.rotation.z = 0;
-        canAttack = true;
-    }, 300);
+dir.normalize();
+
+player.position.addInPlace(
+dir.scale(4)
+);
+
 }
-          let canDash = true;
 
-function dash() {
-    if (!canDash) return;
-
-    canDash = false;
-
-    const forward = new BABYLON.Vector3(
-        Math.sin(player.rotation.y),
-        0,
-        Math.cos(player.rotation.y)
-    );
-
-    player.position.addInPlace(forward.scale(2.5));
-
-    setTimeout(() => {
-        canDash = true;
-    }, 800);
 }
-          window.addEventListener("keydown", (e) => {
-    if (e.key === "Shift") dash();
-});
-          function voidSkill() {
 
-    const sphere = BABYLON.MeshBuilder.CreateSphere("void", {
-        diameter: 2
-    }, scene);
+scene.onBeforeRenderObservable
 
-    sphere.position = player.position.clone();
+if(d<2){
 
-    const mat = new BABYLON.StandardMaterial("v", scene);
-    mat.emissiveColor = new BABYLON.Color3(0.7, 0, 1);
-    sphere.material = mat;
+hp-=0.1;
 
-    // sát thương diện rộng
-    if (enemy) {
-        const dist = BABYLON.Vector3.Distance(player.position, enemy.position);
-        if (dist < 4) {
-            enemy.hp -= 50;
-        }
-    }
+if(hp<0)
+hp=0;
 
-    setTimeout(() => sphere.dispose(), 300);
 }
-          window.addEventListener("keydown", (e) => {
-    if (e.key === "q") voidSkill();
-});
-          const enemy = BABYLON.MeshBuilder.CreateBox("enemy", { size: 1 }, scene);
-enemy.position = new BABYLON.Vector3(5, 0.5, 5);
-enemy.hp = 100;
-          const enemySpeed = 0.03;
 
-scene.onBeforeRenderObservable.add(() => {
+setInterval(()=>{
 
-    const direction = player.position.subtract(enemy.position);
-    const distance = direction.length();
+if(hp<100){
 
-    if (distance > 1.5) {
-        direction.normalize();
+hp+=1;
 
-        enemy.position.addInPlace(direction.scale(enemySpeed));
-    } else {
-        // tấn công người chơi (giả lập)
-        console.log("Enemy attack!");
-    }
-});
-          function checkHit() {
-    if (!enemy) return;
-
-    const dist = BABYLON.Vector3.Distance(player.position, enemy.position);
-
-    if (dist < 2) {
-        enemy.hp -= 20;
-
-        if (enemy.hp <= 0) {
-            enemy.dispose();
-        }
-    }
 }
-          scene.onPointerDown = function () {
-    attack();
+
+},1000);
+
+document.getElementById("skill").onclick=function(){
+
+let ball=
+BABYLON.MeshBuilder.CreateSphere(
+"skill",
+{
+diameter:5
+},
+scene
+);
+
+ball.position=
+player.position.clone();
+
+let m=
+new BABYLON.StandardMaterial(
+"s",
+scene
+);
+
+m.emissiveColor=
+new BABYLON.Color3(
+0,
+1,
+1
+);
+
+ball.material=m;
+
+for(let e of enemies){
+
+if(BABYLON.Vector3.Distance(
+ball.position,
+e.position
+)<8){
+
+e.dispose();
+
+}
+
+}
+
+setTimeout(()=>{
+
+ball.dispose();
+
+},500);
+
 };
-          <button id="dashBtn">DASH</button>
-          document.getElementById("dashBtn").addEventListener("touchstart", dash);
-          camera.attachControl(canvas, true);
-          <div id="mobileControls">
+    const island2 =
+BABYLON.MeshBuilder.CreateGround(
+"Island2",
+{
+width:180,
+height:180
+},
+scene
+);
 
-  <button id="upBtn">⬆️</button>
+island2.position.x = 250;
+island2.position.z = 80;
 
-  <div>
-    <button id="leftBtn">⬅️</button>
-    <button id="downBtn">⬇️</button>
-    <button id="rightBtn">➡️</button>
-  </div>
+let island2Mat =
+new BABYLON.StandardMaterial(
+"island2Mat",
+scene
+);
 
-</div>
-#mobileControls {
-    position: absolute;
-    bottom: 30px;
-    left: 30px;
-    z-index: 999;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+island2Mat.diffuseColor =
+new BABYLON.Color3(.35,.75,.25);
+
+island2.material = island2Mat;
+
+const house =
+BABYLON.MeshBuilder.CreateBox(
+"house",
+{
+width:8,
+height:6,
+depth:8
+},
+scene
+);
+
+house.position.set(12,3,15);
+
+let houseMat =
+new BABYLON.StandardMaterial(
+"houseMat",
+scene
+);
+
+houseMat.diffuseColor =
+new BABYLON.Color3(
+0.8,
+0.6,
+0.4
+);
+
+house.material = houseMat;
+
+let money = 0;
+
+const moneyUI =
+document.createElement("div");
+
+moneyUI.style.position="fixed";
+moneyUI.style.right="15px";
+moneyUI.style.top="10px";
+moneyUI.style.color="white";
+moneyUI.style.fontSize="22px";
+
+document.body.appendChild(
+moneyUI
+);
+
+moneyUI.innerHTML =
+"💰 "+money;
+
+const chest =
+BABYLON.MeshBuilder.CreateBox(
+"Chest",
+{
+size:2
+},
+scene
+);
+
+chest.position.set(
+8,
+1,
+20
+);
+
+let chestMat =
+new BABYLON.StandardMaterial(
+"ChestMat",
+scene
+);
+
+chestMat.diffuseColor =
+new BABYLON.Color3(
+0.6,
+0.3,
+0
+);
+
+chest.material=chestMat;
+
+if(
+BABYLON.Vector3.Distance(
+player.position,
+chest.position
+)<3
+){
+
+money+=100;
+
+chest.dispose();
+
 }
 
-#mobileControls button {
-    width: 60px;
-    height: 60px;
-    margin: 5px;
-    font-size: 20px;
+for(let i=0;i<20;i++){
+
+let palm =
+BABYLON.MeshBuilder.CreateCylinder(
+"Palm",
+{
+height:5,
+diameter:0.5
+},
+scene
+);
+
+palm.position.x =
+Math.random()*120-60;
+
+palm.position.z =
+Math.random()*120-60;
+
+palm.position.y=2.5;
+
 }
-          let moveUp = false;
-let moveDown = false;
-let moveLeft = false;
-let moveRight = false;
-          document.getElementById("upBtn").addEventListener("touchstart", () => moveUp = true);
-document.getElementById("upBtn").addEventListener("touchend", () => moveUp = false);
 
-document.getElementById("downBtn").addEventListener("touchstart", () => moveDown = true);
-document.getElementById("downBtn").addEventListener("touchend", () => moveDown = false);
+scene.registerBeforeRender(()=>{
 
-document.getElementById("leftBtn").addEventListener("touchstart", () => moveLeft = true);
-document.getElementById("leftBtn").addEventListener("touchend", () => moveLeft = false);
-
-document.getElementById("rightBtn").addEventListener("touchstart", () => moveRight = true);
-document.getElementById("rightBtn").addEventListener("touchend", () => moveRight = false);
-          const speed = 0.1;
-
-scene.onBeforeRenderObservable.add(() => {
-
-    if (moveUp) {
-        player.position.z -= speed;
-    }
-
-    if (moveDown) {
-        player.position.z += speed;
-    }
-
-    if (moveLeft) {
-        player.position.x -= speed;
-    }
-
-    if (moveRight) {
-        player.position.x += speed;
-    }
+sea.rotation.y+=0.0005;
 
 });
-          <button id="skillBtn">💜 SKILL</button>
-          #skillBtn {
-    position: absolute;
-    bottom: 40px;
-    right: 40px;
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    font-size: 16px;
-    z-index: 999;
-    background: purple;
-    color: white;
-}
-          document.getElementById("skillBtn").addEventListener("touchstart", voidSkill);
-document.getElementById("skillBtn").addEventListener("click", voidSkill);
-          function voidSkill() {
+    local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
 
-    const sphere = BABYLON.MeshBuilder.CreateSphere("void", {
-        diameter: 3
-    }, scene);
+local canAttack = true
+local damage = 10
+local cooldown = 0.5
 
-    sphere.position = player.position.clone();
+local mouse = player:GetMouse()
 
-    const mat = new BABYLON.StandardMaterial("v", scene);
-    mat.emissiveColor = new BABYLON.Color3(0.7, 0, 1);
-    sphere.material = mat;
+mouse.Button1Down:Connect(function()
+	if not canAttack then return end
+	canAttack = false
 
-    // sát thương đơn giản
-    if (enemy) {
-        const dist = BABYLON.Vector3.Distance(player.position, enemy.position);
+	local target = mouse.Target
+	if target and target.Parent then
+		local enemyHumanoid = target.Parent:FindFirstChild("Humanoid")
 
-        if (dist < 4) {
-            enemy.hp -= 50;
-            console.log("Enemy HP:", enemy.hp);
+		if enemyHumanoid and target.Parent ~= char then
+			enemyHumanoid:TakeDamage(damage)
+		end
+	end
 
-            if (enemy.hp <= 0) {
-                enemy.dispose();
-            }
-        }
-    }
+	task.wait(cooldown)
+	canAttack = true
+end)
 
-    setTimeout(() => sphere.dispose(), 300);
-}
-              <div id="joystickBase">
-  <div id="joystickStick"></div>
-</div>
-#joystickBase {
-    position: absolute;
-    bottom: 40px;
-    left: 40px;
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    z-index: 999;
-}
+game.ReplicatedStorage:WaitForChild("DamageEvent").OnServerEvent:Connect(function(player, targetHumanoid, damage)
+	if targetHumanoid and targetHumanoid.Health > 0 then
+		targetHumanoid:TakeDamage(damage)
+	end
+end)
 
-#joystickStick {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.6);
-    top: 40px;
-    left: 40px;
-}
-              const base = document.getElementById("joystickBase");
-const stick = document.getElementById("joystickStick");
+ReplicatedStorage
+→ DamageEvent (RemoteEvent)
+    local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local root = char:WaitForChild("HumanoidRootPart")
 
-let dragging = false;
-let center = { x: 70, y: 70 };
-let inputVector = { x: 0, z: 0 };
-              base.addEventListener("touchstart", startDrag);
-base.addEventListener("touchmove", moveDrag);
-base.addEventListener("touchend", endDrag);
+local dashCooldown = false
 
-function startDrag(e) {
-    dragging = true;
-}
+local function dash()
+	if dashCooldown then return end
+	dashCooldown = true
 
-function moveDrag(e) {
-    if (!dragging) return;
+	local direction = root.CFrame.LookVector
+	root.Velocity = direction * 80 + Vector3.new(0, 10, 0)
 
-    let rect = base.getBoundingClientRect();
-    let touch = e.touches[0];
+	task.wait(0.6)
+	dashCooldown = false
+end
 
-    let x = touch.clientX - rect.left - center.x;
-    let y = touch.clientY - rect.top - center.y;
+-- TẠO NÚT DASH
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+local btn = Instance.new("TextButton", gui)
 
-    let length = Math.sqrt(x*x + y*y);
-    let max = 50;
+btn.Size = UDim2.new(0, 120, 0, 50)
+btn.Position = UDim2.new(0.8, 0, 0.8, 0)
+btn.Text = "DASH"
 
-    if (length > max) {
-        x = (x / length) * max;
-        y = (y / length) * max;
-    }
+btn.MouseButton1Click:Connect(dash)
 
-    stick.style.left = (center.x + x - 30) + "px";
-    stick.style.top = (center.y + y - 30) + "px";
+local UIS = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
 
-    inputVector.x = x / max;
-    inputVector.z = y / max;
-}
+UIS.TouchTap:Connect(function(touchPositions, gameProcessed)
+	if gameProcessed then return end
 
-function endDrag() {
-    dragging = false;
+	local char = player.Character
+	if not char then return end
 
-    stick.style.left = center.x - 30 + "px";
-    stick.style.top = center.y - 30 + "px";
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
 
-    inputVector.x = 0;
-    inputVector.z = 0;
-}
-              const speed = 0.1;
+	local ray = Ray.new(root.Position, root.CFrame.LookVector * 5)
+	local part = workspace:FindPartOnRay(ray, char)
 
-scene.onBeforeRenderObservable.add(() => {
-
-    player.position.x += inputVector.x * speed;
-    player.position.z += inputVector.z * speed;
-
-});
-              scene.onBeforeRenderObservable.add(() => {
-
-    if (inputVector.x !== 0 || inputVector.z !== 0) {
-
-        player.position.x += inputVector.x * 0.1;
-        player.position.z += inputVector.z * 0.1;
-
-        // quay mặt theo hướng đi
-        player.rotation.y = Math.atan2(inputVector.x, inputVector.z);
-    }
-
-});
-              <button id="attackBtn">⚔️</button>
-              #attackBtn {
-    position: absolute;
-    bottom: 140px;
-    right: 40px;
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    z-index: 999;
-}
-              document.getElementById("attackBtn").addEventListener("touchstart", attack);
-document.getElementById("attackBtn").addEventListener("click", attack);
-              <button id="dashBtn">⚡</button>
-              document.getElementById("dashBtn").addEventListener("touchstart", dash);
-              let canSkill = true;
-              function voidSkill() {
-
-    if (!canSkill) return;
-    canSkill = false;
-
-    const sphere = BABYLON.MeshBuilder.CreateSphere("void", { diameter: 3 }, scene);
-    sphere.position = player.position.clone();
-
-    const mat = new BABYLON.StandardMaterial("v", scene);
-    mat.emissiveColor = new BABYLON.Color3(0.7, 0, 1);
-    sphere.material = mat;
-
-    if (enemy) {
-        let dist = BABYLON.Vector3.Distance(player.position, enemy.position);
-        if (dist < 4) enemy.hp -= 50;
-    }
-
-    setTimeout(() => sphere.dispose(), 300);
-
-    // cooldown 3 giây
-    setTimeout(() => {
-        canSkill = true;
-    }, 3000);
-}
-          let combo = 0;
-let lastTime = 0;
-
-function attack() {
-
-    let now = Date.now();
-
-    if (now - lastTime > 800) combo = 0;
-
-    lastTime = now;
-    combo++;
-
-    if (combo > 3) combo = 1;
-
-    swordAttack(combo);
-}
-          scene.onBeforeRenderObservable.add(() => {
-
-    let dir = player.position.subtract(enemy.position);
-    let dist = dir.length();
-
-    if (dist < 6 && dist > 1.5) {
-        dir.normalize();
-        enemy.position.addInPlace(dir.scale(0.03));
-    }
-
-    if (dist <= 1.5) {
-        console.log("Enemy attack player!");
-    }
-
-});
-      const ground = BABYLON.MeshBuilder.CreateGround("ground", {
-    width: 50,
-    height: 50
-}, scene);
-
-const groundMat = new BABYLON.StandardMaterial("gmat", scene);
-groundMat.diffuseColor = new BABYLON.Color3(0.2, 0.8, 0.3);
-ground.material = groundMat;
-      const water = BABYLON.MeshBuilder.CreateGround("water", {
-    width: 200,
-    height: 200
-}, scene);
-
-water.position.y = -1;
-
-const waterMat = new BABYLON.StandardMaterial("wmat", scene);
-waterMat.diffuseColor = new BABYLON.Color3(0, 0.3, 0.8);
-water.material = waterMat;
-      const water = BABYLON.MeshBuilder.CreateGround("water", {
-    width: 200,
-    height: 200
-}, scene);
-
-water.position.y = -1;
-
-const waterMat = new BABYLON.StandardMaterial("wmat", scene);
-waterMat.diffuseColor = new BABYLON.Color3(0, 0.3, 0.8);
-water.material = waterMat;
-      let enemies = [];
-
-function spawnEnemy(x, z) {
-
-    const e = BABYLON.MeshBuilder.CreateBox("enemy", { size: 1 }, scene);
-
-    e.position = new BABYLON.Vector3(x, 0.5, z);
-    e.hp = 100;
-
-    enemies.push(e);
-}
-      for (let i = 0; i < 5; i++) {
-    spawnEnemy(
-        Math.random() * 20 - 10,
-        Math.random() * 20 - 10
-    );
-}
-        scene.onBeforeRenderObservable.add(() => {
-
-    enemies.forEach((enemy) => {
-
-        let dir = player.position.subtract(enemy.position);
-        let dist = dir.length();
-
-        if (dist > 1.5) {
-            dir.normalize();
-            enemy.position.addInPlace(dir.scale(0.02));
-        }
-
-        if (dist <= 1.5) {
-            // gây sát thương giả lập
-            console.log("Player bị đánh!");
-        }
-    });
-
-});
-          <div id="hpBar"></div>
-          #hpBar {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    width: 200px;
-    height: 20px;
-    background: red;
-}
-          let playerHP = 100;
-
-function updateHPBar() {
-    document.getElementById("hpBar").style.width = playerHP * 2 + "px";
-}
-          let level = 1;
-let exp = 0;
-
-function addExp(amount) {
-    exp += amount;
-
-    if (exp >= 100) {
-        level++;
-        exp = 0;
-
-        console.log("LEVEL UP! Level:", level);
-    }
-}
-          function killEnemy(enemy) {
-    enemy.dispose();
-    addExp(20);
-}
-          function checkHit() {
-
-    enemies.forEach((enemy, index) => {
-
-        let dist = BABYLON.Vector3.Distance(player.position, enemy.position);
-
-        if (dist < 2) {
-            enemy.hp -= 20;
-
-            if (enemy.hp <= 0) {
-                killEnemy(enemy);
-                enemies.splice(index, 1);
-            }
-        }
-    });
-
-}
-              const boss = BABYLON.MeshBuilder.CreateBox("boss", {
-    width: 3,
-    height: 3,
-    depth: 3
-}, scene);
-
-boss.position = new BABYLON.Vector3(10, 1.5, 10);
-boss.hp = 500;
-              const bossMat = new BABYLON.StandardMaterial("bossMat", scene);
-bossMat.emissiveColor = new BABYLON.Color3(1, 0, 0); // đỏ nguy hiểm
-boss.material = bossMat;
-
-scene.onBeforeRenderObservable.add(() => {
-
-    let dir = player.position.subtract(boss.position);
-    let dist = dir.length();
-
-    if (dist > 3) {
-        dir.normalize();
-        boss.position.addInPlace(dir.scale(0.015));
-    }
-
-    if (dist <= 3) {
-        console.log("Boss attack mạnh!");
-        playerHP -= 1; // damage liên tục
-        updateHPBar();
-    }
-
-});
-
-function hitBoss() {
-
-    let dist = BABYLON.Vector3.Distance(player.position, boss.position);
-
-    if (dist < 3) {
-        boss.hp -= 25;
-
-        if (boss.hp <= 0) {
-            dropItem();
-            boss.dispose();
-        }
-    }
-
-function dropItem() {
-
-    const item = BABYLON.MeshBuilder.CreateSphere("item", {
-        diameter: 0.8
-    }, scene);
-
-    item.position = boss.position.clone();
-
-    item.type = "VoidSword";
-}
-let inventory = [];
-
-scene.onBeforeRenderObservable.add(() => {
-
-    const item = scene.getMeshByName("item");
-
-    if (item) {
-        let dist = BABYLON.Vector3.Distance(player.position, item.position);
-
-        if (dist < 2) {
-            inventory.push(item.type);
-            item.dispose();
-
-            console.log("Nhặt được:", inventory);
-        }
-    }
-
-});
-
-<button id="shopBtn">🛒 SHOP</button>
-<div id="shopMenu" style="display:none;">
-    <button id="buySword">Mua Kiếm +10 Damage</button>
-</div>
-document.getElementById("shopBtn").onclick = () => {
-    let menu = document.getElementById("shopMenu");
-    menu.style.display = menu.style.display === "none" ? "block" : "none";
-};
-          let damage = 10;
-
-document.getElementById("buySword").onclick = () => {
-    damage += 10;
-    console.log("Damage hiện tại:", damage);
-};
-          function hitBoss() {
-
-    let dist = BABYLON.Vector3.Distance(player.position, boss.position);
-
-    if (dist < 3) {
-        boss.hp -= damage;
-
-        console.log("Boss HP:", boss.hp);
-
-        if (boss.hp <= 0) {
-            dropItem();
-            boss.dispose();
-        }
-    }
-}
-          function bossLightning() {
-
-    const lightning = BABYLON.MeshBuilder.CreateSphere("lightning", {
-        diameter: 5
-    }, scene);
-
-    lightning.position = player.position.clone();
-
-    const mat = new BABYLON.StandardMaterial("l", scene);
-    mat.emissiveColor = new BABYLON.Color3(1, 1, 0); // vàng sét
-    lightning.material = mat;
-
-    // damage trong vùng
-    let dist = BABYLON.Vector3.Distance(player.position, boss.position);
-
-    if (dist < 6) {
-        playerHP -= 10;
-        updateHPBar();
-    }
-
-    setTimeout(() => lightning.dispose(), 300);
-}
-      setInterval(() => {
-    bossLightning();
-}, 4000);
-      const portal = BABYLON.MeshBuilder.CreateTorus("portal", {
-    diameter: 2,
-    thickness: 0.3
-}, scene);
-
-portal.position = new BABYLON.Vector3(15, 1, 0);
-      scene.onBeforeRenderObservable.add(() => {
-
-    let dist = BABYLON.Vector3.Distance(player.position, portal.position);
-
-    if (dist < 2) {
-
-        player.position = new BABYLON.Vector3(-10, 1, -10);
-
-        console.log("Teleport sang đảo mới!");
-    }
-
-});
-      function saveGame() {
-
-    const data = {
-        level: level,
-        exp: exp,
-        damage: damage,
-        hp: playerHP
-    };
-
-    localStorage.setItem("myGameSave", JSON.stringify(data));
-
-    console.log("Đã lưu game!");
-}
-      function loadGame() {
-
-    const data = JSON.parse(localStorage.getItem("myGameSave"));
-
-    if (!data) return;
-
-    level = data.level;
-    exp = data.exp;
-    damage = data.damage;
-    playerHP = data.hp;
-
-    updateHPBar();
-
-    console.log("Đã load game!");
-}
-      <button onclick="saveGame()">💾 SAVE</button>
-<button onclick="loadGame()">📂 LOAD</button>
-scene.onBeforeRenderObservable.add(() => {
-
-    let dir = player.position.subtract(boss.position);
-    let dist = dir.length();
-
-    dir.normalize();
-
-    // nếu player gần → boss lùi nhẹ + đánh
-    if (dist < 4) {
-        boss.position.addInPlace(dir.scale(-0.01));
-        bossExplosion();
-    }
-
-});
-      let players = [];
-
-function createPlayer(id, x, z) {
-    const p = BABYLON.MeshBuilder.CreateCapsule("p" + id, {
-        height: 2,
-        radius: 0.5
-    }, scene);
-
-    p.position = new BABYLON.Vector3(x, 1, z);
-
-    players.push(p);
-}
-      createPlayer(1, 5, 5);
-createPlayer(2, -5, -5);
-      function updateFakePlayers() {
-    players.forEach(p => {
-        p.position.x += Math.random() * 0.05 - 0.025;
-        p.position.z += Math.random() * 0.05 - 0.025;
-    });
-}
-
-scene.onBeforeRenderObservable.add(updateFakePlayers);
-      const dragon = BABYLON.MeshBuilder.CreateBox("dragon", {
-    width: 5,
-    height: 3,
-    depth: 8
-}, scene);
-
-dragon.position = new BABYLON.Vector3(20, 2, 20);
-dragon.hp = 1000;
-      const dmat = new BABYLON.StandardMaterial("dmat", scene);
-dmat.emissiveColor = new BABYLON.Color3(0, 0, 0.6);
-dragon.material = dmat;
-      scene.onBeforeRenderObservable.add(() => {
-
-    let dir = player.position.subtract(dragon.position);
-    let dist = dir.length();
-
-    if (dist > 5) {
-        dir.normalize();
-        dragon.position.addInPlace(dir.scale(0.02));
-    }
-
-    if (dist < 5) {
-        playerHP -= 0.5;
-        updateHPBar();
-    }
-
-});
-      let canUltimate = true;
-
-function ultimateSkill() {
-
-    if (!canUltimate) return;
-    canUltimate = false;
-
-    const blast = BABYLON.MeshBuilder.CreateSphere("ult", {
-        diameter: 15
-    }, scene);
-
-    blast.position = player.position.clone();
-
-    const mat = new BABYLON.StandardMaterial("u", scene);
-    mat.emissiveColor = new BABYLON.Color3(0.8, 0, 1);
-    blast.material = mat;
-
-    // damage tất cả quái + boss
-    boss.hp -= 200;
-    dragon.hp -= 200;
-
-    enemies.forEach(e => {
-        e.hp -= 100;
-    });
-
-    setTimeout(() => blast.dispose(), 500);
-
-    // cooldown 8 giây
-    setTimeout(() => {
-        canUltimate = true;
-    }, 8000);
-}
-      <button id="ultBtn">💥 ULT</button>
-      document.getElementById("ultBtn").addEventListener("touchstart", ultimateSkill);
-      <div id="menu">
-    <h2>VOID GAME</h2>
-    <button onclick="startGame()">▶ PLAY</button>
-</div>
-#menu {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: black;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-      function startGame() {
-    document.getElementById("menu").style.display = "none";
-}
-      engine.setHardwareScalingLevel(1.5); // nhẹ hơn cho điện thoại
-Game 3d
-// Nhân vật chính (player)
-const player = BABYLON.MeshBuilder.CreateCapsule("player", {
-    height: 2,
-    radius: 0.5
-}, scene);
-
-player.position = new BABYLON.Vector3(0, 1, 0);
-
-// Vật liệu cho nhân vật
-const playerMat = new BABYLON.StandardMaterial("playerMat", scene);
-playerMat.diffuseColor = new BABYLON.Color3(0, 0.6, 1);
-player.material = playerMat;
+	if part and part.Parent:FindFirstChild("Humanoid") then
+		part.Parent.Humanoid:TakeDamage(10)
+	end
+end)
     
