@@ -1228,3 +1228,110 @@ btn.Text = "🔥 Skill"
 btn.MouseButton1Click:Connect(function()
 	event:FireServer()
 end)
+local character = script.Parent
+local humanoid = character:WaitForChild("Humanoid")
+
+humanoid.WalkSpeed = 16
+humanoid.JumpPower = 50
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- Tạo GUI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 120, 0, 120)
+button.Position = UDim2.new(0.8, 0, 0.7, 0)
+button.Text = "JUMP"
+button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+button.Parent = gui
+
+-- Khi bấm nút
+button.MouseButton1Click:Connect(function()
+	humanoid.Jump = true
+end)
+
+local attack = Instance.new("TextButton")
+attack.Size = UDim2.new(0, 120, 0, 120)
+attack.Position = UDim2.new(0.65, 0, 0.7, 0)
+attack.Text = "ATTACK"
+attack.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+attack.Parent = gui
+
+attack.MouseButton1Click:Connect(function()
+	print("Đánh!")
+end)
+	local player = game.Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local root = character:WaitForChild("HumanoidRootPart")
+
+-- Tạo GUI joystick
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+local base = Instance.new("Frame")
+base.Size = UDim2.new(0, 150, 0, 150)
+base.Position = UDim2.new(0, 50, 1, -200)
+base.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+base.BackgroundTransparency = 0.4
+base.Parent = gui
+
+local knob = Instance.new("Frame")
+knob.Size = UDim2.new(0, 60, 0, 60)
+knob.Position = UDim2.new(0.5, -30, 0.5, -30)
+knob.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+knob.Parent = base
+
+-- Điều khiển
+local dragging = false
+local startPos = Vector2.new()
+
+local moveVector = Vector3.zero
+
+local function update(input)
+	local delta = input.Position - startPos
+	local offset = Vector2.new(delta.X, delta.Y)
+
+	if offset.Magnitude > 50 then
+		offset = offset.Unit * 50
+	end
+
+	knob.Position = UDim2.new(0.5, offset.X - 30, 0.5, offset.Y - 30)
+
+	moveVector = Vector3.new(offset.X / 50, 0, offset.Y / 50)
+end
+
+base.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		startPos = input.Position
+	end
+end)
+
+base.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+		knob.Position = UDim2.new(0.5, -30, 0.5, -30)
+		moveVector = Vector3.zero
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.Touch then
+		update(input)
+	end
+end)
+
+-- Di chuyển nhân vật
+RunService.RenderStepped:Connect(function()
+	if character and humanoid then
+		local cam = workspace.CurrentCamera
+		local moveDir = cam.CFrame:VectorToWorldSpace(moveVector)
+		humanoid:Move(moveDir, false)
+	end
+end)
