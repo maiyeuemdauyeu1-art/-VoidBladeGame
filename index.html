@@ -1,1547 +1,340 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apex Pro Ultimate - Customizer</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-    body {
-      background: #090d16;
-      color: #f8fafc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
+// module: wear/build.gradle.kts (Dành cho Wear OS)
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+android {
+    namespace = "com.example.mywearapp"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.example.mywearapp"
+        minSdk = 30 // Thường hỗ trợ từ Wear OS 3.0 trở lên
+        targetSdk = 34
     }
-    .card {
-      background: rgba(30, 41, 59, 0.7);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 24px;
-      width: 100%;
-      max-width: 420px;
-      padding: 28px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-      position: relative;
+}
+
+dependencies {
+    // Thư viện dành riêng cho Wear OS Compose
+    implementation("androidx.wear.compose:compose-material:1.3.0")
+    implementation("androidx.wear.compose:compose-foundation:1.3.0")
+}
+// Wear OS UI với Compose
+import androidx.compose.runtime.Composable
+import androidx.wear.compose.material.Button
+import androidx.wear.compose.material.MaterialTheme
+import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.ScalingLazyColumn
+
+@Composable
+ComposableWearApp() {
+    MaterialTheme {
+        ScalingLazyColumn {
+            item {
+                Text(text = "Ứng dụng Wear OS")
+            }
+            item {
+                Button(onClick = { /* Xử lý sự kiện */ }) {
+                    Text(text = "Bắt đầu")
+                }
+            }
+        }
     }
-    .phone-preview {
-      width: 100%;
-      height: 180px;
-      border-radius: 16px;
-      margin: 16px 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      font-weight: bold;
-      letter-spacing: 2px;
-      transition: all 0.4s ease;
-      box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+// Android TV UI đơn giản
+import androidx.compose.runtime.Composable
+import androidx.tv.material3.Button
+import androidx.tv.material3.Text
+
+@Composable
+fun TvHomeScreen() {
+    // Nút bấm trên TV tự động đổi màu/phóng to khi được Focus qua Remote
+    Button(
+        onClick = { /* Mở video hoặc ứng dụng */ }
+    ) {
+        Text("Xem tiếp nội dung")
     }
-    /* Dynamic Phone Colors */
-    .color-titanium { background: linear-gradient(135deg, #475569, #1e293b); color: #cbd5e1; border: 2px solid #94a3b8; }
-    .color-cyberpunk { background: linear-gradient(135deg, #7c3aed, #db2777); color: #f472b6; border: 2px solid #ec4899; }
-    .color-emerald { background: linear-gradient(135deg, #059669, #022c22); color: #6ee7b7; border: 2px solid #10b981; }
+}
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.runtime.Composable
 
-    .title { font-size: 26px; font-weight: 800; color: #fff; }
-    .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 16px; }
-    
-    .section-label { font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: 700; margin: 12px 0 6px; }
-    
-    .options { display: flex; gap: 8px; }
-    .btn-opt {
-      flex: 1;
-      padding: 8px;
-      background: #334155;
-      border: 1px solid transparent;
-      color: #fff;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: all 0.2s;
+@Composable
+fun AdaptiveMainScreen(widthSizeClass: WindowWidthSizeClass) {
+    when (widthSizeClass) {
+        WindowWidthSizeClass.Compact -> {
+            // Giao diện Điện thoại (màn hình hẹp)
+            MobileLayout()
+        }
+        WindowWidthSizeClass.Medium, WindowWidthSizeClass.Expanded -> {
+            // Giao diện Laptop / Desktop / Tablet (màn hình rộng)
+            DesktopLayoutWithSidebar()
+        }
     }
-    .btn-opt.active { background: #0284c7; border-color: #38bdf8; font-weight: bold; }
-    
-    .price-box { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid #334155; }
-    .price { font-size: 24px; font-weight: 800; color: #4ade80; }
-    .btn-buy {
-      background: linear-gradient(90deg, #38bdf8, #818cf8);
-      color: #0f172a;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 12px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
+}
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-  <div class="card">
-    <h1 class="title">APEX PRO AI</h1>
-    <p class="subtitle">Thế hệ Điện thoại Trí tuệ Nhân tạo Tự học</p>
+    <!-- Khai báo cho thiết bị Wear OS -->
+    <uses-feature android:name="android.hardware.type.watch" />
 
-    <!-- Visual Mockup -->
-    <div id="phoneDisplay" class="phone-preview color-titanium">
-      APEX 24GB AI
-    </div>
+    <!-- Khai báo cho Android TV (Không yêu cầu màn hình cảm ứng) -->
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.software.leanback" android:required="true" />
 
-    <!-- Storage Option -->
-    <div class="section-label">Dung lượng bộ nhớ</div>
-    <div class="options">
-      <button class="btn-opt active" onclick="setStorage(512, 1699, this)">512GB</button>
-      <button class="btn-opt" onclick="setStorage(1024, 1999, this)">1TB</button>
-      <button class="btn-opt" onclick="setStorage(2048, 2399, this)">2TB</button>
-    </div>
-
-    <!-- Color Option -->
-    <div class="section-label">Màu sắc Titanium</div>
-    <div class="options">
-      <button class="btn-opt active" onclick="setColor('color-titanium', this)">Xám Titan</button>
-      <button class="btn-opt" onclick="setColor('color-cyberpunk', this)">Neon Neon</button>
-      <button class="btn-opt" onclick="setColor('color-emerald', this)">Lục Bảo</button>
-    </div>
-
-    <!-- Checkout -->
-    <div class="price-box">
-      <div>
-        <div style="font-size:10px; color:#94a3b8;">Giá dự kiến</div>
-        <div class="price" id="priceDisplay">$1,699</div>
-      </div>
-      <button class="btn-buy" onclick="checkout()">Tùy chỉnh ngay</button>
-    </div>
-  </div>
-
-  <script>
-    let basePrice = 1699;
-    
-    function setStorage(size, price, el) {
-      document.querySelectorAll('.options')[0].querySelectorAll('.btn-opt').forEach(b => b.classList.remove('active'));
-      el.classList.add('active');
-      basePrice = price;
-      document.getElementById('priceDisplay').innerText = '$' + price.toLocaleString();
-    }
-
-    function setColor(colorClass, el) {
-      document.querySelectorAll('.options')[1].querySelectorAll('.btn-opt').forEach(b => b.classList.remove('active'));
-      el.classList.add('active');
-      const phone = document.getElementById('phoneDisplay');
-      phone.className = 'phone-preview ' + colorClass;
-    }
-
-    function checkout() {
-      alert(`Đã lưu cấu hình APEX PRO AI với giá ${document.getElementById('priceDisplay').innerText}!`);
-    }
-  </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apex Pro AI - Virtual Smartphone</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    
-    body {
-      background: #090d16;
-      color: #f8fafc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    /* Khung điện thoại ảo */
-    .phone-container {
-      width: 360px;
-      height: 720px;
-      background: #000;
-      border-radius: 48px;
-      padding: 12px;
-      box-shadow: 0 0 40px rgba(56, 189, 248, 0.2), 0 25px 50px -12px rgba(0, 0, 0, 0.9);
-      border: 4px solid #334155;
-      position: relative;
-    }
-
-    /* Màn hình điện thoại */
-    .screen {
-      width: 100%;
-      height: 100%;
-      background: #0f172a;
-      border-radius: 36px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-
-    /* Dynamic Island / Camera ẩn */
-    .notch {
-      width: 120px;
-      height: 25px;
-      background: #000;
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-radius: 20px;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      padding: 0 10px;
-    }
-    .camera-dot { width: 10px; height: 10px; background: #1e293b; border-radius: 50%; border: 1px solid #334155; }
-
-    /* Thanh trạng thái Status Bar */
-    .status-bar {
-      height: 40px;
-      padding: 10px 24px 0 24px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      font-weight: bold;
-      color: #fff;
-      z-index: 90;
-    }
-
-    /* Thanh địa chỉ URL (Browser Bar) */
-    .browser-bar {
-      padding: 8px 12px;
-      background: #1e293b;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      border-bottom: 1px solid #334155;
-    }
-
-    .url-input {
-      flex: 1;
-      background: #0f172a;
-      border: 1px solid #475569;
-      color: #38bdf8;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      outline: none;
-    }
-
-    .btn-go {
-      background: #38bdf8;
-      color: #0f172a;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 16px;
-      font-size: 12px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    /* Quick Bookmarks */
-    .quick-links {
-      display: flex;
-      gap: 6px;
-      padding: 6px 12px;
-      background: #1e293b;
-      overflow-x: auto;
-    }
-    .chip {
-      background: #334155;
-      color: #94a3b8;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 11px;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .chip:hover { background: #0284c7; color: #fff; }
-
-    /* Khung hiển thị Trang Web (Iframe) */
-    .web-viewport {
-      flex: 1;
-      width: 100%;
-      border: none;
-      background: #fff;
-    }
-
-    /* Màn hình chờ khi chưa tải trang */
-    .home-screen {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      text-align: center;
-      background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
-    }
-
-    .home-title { font-size: 20px; font-weight: bold; color: #38bdf8; margin-bottom: 8px; }
-    .home-desc { font-size: 12px; color: #94a3b8; margin-bottom: 20px; }
-
-    /* Navigation Bar phía dưới */
-    .nav-bar {
-      height: 15px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #000;
-    }
-    .home-indicator {
-      width: 120px;
-      height: 4px;
-      background: #fff;
-      border-radius: 2px;
-      opacity: 0.6;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="phone-container">
-    <div class="screen">
-      
-      <!-- Dynamic Island -->
-      <div class="notch">
-        <div class="camera-dot"></div>
-      </div>
-
-      <!-- Status Bar -->
-      <div class="status-bar">
-        <span>09:41</span>
-        <span>5G ⚡ 100%</span>
-      </div>
-
-      <!-- Thanh nhập địa chỉ Web -->
-      <div class="browser-bar">
-        <input type="text" id="urlInput" class="url-input" placeholder="Nhập địa chỉ URL (https://...)" value="https://wikipedia.org">
-        <button class="btn-go" onclick="loadWeb()">Duyệt</button>
-      </div>
-
-      <!-- Bookmark nhanh -->
-      <div class="quick-links">
-        <span class="chip" onclick="openPreset('https://wikipedia.org')">Wikipedia</span>
-        <span class="chip" onclick="openPreset('https://bing.com')">Bing Search</span>
-        <span class="chip" onclick="openPreset('https://example.com')">Example.com</span>
-      </div>
-
-      <!-- Màn hình hiển thị Web -->
-      <iframe id="webFrame" class="web-viewport" src="https://wikipedia.org" title="Virtual Browser"></iframe>
-
-      <!-- Thanh Home Indicator -->
-      <div class="nav-bar">
-        <div class="home-indicator"></div>
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    function loadWeb() {
-      let url = document.getElementById('urlInput').value.trim();
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
-      }
-      document.getElementById('webFrame').src = url;
-    }
-
-    function openPreset(url) {
-      document.getElementById('urlInput').value = url;
-      document.getElementById('webFrame').src = url;
-    }
-  </script>
-
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apex Pro Android Virtual</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    
-    body {
-      background: #090d16;
-      color: #f8fafc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    /* Khung điện thoại ảo */
-    .phone-container {
-      width: 360px;
-      height: 720px;
-      background: #000;
-      border-radius: 48px;
-      padding: 12px;
-      box-shadow: 0 0 40px rgba(56, 189, 248, 0.2), 0 25px 50px -12px rgba(0, 0, 0, 0.9);
-      border: 4px solid #334155;
-      position: relative;
-    }
-
-    /* Màn hình điện thoại */
-    .screen {
-      width: 100%;
-      height: 100%;
-      background: #0f172a;
-      border-radius: 36px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-
-    /* Dynamic Island / Camera ẩn */
-    .notch {
-      width: 100px;
-      height: 22px;
-      background: #000;
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-radius: 20px;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .camera-dot { width: 8px; height: 8px; background: #1e293b; border-radius: 50%; border: 1px solid #334155; }
-
-    /* Thanh trạng thái Status Bar */
-    .status-bar {
-      height: 35px;
-      padding: 8px 20px 0 20px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      font-weight: bold;
-      color: #fff;
-      z-index: 90;
-      background: rgba(0,0,0,0.2);
-    }
-
-    /* Vùng hiển thị nội dung chính */
-    .content-area {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* 1. MÀN HÌNH CHÍNH (Home Screen) */
-    .home-screen {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(180deg, #1e1b4b 0%, #0f172a 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px 20px 20px;
-    }
-
-    .widget-clock {
-      font-size: 48px;
-      font-weight: 300;
-      color: #fff;
-      margin-bottom: 24px;
-    }
-
-    /* Google Search Widget */
-    .google-widget {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 24px;
-      padding: 8px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 40px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    .google-logo {
-      font-weight: bold;
-      font-size: 16px;
-      background: linear-gradient(45deg, #4285F4, #EA4335, #FBBC05, #34A853);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .google-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #fff;
-      outline: none;
-      font-size: 13px;
-    }
-
-    .google-input::placeholder { color: #cbd5e1; }
-
-    /* App Grid */
-    .app-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      width: 100%;
-    }
-
-    .app-icon {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-    }
-
-    .icon-box {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    }
-
-    .app-name { font-size: 10px; color: #cbd5e1; text-align: center; }
-
-    /* 2. MÀN HÌNH BROWSER (Trình duyệt) */
-    .browser-screen {
-      width: 100%;
-      height: 100%;
-      display: none;
-      flex-direction: column;
-      background: #fff;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 10;
-    }
-
-    .browser-bar {
-      padding: 8px;
-      background: #1e293b;
-      display: flex;
-      gap: 6px;
-    }
-
-    .url-input {
-      flex: 1;
-      background: #0f172a;
-      border: 1px solid #475569;
-      color: #38bdf8;
-      padding: 6px 12px;
-      border-radius: 16px;
-      font-size: 11px;
-      outline: none;
-    }
-
-    .web-viewport {
-      flex: 1;
-      border: none;
-      width: 100%;
-    }
-
-    /* THANH ĐIỀU HƯỚNG ANDROID (Android Navigation Bar) */
-    .android-nav-bar {
-      height: 45px;
-      background: #000;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 100;
-    }
-
-    .nav-btn {
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      font-size: 16px;
-      cursor: pointer;
-      width: 50px;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: color 0.2s;
-    }
-
-    .nav-btn:hover { color: #fff; }
-    .nav-btn:active { transform: scale(0.9); }
-  </style>
-</head>
-<body>
-
-  <div class="phone-container">
-    <div class="screen">
-      
-      <!-- Dynamic Island -->
-      <div class="notch"><div class="camera-dot"></div></div>
-
-      <!-- Status Bar -->
-      <div class="status-bar">
-        <span id="liveClock">12:00</span>
-        <span>5G ⚡ 100%</span>
-      </div>
-
-      <!-- Vùng Nội Dung -->
-      <div class="content-area">
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Ứng dụng đa nền tảng">
         
-        <!-- MÀN HÌNH CHÍNH -->
-        <div id="homeScreen" class="home-screen">
-          <div class="widget-clock" id="mainClock">12:00</div>
-          
-          <!-- Thanh tìm kiếm Google -->
-          <div class="google-widget">
-            <span class="google-logo">G</span>
-            <input type="text" id="googleSearchInput" class="google-input" placeholder="Tìm kiếm trên Google..." onkeydown="handleGoogleSearch(event)">
-          </div>
+        <!-- Activity dành cho Android TV -->
+        <activity
+            android:name=".TvActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-          <!-- Các ứng dụng màn hình chính -->
-          <div class="app-grid">
-            <div class="app-icon" onclick="openWeb('https://bing.com')">
-              <div class="icon-box" style="background: #0284c7;">🌐</div>
-              <span class="app-name">Browser</span>
-            </div>
-            <div class="app-icon" onclick="openWeb('https://wikipedia.org')">
-              <div class="icon-box" style="background: #475569;">📚</div>
-              <span class="app-name">Wiki</span>
-            </div>
-            <div class="app-icon" onclick="openWeb('https://bing.com/news')">
-              <div class="icon-box" style="background: #16a34a;">📰</div>
-              <span class="app-name">Tin tức</span>
-            </div>
-            <div class="app-icon" onclick="alert('Tính năng cài đặt hệ thống APEX AI')">
-              <div class="icon-box" style="background: #64748b;">⚙️</div>
-              <span class="app-name">Cài đặt</span>
-            </div>
-          </div>
-        </div>
+    <!-- Cấp quyền truy cập Internet và Quản lý Tải xuống -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+                     android:maxSdkVersion="28" />
 
-        <!-- MÀN HÌNH DUYỆT WEB (Khi mở trang hoặc tìm kiếm) -->
-        <div id="browserScreen" class="browser-screen">
-          <div class="browser-bar">
-            <input type="text" id="urlInput" class="url-input" onkeydown="handleUrlInput(event)">
-          </div>
-          <iframe id="webFrame" class="web-viewport" src="" title="Browser"></iframe>
-        </div>
-
-      </div>
-
-      <!-- THANH ĐIỀU HƯỚNG ANDROID (3 NÚT) -->
-      <div class="android-nav-bar">
-        <!-- Nút Recent Apps (Ứng dụng gần đây) -->
-        <button class="nav-btn" onclick="btnRecent()" title="Recent Apps">|||</button>
-        <!-- Nút Home Android -->
-        <button class="nav-btn" onclick="btnHome()" title="Home">●</button>
-        <!-- Nút Back (Quay lại) -->
-        <button class="nav-btn" onclick="btnBack()" title="Back">◄</button>
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    // Cập nhật đồng hồ thời gian thực
-    function updateTime() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const timeStr = `${hours}:${minutes}`;
-      document.getElementById('liveClock').innerText = timeStr;
-      document.getElementById('mainClock').innerText = timeStr;
-    }
-    setInterval(updateTime, 1000);
-    updateTime();
-
-    // Mở một trang Web
-    function openWeb(url) {
-      document.getElementById('homeScreen').style.display = 'none';
-      document.getElementById('browserScreen').style.display = 'flex';
-      document.getElementById('urlInput').value = url;
-      document.getElementById('webFrame').src = url;
-    }
-
-    // Tìm kiếm Google từ Widget màn hình chính
-    function handleGoogleSearch(event) {
-      if (event.key === 'Enter') {
-        const query = document.getElementById('googleSearchInput').value.trim();
-        if (query) {
-          // Sử dụng Bing Search vì Google chặn hiển thị qua iframe
-          const searchUrl = 'https://www.bing.com/search?q=' + encodeURIComponent(query);
-          openWeb(searchUrl);
-          document.getElementById('googleSearchInput').value = '';
-        }
-      }
-    }
-
-    // Nhập URL từ thanh địa chỉ Browser
-    function handleUrlInput(event) {
-      if (event.key === 'Enter') {
-        let url = document.getElementById('urlInput').value.trim();
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-          url = 'https://' + url;
-        }
-        document.getElementById('webFrame').src = url;
-      }
-    }
-
-    // --- CÁC NÚT ĐIỀU HƯỚNG ANDROID ---
-    
-    // Nút Home: Trở về màn hình chính
-    function btnHome() {
-      document.getElementById('browserScreen').style.display = 'none';
-      document.getElementById('homeScreen').style.display = 'flex';
-    }
-
-    // Nút Back: Trở lại màn hình chính nếu đang ở trong Browser
-    function btnBack() {
-      if (document.getElementById('browserScreen').style.display === 'flex') {
-        btnHome();
-      }
-    }
-
-    // Nút Recent Apps: Thông báo mô phỏng
-    function btnRecent() {
-      alert('Đang mở danh sách ứng dụng chạy ngầm (Apex AI Task Manager)');
-    }
-  </script>
-
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apex Pro Android Virtual</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    
-    body {
-      background: #090d16;
-      color: #f8fafc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    /* Khung điện thoại ảo */
-    .phone-container {
-      width: 360px;
-      height: 720px;
-      background: #000;
-      border-radius: 48px;
-      padding: 12px;
-      box-shadow: 0 0 40px rgba(56, 189, 248, 0.2), 0 25px 50px -12px rgba(0, 0, 0, 0.9);
-      border: 4px solid #334155;
-      position: relative;
-    }
-
-    /* Màn hình điện thoại */
-    .screen {
-      width: 100%;
-      height: 100%;
-      background: #0f172a;
-      border-radius: 36px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-
-    /* Dynamic Island */
-    .notch {
-      width: 100px;
-      height: 22px;
-      background: #000;
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-radius: 20px;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .camera-dot { width: 8px; height: 8px; background: #1e293b; border-radius: 50%; border: 1px solid #334155; }
-
-    /* Thanh trạng thái Status Bar */
-    .status-bar {
-      height: 35px;
-      padding: 8px 20px 0 20px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      font-weight: bold;
-      color: #fff;
-      z-index: 90;
-      background: rgba(0,0,0,0.2);
-    }
-
-    /* Vùng hiển thị nội dung chính */
-    .content-area {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* 1. MÀN HÌNH CHÍNH (Home Screen) */
-    .home-screen {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(180deg, #1e1b4b 0%, #0f172a 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px 20px 20px;
-    }
-
-    .widget-clock {
-      font-size: 48px;
-      font-weight: 300;
-      color: #fff;
-      margin-bottom: 24px;
-    }
-
-    /* Google/Web Search Widget */
-    .google-widget {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 24px;
-      padding: 8px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 40px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    .google-logo {
-      font-weight: bold;
-      font-size: 16px;
-      background: linear-gradient(45deg, #4285F4, #EA4335, #FBBC05, #34A853);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .google-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #fff;
-      outline: none;
-      font-size: 13px;
-    }
-
-    .google-input::placeholder { color: #cbd5e1; }
-
-    /* App Grid */
-    .app-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      width: 100%;
-    }
-
-    .app-icon {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-    }
-
-    .icon-box {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    }
-
-    .app-name { font-size: 10px; color: #cbd5e1; text-align: center; }
-
-    /* 2. MÀN HÌNH BROWSER (Trình duyệt) */
-    .browser-screen {
-      width: 100%;
-      height: 100%;
-      display: none;
-      flex-direction: column;
-      background: #fff;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 10;
-    }
-
-    .browser-bar {
-      padding: 8px;
-      background: #1e293b;
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .url-input {
-      flex: 1;
-      background: #0f172a;
-      border: 1px solid #475569;
-      color: #38bdf8;
-      padding: 6px 12px;
-      border-radius: 16px;
-      font-size: 11px;
-      outline: none;
-    }
-
-    .btn-open-tab {
-      background: #38bdf8;
-      color: #0f172a;
-      border: none;
-      border-radius: 12px;
-      padding: 6px 10px;
-      font-size: 12px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .web-viewport {
-      flex: 1;
-      border: none;
-      width: 100%;
-      background: #f8fafc;
-    }
-
-    /* THANH ĐIỀU HƯỚNG ANDROID */
-    .android-nav-bar {
-      height: 45px;
-      background: #000;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 100;
-    }
-
-    .nav-btn {
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      font-size: 16px;
-      cursor: pointer;
-      width: 50px;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: color 0.2s;
-    }
-
-    .nav-btn:hover { color: #fff; }
-    .nav-btn:active { transform: scale(0.9); }
-  </style>
-</head>
-<body>
-
-  <div class="phone-container">
-    <div class="screen">
-      
-      <!-- Dynamic Island -->
-      <div class="notch"><div class="camera-dot"></div></div>
-
-      <!-- Status Bar -->
-      <div class="status-bar">
-        <span id="liveClock">12:00</span>
-        <span>5G ⚡ 100%</span>
-      </div>
-
-      <!-- Vùng Nội Dung -->
-      <div class="content-area">
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="APK Web Downloader"
+        android:usesCleartextTraffic="true"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         
-        <!-- MÀN HÌNH CHÍNH -->
-        <div id="homeScreen" class="home-screen">
-          <div class="widget-clock" id="mainClock">12:00</div>
-          
-          <!-- Thanh tìm kiếm -->
-          <div class="google-widget">
-            <span class="google-logo">G</span>
-            <input type="text" id="googleSearchInput" class="google-input" placeholder="Nhập từ khóa tìm kiếm..." onkeydown="handleSearch(event)">
-          </div>
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
 
-          <!-- Các ứng dụng màn hình chính -->
-          <div class="app-grid">
-            <div class="app-icon" onclick="openWeb('https://html.duckduckgo.com/html/')">
-              <div class="icon-box" style="background: #de5833;">🔍</div>
-              <span class="app-name">Tìm kiếm</span>
-            </div>
-            <div class="app-icon" onclick="openWeb('https://wikipedia.org')">
-              <div class="icon-box" style="background: #475569;">📚</div>
-              <span class="app-name">Wiki</span>
-            </div>
-            <div class="app-icon" onclick="openWeb('https://example.com')">
-              <div class="icon-box" style="background: #16a34a;">🌐</div>
-              <span class="app-name">Web Test</span>
-            </div>
-            <div class="app-icon" onclick="alert('Tính năng cài đặt hệ thống APEX AI')">
-              <div class="icon-box" style="background: #64748b;">⚙️</div>
-              <span class="app-name">Cài đặt</span>
-            </div>
-          </div>
-        </div>
+</manifest>
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-        <!-- MÀN HÌNH DUYỆT WEB -->
-        <div id="browserScreen" class="browser-screen">
-          <div class="browser-bar">
-            <input type="text" id="urlInput" class="url-input" onkeydown="handleUrlInput(event)">
-            <!-- Nút Mở Tab Mới nếu web bị chặn -->
-            <button class="btn-open-tab" onclick="openExternalTab()" title="Mở sang tab trình duyệt thật">↗</button>
-          </div>
-          <iframe id="webFrame" class="web-viewport" src="" title="Browser"></iframe>
-        </div>
+    <!-- Thanh nhập địa chỉ / tìm kiếm Google -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp">
 
-      </div>
+        <EditText
+            android:id="@+id/edtUrl"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Nhập link hoặc từ khóa tìm kiếm..."
+            android:inputType="textUri"
+            android:singleLine="true" />
 
-      <!-- THANH ĐIỀU HƯỚNG ANDROID -->
-      <div class="android-nav-bar">
-        <button class="nav-btn" onclick="btnRecent()" title="Recent Apps">|||</button>
-        <button class="nav-btn" onclick="btnHome()" title="Home">●</button>
-        <button class="nav-btn" onclick="btnBack()" title="Back">◄</button>
-      </div>
+        <Button
+            android:id="@+id/btnGo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mở" />
+    </LinearLayout>
 
-    </div>
-  </div>
+    <!-- Khung hiển thị trang web -->
+    <WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
-  <script>
-    let currentUrl = '';
+</LinearLayout>
+package com.example.apkdownloader
 
-    // Đồng hồ thời gian thực
-    function updateTime() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const timeStr = `${hours}:${minutes}`;
-      document.getElementById('liveClock').innerText = timeStr;
-      document.getElementById('mainClock').innerText = timeStr;
-    }
-    setInterval(updateTime, 1000);
-    updateTime();
+import android.app.DownloadManager
+import android.content.Context
+import android.net.Uri
+import android.os.Bundle
+import android.os.Environment
+import android.webkit.CookieManager
+import android.webkit.URLUtil
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 
-    // Mở trang Web
-    function openWeb(url) {
-      currentUrl = url;
-      document.getElementById('homeScreen').style.display = 'none';
-      document.getElementById('browserScreen').style.display = 'flex';
-      document.getElementById('urlInput').value = url;
-      document.getElementById('webFrame').src = url;
-    }
+class MainActivity : AppCompatActivity() {
 
-    // Tìm kiếm từ màn hình chính (Dùng DuckDuckGo HTML tương thích iframe)
-    function handleSearch(event) {
-      if (event.key === 'Enter') {
-        const query = document.getElementById('googleSearchInput').value.trim();
-        if (query) {
-          const searchUrl = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
-          openWeb(searchUrl);
-          document.getElementById('googleSearchInput').value = '';
+    private lateinit var webView: WebView
+    private lateinit var edtUrl: EditText
+    private lateinit var btnGo: Button
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        webView = findViewById(R.id.webView)
+        edtUrl = findViewById(R.id.edtUrl)
+        btnGo = findViewById(R.id.btnGo)
+
+        // Cấu hình WebView
+        webView.settings.javaScriptEnabled = true
+        webView.settings.domStorageEnabled = true
+        webView.webViewClient = WebViewClient()
+
+        // Mở sẵn Google khi bắt đầu ứng dụng
+        val homeUrl = "https://www.google.com"
+        webView.loadUrl(homeUrl)
+        edtUrl.setText(homeUrl)
+
+        // Sự kiện khi bấm nút "Mở"
+        btnGo.setOnClickListener {
+            val input = edtUrl.text.toString().trim()
+            if (input.isNotEmpty()) {
+                val urlToLoad = if (input.startsWith("http://") || input.startsWith("https://")) {
+                    input
+                } else {
+                    // Nếu nhập từ khóa thì tự động tìm qua Google
+                    "https://www.google.com/search?q=$input"
+                }
+                webView.loadUrl(urlToLoad)
+            }
         }
-      }
-    }
 
-    // Nhập URL thủ công
-    function handleUrlInput(event) {
-      if (event.key === 'Enter') {
-        let url = document.getElementById('urlInput').value.trim();
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-          url = 'https://' + url;
+        // BẮT SỰ KIỆN TẢI FILE APK VỀ MÁY
+        webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+            try {
+                val request = DownloadManager.Request(Uri.parse(url))
+                
+                // Thiết lập cấu hình tải
+                request.setMimeType(mimetype)
+                val cookies = CookieManager.getInstance().getCookie(url)
+                request.addRequestHeader("cookie", cookies)
+                request.addRequestHeader("User-Agent", userAgent)
+                
+                // Đặt tên file và vị trí lưu (Thư mục Download)
+                val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
+                request.setTitle(fileName)
+                request.setDescription("Đang tải file APK...")
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+
+                // Gọi DownloadManager của Android
+                val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                downloadManager.enqueue(request)
+
+                Toast.makeText(this, "Đã bắt đầu tải xuống: $fileName", Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, "Lỗi khi tải xuống: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
-        openWeb(url);
-      }
     }
 
-    // Mở trang web bị chặn ra Tab Trình Duyệt thật
-    function openExternalTab() {
-      if (currentUrl) {
-        window.open(currentUrl, '_blank');
-      }
+    // Xử lý khi nhấn nút Back trên điện thoại để quay lại trang web trước
+    override fun onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack()
+        } else {
+            super.onBackPressed()
+        }
     }
+}
+package com.example.vapp
 
-    // Nút Home Android
-    function btnHome() {
-      document.getElementById('browserScreen').style.display = 'none';
-      document.getElementById('homeScreen').style.display = 'flex';
-    }
+import android.app.DownloadManager
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Bundle
+import android.os.Environment
+import android.webkit.CookieManager
+import android.webkit.URLUtil
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.Button
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import dalvik.system.DexClassLoader
+import java.io.File
 
-    // Nút Back Android
-    function btnBack() {
-      if (document.getElementById('browserScreen').style.display === 'flex') {
-        btnHome();
-      }
-    }
+class MainActivity : AppCompatActivity() {
+    private lateinit var webView: WebView
+    private lateinit var edtUrl: EditText
+    private var lastDownloadedApkPath: String? = null
 
-    // Nút Recent Apps
-    function btnRecent() {
-      alert('Danh sách ứng dụng chạy ngầm (Apex AI Task Manager)');
-    }
-  </script>
-
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apex Pro Android Virtual - Google Search Simulation</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    
-    body {
-      background: #090d16;
-      color: #f8fafc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    /* Khung điện thoại ảo */
-    .phone-container {
-      width: 360px;
-      height: 720px;
-      background: #000;
-      border-radius: 48px;
-      padding: 12px;
-      box-shadow: 0 0 40px rgba(56, 189, 248, 0.2), 0 25px 50px -12px rgba(0, 0, 0, 0.9);
-      border: 4px solid #334155;
-      position: relative;
-    }
-
-    .screen {
-      width: 100%;
-      height: 100%;
-      background: #0f172a;
-      border-radius: 36px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-
-    /* Dynamic Island */
-    .notch {
-      width: 100px;
-      height: 22px;
-      background: #000;
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-radius: 20px;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .camera-dot { width: 8px; height: 8px; background: #1e293b; border-radius: 50%; border: 1px solid #334155; }
-
-    /* Status Bar */
-    .status-bar {
-      height: 35px;
-      padding: 8px 20px 0 20px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      font-weight: bold;
-      color: #fff;
-      z-index: 90;
-      background: rgba(0,0,0,0.2);
-    }
-
-    .content-area {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* 1. MÀN HÌNH CHÍNH (HOME) */
-    .home-screen {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(180deg, #1e1b4b 0%, #0f172a 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px 20px 20px;
-    }
-
-    .widget-clock { font-size: 48px; font-weight: 300; color: #fff; margin-bottom: 24px; }
-
-    /* Widget Search trên màn hình chính */
-    .google-widget {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 24px;
-      padding: 8px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 40px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      cursor: pointer;
-    }
-
-    .google-logo {
-      font-weight: bold;
-      font-size: 16px;
-      background: linear-gradient(45deg, #4285F4, #EA4335, #FBBC05, #34A853);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .google-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #fff;
-      outline: none;
-      font-size: 13px;
-    }
-    .google-input::placeholder { color: #cbd5e1; }
-
-    .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; width: 100%; }
-    .app-icon { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
-    .icon-box { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
-    .app-name { font-size: 10px; color: #cbd5e1; text-align: center; }
-
-    /* 2. MÀN HÌNH GOOGLE SEARCH ẢO */
-    .google-screen {
-      width: 100%;
-      height: 100%;
-      display: none;
-      flex-direction: column;
-      background: #202124;
-      color: #e8eaed;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 10;
-      overflow-y: auto;
-      padding: 12px;
-    }
-
-    .g-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .g-search-bar {
-      flex: 1;
-      background: #303134;
-      border: 1px solid #5f6368;
-      border-radius: 20px;
-      padding: 8px 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .g-search-input {
-      background: transparent;
-      border: none;
-      color: #fff;
-      width: 100%;
-      outline: none;
-      font-size: 13px;
-    }
-
-    .g-results { display: flex; flex-direction: column; gap: 16px; margin-top: 10px; }
-    
-    .g-item {
-      background: #2d2e31;
-      padding: 12px;
-      border-radius: 12px;
-      cursor: pointer;
-      border: 1px solid #3c4043;
-    }
-    .g-item:hover { background: #3c4043; }
-    .g-site { font-size: 11px; color: #bdc1c6; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
-    .g-title { font-size: 14px; color: #8ab4f8; font-weight: 500; margin-bottom: 4px; }
-    .g-snippet { font-size: 12px; color: #bdc1c6; line-height: 1.4; }
-
-    /* 3. MÀN HÌNH BROWSER (Xem Web) */
-    .browser-screen {
-      width: 100%;
-      height: 100%;
-      display: none;
-      flex-direction: column;
-      background: #fff;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 20;
-    }
-
-    .browser-bar { padding: 8px; background: #1e293b; display: flex; gap: 6px; align-items: center; }
-    .url-input { flex: 1; background: #0f172a; border: 1px solid #475569; color: #38bdf8; padding: 6px 12px; border-radius: 16px; font-size: 11px; outline: none; }
-    .btn-open-tab { background: #38bdf8; color: #0f172a; border: none; border-radius: 12px; padding: 6px 10px; font-size: 12px; font-weight: bold; cursor: pointer; }
-    .web-viewport { flex: 1; border: none; width: 100%; background: #f8fafc; }
-
-    /* THANH ĐIỀU HƯỚNG ANDROID */
-    .android-nav-bar {
-      height: 45px;
-      background: #000;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 100;
-    }
-
-    .nav-btn {
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      font-size: 16px;
-      cursor: pointer;
-      width: 50px;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .nav-btn:hover { color: #fff; }
-  </style>
-</head>
-<body>
-
-  <div class="phone-container">
-    <div class="screen">
-      
-      <!-- Dynamic Island -->
-      <div class="notch"><div class="camera-dot"></div></div>
-
-      <!-- Status Bar -->
-      <div class="status-bar">
-        <span id="liveClock">12:00</span>
-        <span>5G ⚡ 100%</span>
-      </div>
-
-      <!-- Vùng Nội Dung -->
-      <div class="content-area">
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         
-        <!-- 1. MÀN HÌNH CHÍNH -->
-        <div id="homeScreen" class="home-screen">
-          <div class="widget-clock" id="mainClock">12:00</div>
-          
-          <div class="google-widget">
-            <span class="google-logo">G</span>
-            <input type="text" id="homeSearchInput" class="google-input" placeholder="Tìm kiếm trên Google ảo..." onkeydown="handleHomeSearch(event)">
-          </div>
+        // 1. Tạo giao diện chương trình trực tiếp bằng Code (UI Layout)
+        val rootLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val topBar = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        edtUrl = EditText(this).apply { hint = "Tìm kiếm Google hoặc nhập link APK..."; layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f) }
+        val btnGo = Button(this).apply { text = "Mở"; setOnClickListener { loadUrlOrSearch(edtUrl.text.toString()) } }
+        val btnPlay = Button(this).apply { text = "Chơi APK Ảo"; setOnClickListener { launchVirtualApk(lastDownloadedApkPath) } }
+        
+        topBar.addView(edtUrl); topBar.addView(btnGo); topBar.addView(btnPlay)
+        webView = WebView(this).apply { settings.javaScriptEnabled = true; settings.domStorageEnabled = true; webViewClient = WebViewClient() }
+        rootLayout.addView(topBar); rootLayout.addView(webView, LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+        setContentView(rootLayout)
 
-          <div class="app-grid">
-            <div class="app-icon" onclick="openGoogleScreen('')">
-              <div class="icon-box" style="background: #ffffff;"><span class="google-logo">G</span></div>
-              <span class="app-name">Google</span>
-            </div>
-            <div class="app-icon" onclick="openWebPage('https://wikipedia.org')">
-              <div class="icon-box" style="background: #475569;">📚</div>
-              <span class="app-name">Wiki</span>
-            </div>
-            <div class="app-icon" onclick="openWebPage('https://example.com')">
-              <div class="icon-box" style="background: #16a34a;">🌐</div>
-              <span class="app-name">Web Test</span>
-            </div>
-            <div class="app-icon" onclick="alert('Cài đặt hệ thống APEX AI')">
-              <div class="icon-box" style="background: #64748b;">⚙️</div>
-              <span class="app-name">Cài đặt</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. MÀN HÌNH GOOGLE SEARCH ẢO -->
-        <div id="googleScreen" class="google-screen">
-          <div class="g-header">
-            <span class="google-logo" style="font-size:20px;">G</span>
-            <div class="g-search-bar">
-              <input type="text" id="gSearchInput" class="g-search-input" placeholder="Tìm kiếm..." onkeydown="handleGSearch(event)">
-            </div>
-          </div>
-
-          <div style="font-size: 11px; color: #9aa0a6; margin-bottom: 8px;" id="gQueryLabel">Kết quả tìm kiếm cho: ...</div>
-
-          <!-- Danh sách kết quả mô phỏng -->
-          <div id="gResults" class="g-results"></div>
-        </div>
-
-        <!-- 3. MÀN HÌNH BROWSER -->
-        <div id="browserScreen" class="browser-screen">
-          <div class="browser-bar">
-            <input type="text" id="urlInput" class="url-input" readonly>
-            <button class="btn-open-tab" onclick="openExternalTab()" title="Mở sang tab trình duyệt thật">↗ Tab mới</button>
-          </div>
-          <iframe id="webFrame" class="web-viewport" src="" title="Browser"></iframe>
-        </div>
-
-      </div>
-
-      <!-- THANH ĐIỀU HƯỚNG ANDROID -->
-      <div class="android-nav-bar">
-        <button class="nav-btn" onclick="alert('Apex AI Task Manager')" title="Recent">|||</button>
-        <button class="nav-btn" onclick="btnHome()" title="Home">●</button>
-        <button class="nav-btn" onclick="btnBack()" title="Back">◄</button>
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    let currentActivePage = 'homeScreen';
-    let currentWebUrl = '';
-
-    // Cập nhật đồng hồ
-    function updateTime() {
-      const now = new Date();
-      const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-      document.getElementById('liveClock').innerText = timeStr;
-      document.getElementById('mainClock').innerText = timeStr;
-    }
-    setInterval(updateTime, 1000);
-    updateTime();
-
-    // Tìm kiếm từ màn hình chính
-    function handleHomeSearch(e) {
-      if (e.key === 'Enter') {
-        const query = document.getElementById('homeSearchInput').value.trim();
-        if (query) {
-          openGoogleScreen(query);
-          document.getElementById('homeSearchInput').value = '';
+        // 2. Tải sẵn Google & Cấu hình bộ tải file APK
+        val homeUrl = "https://www.google.com"; webView.loadUrl(homeUrl); edtUrl.setText(homeUrl)
+        webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, _ ->
+            try {
+                val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
+                val request = DownloadManager.Request(Uri.parse(url)).apply {
+                    setMimeType(mimetype); addRequestHeader("cookie", CookieManager.getInstance().getCookie(url))
+                    addRequestHeader("User-Agent", userAgent); setTitle(fileName); setDescription("Đang tải file APK...")
+                    setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+                }
+                (getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
+                lastDownloadedApkPath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName).absolutePath
+                Toast.makeText(this, "Bắt đầu tải: $fileName", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) { Toast.makeText(this, "Lỗi tải file: ${e.message}", Toast.LENGTH_SHORT).show() }
         }
-      }
     }
 
-    // Tìm kiếm bên trong Google ảo
-    function handleGSearch(e) {
-      if (e.key === 'Enter') {
-        const query = document.getElementById('gSearchInput').value.trim();
-        if (query) {
-          renderGoogleResults(query);
+    // 3. Hàm tìm kiếm Google / Điều hướng trang web
+    private fun loadUrlOrSearch(input: String) {
+        val url = if (input.startsWith("http://") || input.startsWith("https://")) input else "https://www.google.com/search?q=$input"
+        webView.loadUrl(url)
+    }
+
+    // 4. Hàm khởi chạy APK trong môi trường ảo hóa (Virtual Launcher)
+    private fun launchVirtualApk(apkPath: String?) {
+        if (apkPath == null || !File(apkPath).exists()) {
+            Toast.makeText(this, "Chưa tìm thấy file APK! Hãy tải một file APK từ web trước.", Toast.LENGTH_LONG).show()
+            return
         }
-      }
+        try {
+            val pkgInfo = packageManager.getPackageArchiveInfo(apkPath, PackageManager.GET_ACTIVITIES)
+            val mainActivityName = pkgInfo?.activities?.firstOrNull()?.name ?: return
+            val dexOptDir = getDir("virtual_dex", Context.MODE_PRIVATE)
+            
+            // Nạp mã nguồn APK bằng DexClassLoader
+            val classLoader = DexClassLoader(apkPath, dexOptDir.absolutePath, null, classLoader)
+            classLoader.loadClass(mainActivityName)
+            Toast.makeText(this, "Đang mở APK ảo: $mainActivityName", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) { Toast.makeText(this, "Lỗi chạy APK ảo: ${e.message}", Toast.LENGTH_SHORT).show() }
     }
 
-    // Mở màn hình Google
-    function openGoogleScreen(query) {
-      showScreen('googleScreen');
-      document.getElementById('gSearchInput').value = query;
-      renderGoogleResults(query || 'Trang web phổ biến');
-    }
-
-    // Tạo các kết quả Google giả lập thông minh
-    function renderGoogleResults(query) {
-      document.getElementById('gQueryLabel').innerText = `Kết quả tìm kiếm cho: "${query}"`;
-      const container = document.getElementById('gResults');
-      
-      // Tạo danh sách mô phỏng kết quả tìm kiếm dựa trên từ khóa
-      const mockData = [
-        {
-          site: 'wikipedia.org',
-          title: `${query} – Bách khoa toàn thư mở Wikipedia`,
-          snippet: `Thông tin chi tiết, lịch sử, khái niệm và định nghĩa đầy đủ về ${query} trên Bách khoa toàn thư Wikipedia.`,
-          url: 'https://vi.wikipedia.org/wiki/' + encodeURIComponent(query)
-        },
-        {
-          site: 'bing.com',
-          title: `Tìm kiếm mở rộng cho "${query}" trên Bing`,
-          snippet: `Khám phá thêm các thông tin, hình ảnh và tin tức cập nhật mới nhất về ${query}.`,
-          url: 'https://www.bing.com/search?q=' + encodeURIComponent(query)
-        },
-        {
-          site: 'example.com',
-          title: `Trang thông tin & Thử nghiệm Web: ${query}`,
-          snippet: `Trang mẫu kiểm tra kết nối mạng và khả năng truy cập website trực tiếp cho từ khóa ${query}.`,
-          url: 'https://example.com'
-        },
-        {
-          site: 'duckduckgo.com',
-          title: `Tra cứu bảo mật về ${query}`,
-          snippet: `Tìm kiếm thông tin an toàn, không theo dõi lịch sử duyệt web về ${query}.`,
-          url: 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query)
-        }
-      ];
-
-      container.innerHTML = mockData.map(item => `
-        <div class="g-item" onclick="openWebPage('${item.url}')">
-          <div class="g-site">🌐 ${item.site}</div>
-          <div class="g-title">${item.title}</div>
-          <div class="g-snippet">${item.snippet}</div>
-        </div>
-      `).join('');
-    }
-
-    // Mở một trang Web từ Google ảo
-    function openWebPage(url) {
-      currentWebUrl = url;
-      showScreen('browserScreen');
-      document.getElementById('urlInput').value = url;
-      document.getElementById('webFrame').src = url;
-    }
-
-    // Mở tab mới ngoài trình duyệt thật
-    function openExternalTab() {
-      if (currentWebUrl) {
-        window.open(currentWebUrl, '_blank');
-      }
-    }
-
-    // Chuyển đổi qua lại giữa các màn hình
-    function showScreen(screenId) {
-      document.getElementById('homeScreen').style.display = 'none';
-      document.getElementById('googleScreen').style.display = 'none';
-      document.getElementById('browserScreen').style.display = 'none';
-      
-      document.getElementById(screenId).style.display = 'flex';
-      currentActivePage = screenId;
-    }
-
-    // Nút Home Android
-    function btnHome() {
-      showScreen('homeScreen');
-    }
-
-    // Nút Back Android
-    function btnBack() {
-      if (currentActivePage === 'browserScreen') {
-        showScreen('googleScreen');
-      } else if (currentActivePage === 'googleScreen') {
-        showScreen('homeScreen');
-      }
-    }
-  </script>
-
-</body>
-</html>
+    override fun onBackPressed() { if (webView.canGoBack()) webView.goBack() else super.onBackPressed() }
+    companion object { const val MATCH_PARENT = LinearLayout.LayoutParams.MATCH_PARENT }
+}
