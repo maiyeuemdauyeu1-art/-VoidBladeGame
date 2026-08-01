@@ -1,971 +1,139 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trình Giả Lập Điện Thoại Đám Mây (Cloud Phone)</title>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --panel-bg: #1e293b;
-            --border-color: #334155;
-            --accent-color: #3b82f6;
-            --accent-hover: #2563eb;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --phone-border: #1e1e24;
-            --phone-screen: #000000;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Pro Ultimate - Customizer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body {
+      background: #090d16;
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 420px;
+      padding: 28px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      position: relative;
+    }
+    .phone-preview {
+      width: 100%;
+      height: 180px;
+      border-radius: 16px;
+      margin: 16px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      transition: all 0.4s ease;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    }
+    /* Dynamic Phone Colors */
+    .color-titanium { background: linear-gradient(135deg, #475569, #1e293b); color: #cbd5e1; border: 2px solid #94a3b8; }
+    .color-cyberpunk { background: linear-gradient(135deg, #7c3aed, #db2777); color: #f472b6; border: 2px solid #ec4899; }
+    .color-emerald { background: linear-gradient(135deg, #059669, #022c22); color: #6ee7b7; border: 2px solid #10b981; }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            user-select: none;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-            overflow: hidden;
-        }
-
-        /* Container Layout */
-        .simulator-container {
-            display: flex;
-            gap: 24px;
-            max-width: 1200px;
-            width: 100%;
-            height: 640px;
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
-        }
-
-        /* Left Side Panel - Control Center */
-        .control-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            background: var(--panel-bg);
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid var(--border-color);
-            overflow-y: auto;
-        }
-
-        .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 12px;
-        }
-
-        .panel-header h2 {
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #60a5fa;
-        }
-
-        .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.8rem;
-            background: rgba(34, 197, 94, 0.1);
-            color: var(--success);
-            padding: 4px 10px;
-            border-radius: 20px;
-            border: 1px solid rgba(34, 197, 94, 0.2);
-        }
-
-        .pulse-dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--success);
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-
-        .section-title {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
-            margin-top: 8px;
-        }
-
-        .setting-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-            background: rgba(15, 23, 42, 0.4);
-            padding: 10px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .setting-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-        }
-
-        select, button.action-btn {
-            background: #0f172a;
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            padding: 6px 12px;
-            border-radius: 6px;
-            outline: none;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-        }
-
-        select:hover, button.action-btn:hover {
-            border-color: var(--accent-color);
-        }
-
-        .btn-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 8px;
-        }
-
-        .btn-action {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            background: rgba(59, 130, 246, 0.1);
-            color: #60a5fa;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-action:hover {
-            background: var(--accent-color);
-            color: #fff;
-        }
-
-        .btn-danger {
-            background: rgba(239, 68, 68, 0.1);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .btn-danger:hover {
-            background: var(--danger);
-            color: #fff;
-        }
-
-        /* Phone Frame */
-        .phone-wrapper {
-            position: relative;
-            width: 290px;
-            height: 580px;
-            background: var(--phone-border);
-            border-radius: 40px;
-            padding: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8), inset 0 0 4px rgba(255,255,255,0.2);
-            border: 2px solid #2a2a35;
-            display: flex;
-            flex-direction: column;
-            align-self: center;
-        }
-
-        /* Phone Hardware Buttons */
-        .phone-btn-power {
-            position: absolute;
-            right: -6px;
-            top: 100px;
-            width: 4px;
-            height: 40px;
-            background: #2a2a35;
-            border-radius: 0 4px 4px 0;
-            cursor: pointer;
-        }
-
-        .phone-btn-vol-up {
-            position: absolute;
-            left: -6px;
-            top: 80px;
-            width: 4px;
-            height: 35px;
-            background: #2a2a35;
-            border-radius: 4px 0 0 4px;
-            cursor: pointer;
-        }
-
-        .phone-btn-vol-down {
-            position: absolute;
-            left: -6px;
-            top: 125px;
-            width: 4px;
-            height: 35px;
-            background: #2a2a35;
-            border-radius: 4px 0 0 4px;
-            cursor: pointer;
-        }
-
-        .phone-screen {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            background: var(--phone-screen);
-            border-radius: 30px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Dynamic Island / Notch */
-        .notch {
-            position: absolute;
-            top: 6px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 18px;
-            background: #000;
-            border-radius: 20px;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding-right: 6px;
-        }
-
-        .camera-lens {
-            width: 8px;
-            height: 8px;
-            background: #111;
-            border: 1px solid #222;
-            border-radius: 50%;
-        }
-
-        /* Top Status Bar */
-        .status-bar {
-            height: 28px;
-            padding: 0 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.7rem;
-            color: #fff;
-            z-index: 100;
-            margin-top: 2px;
-        }
-
-        .status-bar-icons {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
-        /* Android Screen Content */
-        .app-display {
-            flex: 1;
-            position: relative;
-            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
-            overflow: hidden;
-        }
-
-        /* Launcher Home Screen */
-        .home-screen {
-            position: absolute;
-            inset: 0;
-            padding: 20px 16px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: transform 0.3s ease;
-        }
-
-        .widget-clock {
-            margin-top: 20px;
-            text-align: center;
-            color: #fff;
-        }
-
-        .widget-clock .time {
-            font-size: 2.5rem;
-            font-weight: 200;
-            letter-spacing: -1px;
-        }
-
-        .widget-clock .date {
-            font-size: 0.75rem;
-            color: rgba(255,255,255,0.7);
-        }
-
-        .app-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px 8px;
-            margin-bottom: 10px;
-        }
-
-        .app-icon {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            transition: transform 0.15s;
-        }
-
-        .app-icon:active {
-            transform: scale(0.9);
-        }
-
-        .icon-box {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        .app-name {
-            font-size: 0.65rem;
-            color: #fff;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            text-align: center;
-        }
-
-        /* Views (Individual App Windows) */
-        .app-view {
-            position: absolute;
-            inset: 0;
-            background: #1e293b;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .app-view.active {
-            transform: translateY(0);
-        }
-
-        .app-header {
-            height: 40px;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 12px;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        .app-body {
-            flex: 1;
-            padding: 12px;
-            overflow-y: auto;
-            color: var(--text-primary);
-            font-size: 0.8rem;
-        }
-
-        /* Specific App Views */
-        /* 1. Cloud Gaming Sim */
-        .game-canvas {
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        #gameBall {
-            width: 24px;
-            height: 24px;
-            background: #3b82f6;
-            border-radius: 50%;
-            position: absolute;
-            box-shadow: 0 0 15px #3b82f6;
-        }
-
-        .game-stats {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background: rgba(0,0,0,0.6);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 0.65rem;
-            color: #22c55e;
-        }
-
-        /* 2. Performance Monitor App */
-        .perf-chart-box {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-
-        .perf-bar-bg {
-            height: 8px;
-            background: #334155;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 4px;
-        }
-
-        .perf-bar-fill {
-            height: 100%;
-            background: var(--accent-color);
-            width: 40%;
-            transition: width 0.5s ease;
-        }
-
-        /* Bottom Nav Bar */
-        .nav-bar {
-            height: 32px;
-            background: #000;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 0 30px;
-            z-index: 100;
-        }
-
-        .nav-btn {
-            color: #94a3b8;
-            cursor: pointer;
-            padding: 4px 12px;
-            transition: color 0.2s;
-        }
-
-        .nav-btn:hover {
-            color: #fff;
-        }
-
-        /* Toast Notice */
-        .toast {
-            position: absolute;
-            bottom: 45px;
-            left: 50%;
-            transform: translateX(-50%) translateY(50px);
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid var(--accent-color);
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            opacity: 0;
-            transition: all 0.3s;
-            pointer-events: none;
-            z-index: 2000;
-            white-space: nowrap;
-        }
-
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-        /* Stream Latency Overlay inside Screen */
-        .stream-overlay {
-            position: absolute;
-            top: 32px;
-            right: 8px;
-            background: rgba(0,0,0,0.5);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.6rem;
-            font-family: monospace;
-            color: #22c55e;
-            z-index: 99;
-            pointer-events: none;
-        }
-    </style>
+    .title { font-size: 26px; font-weight: 800; color: #fff; }
+    .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 16px; }
+    
+    .section-label { font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: 700; margin: 12px 0 6px; }
+    
+    .options { display: flex; gap: 8px; }
+    .btn-opt {
+      flex: 1;
+      padding: 8px;
+      background: #334155;
+      border: 1px solid transparent;
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    .btn-opt.active { background: #0284c7; border-color: #38bdf8; font-weight: bold; }
+    
+    .price-box { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid #334155; }
+    .price { font-size: 24px; font-weight: 800; color: #4ade80; }
+    .btn-buy {
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      color: #0f172a;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
-<div class="simulator-container">
+  <div class="card">
+    <h1 class="title">APEX PRO AI</h1>
+    <p class="subtitle">Thế hệ Điện thoại Trí tuệ Nhân tạo Tự học</p>
+
+    <!-- Visual Mockup -->
+    <div id="phoneDisplay" class="phone-preview color-titanium">
+      APEX 24GB AI
+    </div>
+
+    <!-- Storage Option -->
+    <div class="section-label">Dung lượng bộ nhớ</div>
+    <div class="options">
+      <button class="btn-opt active" onclick="setStorage(512, 1699, this)">512GB</button>
+      <button class="btn-opt" onclick="setStorage(1024, 1999, this)">1TB</button>
+      <button class="btn-opt" onclick="setStorage(2048, 2399, this)">2TB</button>
+    </div>
+
+    <!-- Color Option -->
+    <div class="section-label">Màu sắc Titanium</div>
+    <div class="options">
+      <button class="btn-opt active" onclick="setColor('color-titanium', this)">Xám Titan</button>
+      <button class="btn-opt" onclick="setColor('color-cyberpunk', this)">Neon Neon</button>
+      <button class="btn-opt" onclick="setColor('color-emerald', this)">Lục Bảo</button>
+    </div>
+
+    <!-- Checkout -->
+    <div class="price-box">
+      <div>
+        <div style="font-size:10px; color:#94a3b8;">Giá dự kiến</div>
+        <div class="price" id="priceDisplay">$1,699</div>
+      </div>
+      <button class="btn-buy" onclick="checkout()">Tùy chỉnh ngay</button>
+    </div>
+  </div>
+
+  <script>
+    let basePrice = 1699;
     
-    <!-- Left Control Dashboard -->
-    <div class="control-panel">
-        <div class="panel-header">
-            <h2><i data-lucide="cloud"></i> Cloud Phone Instance</h2>
-            <div class="status-badge">
-                <div class="pulse-dot"></div>
-                <span id="instanceState">Đang chạy</span>
-            </div>
-        </div>
-
-        <!-- Spec Config -->
-        <div class="section-title">Cấu hình Đám mây (Specs)</div>
-        <div class="setting-group">
-            <div class="setting-item">
-                <span class="setting-label"><i data-lucide="cpu" size="16"></i> CPU ảo (vCPU)</span>
-                <select id="cpuSelect">
-                    <option value="4">4 Cores</option>
-                    <option value="8" selected>8 Cores (Khuyên dùng)</option>
-                    <option value="16">16 Cores Ultra</option>
-                </select>
-            </div>
-            <div class="setting-item">
-                <span class="setting-label"><i data-lucide="memory-stick" size="16"></i> RAM ảo (vRAM)</span>
-                <select id="ramSelect">
-                    <option value="8">8 GB</option>
-                    <option value="16" selected>16 GB</option>
-                    <option value="32">32 GB Gaming</option>
-                </select>
-            </div>
-            <div class="setting-item">
-                <span class="setting-label"><i data-lucide="globe" size="16"></i> Khu vực Server</span>
-                <select id="regionSelect">
-                    <option value="sg">Singapore (12ms)</option>
-                    <option value="hk">Hong Kong (28ms)</option>
-                    <option value="jp">Japan (45ms)</option>
-                    <option value="us">US West (160ms)</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Streaming Config -->
-        <div class="section-title">Luồng Truyền Tải (Stream Quality)</div>
-        <div class="setting-group">
-            <div class="setting-item">
-                <span class="setting-label"><i data-lucide="monitor" size="16"></i> Độ phân giải</span>
-                <select id="resSelect">
-                    <option value="720p">720p HD (Tiết kiệm Băng thông)</option>
-                    <option value="1080p" selected>1080p FHD (Tối ưu)</option>
-                    <option value="2k">2K QHD (Sắc nét)</option>
-                </select>
-            </div>
-            <div class="setting-item">
-                <span class="setting-label"><i data-lucide="gauge" size="16"></i> Tốc độ khung hình</span>
-                <select id="fpsSelect">
-                    <option value="30">30 FPS</option>
-                    <option value="60" selected>60 FPS</option>
-                    <option value="120">120 FPS Ultra</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="section-title">Thao tác Nhanh</div>
-        <div class="btn-grid">
-            <button class="btn-action" id="btnScreenshot"><i data-lucide="camera" size="16"></i> Chụp ảnh</button>
-            <button class="btn-action" id="btnClipboard"><i data-lucide="clipboard" size="16"></i> Đồng bộ Khay nhớ</button>
-            <button class="btn-action" id="btnRotate"><i data-lucide="screen-share-off" size="16"></i> Xoay màn hình</button>
-            <button class="btn-action btn-danger" id="btnReboot"><i data-lucide="rotate-ccw" size="16"></i> Khởi động lại</button>
-        </div>
-    </div>
-
-    <!-- Right Phone Device -->
-    <div class="phone-wrapper">
-        <!-- Hardware buttons -->
-        <div class="phone-btn-power" id="hwPower" title="Nguồn"></div>
-        <div class="phone-btn-vol-up" id="hwVolUp" title="Tăng âm lượng"></div>
-        <div class="phone-btn-vol-down" id="hwVolDown" title="Giảm âm lượng"></div>
-
-        <div class="phone-screen" id="phoneScreen">
-            <!-- Dynamic Island -->
-            <div class="notch">
-                <div class="camera-lens"></div>
-            </div>
-
-            <!-- Status Bar -->
-            <div class="status-bar">
-                <span id="clockTime">12:00</span>
-                <div class="status-bar-icons">
-                    <i data-lucide="wifi" size="12"></i>
-                    <i data-lucide="signal" size="12"></i>
-                    <i data-lucide="battery-charging" size="12"></i>
-                </div>
-            </div>
-
-            <!-- Stream Overlay info -->
-            <div class="stream-overlay" id="streamOverlay">12ms | 60 FPS</div>
-
-            <!-- Display Area -->
-            <div class="app-display">
-                
-                <!-- Home Launcher -->
-                <div class="home-screen" id="homeScreen">
-                    <div class="widget-clock">
-                        <div class="time" id="homeTime">12:00</div>
-                        <div class="date" id="homeDate">Thứ Bảy, 1 Tháng 8</div>
-                    </div>
-
-                    <div class="app-grid">
-                        <div class="app-icon" data-app="game">
-                            <div class="icon-box" style="background: linear-gradient(45deg, #f59e0b, #ef4444);">
-                                <i data-lucide="gamepad-2"></i>
-                            </div>
-                            <span class="app-name">Cloud Game</span>
-                        </div>
-                        <div class="app-icon" data-app="browser">
-                            <div class="icon-box" style="background: linear-gradient(45deg, #3b82f6, #06b6d4);">
-                                <i data-lucide="globe"></i>
-                            </div>
-                            <span class="app-name">Trình duyệt</span>
-                        </div>
-                        <div class="app-icon" data-app="perf">
-                            <div class="icon-box" style="background: linear-gradient(45deg, #10b981, #059669);">
-                                <i data-lucide="activity"></i>
-                            </div>
-                            <span class="app-name">Giám sát</span>
-                        </div>
-                        <div class="app-icon" data-app="files">
-                            <div class="icon-box" style="background: linear-gradient(45deg, #8b5cf6, #6366f1);">
-                                <i data-lucide="folder"></i>
-                            </div>
-                            <span class="app-name">Tệp tin</span>
-                        </div>
-                        <div class="app-icon" data-app="settings">
-                            <div class="icon-box" style="background: linear-gradient(45deg, #64748b, #475569);">
-                                <i data-lucide="settings"></i>
-                            </div>
-                            <span class="app-name">Cài đặt</span>
-                        </div>
-                        <div class="app-icon" data-app="store">
-                            <div class="icon-box" style="background: linear-gradient(45deg, #ec4899, #f43f5e);">
-                                <i data-lucide="shopping-bag"></i>
-                            </div>
-                            <span class="app-name">Cửa hàng</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- APP 1: Cloud Game -->
-                <div class="app-view" id="app-game">
-                    <div class="app-header">
-                        <span>Cloud Gaming Simulation</span>
-                        <i data-lucide="x" size="16" class="close-app"></i>
-                    </div>
-                    <div class="app-body" style="padding:0;">
-                        <div class="game-canvas" id="gameArea">
-                            <div class="game-stats">Engine: Unity v2024.1<br>Render: Vulkan Cloud</div>
-                            <div id="gameBall"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- APP 2: Browser -->
-                <div class="app-view" id="app-browser">
-                    <div class="app-header">
-                        <span>Chrome Cloud</span>
-                        <i data-lucide="x" size="16" class="close-app"></i>
-                    </div>
-                    <div class="app-body">
-                        <div style="background: #0f172a; padding: 6px 10px; border-radius: 6px; margin-bottom: 12px; font-size: 0.75rem; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 6px;">
-                            <i data-lucide="lock" size="12"></i> https://cloud.google.com
-                        </div>
-                        <h3 style="margin-bottom: 8px;">Tải xuống Tốc độ cao</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 12px;">
-                            Kết nối băng thông máy chủ Cloud Phone lên tới 1Gbps, giúp tải và xử lý dữ liệu nặng trong vài giây.
-                        </p>
-                        <button class="btn-action" id="btnTestSpeed" style="width: 100%;"><i data-lucide="zap" size="14"></i> Kiểm tra Tốc độ Mạng Cloud</button>
-                        <div id="speedResult" style="margin-top: 10px; font-family: monospace; font-size: 0.75rem; color: #38bdf8;"></div>
-                    </div>
-                </div>
-
-                <!-- APP 3: Perf Monitor -->
-                <div class="app-view" id="app-perf">
-                    <div class="app-header">
-                        <span>Giám sát Hệ thống</span>
-                        <i data-lucide="x" size="16" class="close-app"></i>
-                    </div>
-                    <div class="app-body">
-                        <div class="perf-chart-box">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>sử dụng vCPU</span>
-                                <span id="cpuUsageText">24%</span>
-                            </div>
-                            <div class="perf-bar-bg">
-                                <div class="perf-bar-fill" id="cpuBar" style="width: 24%;"></div>
-                            </div>
-                        </div>
-
-                        <div class="perf-chart-box">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>sử dụng vRAM</span>
-                                <span id="ramUsageText">4.2 / 16 GB</span>
-                            </div>
-                            <div class="perf-bar-bg">
-                                <div class="perf-bar-fill" id="ramBar" style="width: 30%; background: #a855f7;"></div>
-                            </div>
-                        </div>
-
-                        <div class="perf-chart-box">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Băng thông Stream</span>
-                                <span>18.4 Mbps</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Generic view for other icons -->
-                <div class="app-view" id="app-generic">
-                    <div class="app-header">
-                        <span id="genericTitle">Ứng dụng</span>
-                        <i data-lucide="x" size="16" class="close-app"></i>
-                    </div>
-                    <div class="app-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--text-secondary);">
-                        <i data-lucide="box" size="40" style="margin-bottom: 8px;"></i>
-                        <p>Ứng dụng đang chạy hoàn toàn trên đám mây 24/7 mà không ảnh hưởng tới tài nguyên máy thật.</p>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Bottom Android Nav Bar -->
-            <div class="nav-bar">
-                <div class="nav-btn" id="navRecents"><i data-lucide="square" size="14"></i></div>
-                <div class="nav-btn" id="navHome"><i data-lucide="circle" size="14"></i></div>
-                <div class="nav-btn" id="navBack"><i data-lucide="triangle" size="14" style="transform: rotate(-90deg);"></i></div>
-            </div>
-
-            <!-- Toast notification inside screen -->
-            <div class="toast" id="phoneToast">Ảnh màn hình đã lưu vào Cloud storage</div>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Initialize Lucide Icons
-    lucide.createIcons();
-
-    // Elements
-    const clockTime = document.getElementById('clockTime');
-    const homeTime = document.getElementById('homeTime');
-    const homeDate = document.getElementById('homeDate');
-    const streamOverlay = document.getElementById('streamOverlay');
-    const phoneToast = document.getElementById('phoneToast');
-    const phoneScreen = document.getElementById('phoneScreen');
-
-    // System Settings Controls
-    const cpuSelect = document.getElementById('cpuSelect');
-    const ramSelect = document.getElementById('ramSelect');
-    const regionSelect = document.getElementById('regionSelect');
-    const resSelect = document.getElementById('resSelect');
-    const fpsSelect = document.getElementById('fpsSelect');
-    const ramUsageText = document.getElementById('ramUsageText');
-
-    // App Controls
-    const appIcons = document.querySelectorAll('.app-icon');
-    const appViews = document.querySelectorAll('.app-view');
-    const closeBtns = document.querySelectorAll('.close-app');
-    const navHome = document.getElementById('navHome');
-    const navBack = document.getElementById('navBack');
-
-    // Hardware Buttons
-    const hwPower = document.getElementById('hwPower');
-    const btnReboot = document.getElementById('btnReboot');
-    const btnScreenshot = document.getElementById('btnScreenshot');
-    const btnClipboard = document.getElementById('btnClipboard');
-    const btnRotate = document.getElementById('btnRotate');
-
-    let currentRegionPing = "12ms";
-    let currentFps = "60";
-    let isScreenOn = true;
-
-    // Real-time Clock
-    function updateClock() {
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const timeStr = `${hours}:${minutes}`;
-        
-        clockTime.textContent = timeStr;
-        homeTime.textContent = timeStr;
-
-        const options = { weekday: 'long', month: 'numeric', day: 'numeric' };
-        homeDate.textContent = now.toLocaleDateString('vi-VN', options);
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // Show Toast Inside Phone Screen
-    function showToast(msg) {
-        phoneToast.textContent = msg;
-        phoneToast.classList.add('show');
-        setTimeout(() => {
-            phoneToast.classList.remove('show');
-        }, 2200);
+    function setStorage(size, price, el) {
+      document.querySelectorAll('.options')[0].querySelectorAll('.btn-opt').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      basePrice = price;
+      document.getElementById('priceDisplay').innerText = '$' + price.toLocaleString();
     }
 
-    // App Navigation Logic
-    function openApp(appId, title = "") {
-        closeAllApps();
-        let targetApp = document.getElementById(`app-${appId}`);
-        if (!targetApp) {
-            targetApp = document.getElementById('app-generic');
-            document.getElementById('genericTitle').textContent = title || "Ứng dụng Đám mây";
-        }
-        targetApp.classList.add('active');
+    function setColor(colorClass, el) {
+      document.querySelectorAll('.options')[1].querySelectorAll('.btn-opt').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      const phone = document.getElementById('phoneDisplay');
+      phone.className = 'phone-preview ' + colorClass;
     }
 
-    function closeAllApps() {
-        appViews.forEach(view => view.classList.remove('active'));
+    function checkout() {
+      alert(`Đã lưu cấu hình APEX PRO AI với giá ${document.getElementById('priceDisplay').innerText}!`);
     }
-
-    appIcons.forEach(icon => {
-        icon.addEventListener('click', () => {
-            const app = icon.getAttribute('data-app');
-            const name = icon.querySelector('.app-name').textContent;
-            openApp(app, name);
-        });
-    });
-
-    closeBtns.forEach(btn => {
-        btn.addEventListener('click', closeAllApps);
-    });
-
-    navHome.addEventListener('click', closeAllApps);
-    navBack.addEventListener('click', closeAllApps);
-
-    // Dynamic Latency & FPS overlay update
-    function updateOverlay() {
-        streamOverlay.textContent = `${currentRegionPing} | ${currentFps} FPS`;
-    }
-
-    regionSelect.addEventListener('change', (e) => {
-        const pings = { sg: '12ms', hk: '28ms', jp: '45ms', us: '160ms' };
-        currentRegionPing = pings[e.target.value] || '12ms';
-        updateOverlay();
-        showToast(`Đã chuyển máy chủ: ${e.target.options[e.target.selectedIndex].text}`);
-    });
-
-    fpsSelect.addEventListener('change', (e) => {
-        currentFps = e.target.value;
-        updateOverlay();
-        showToast(`Cấu hình luồng: ${currentFps} FPS`);
-    });
-
-    ramSelect.addEventListener('change', (e) => {
-        const val = e.target.value;
-        ramUsageText.textContent = `4.2 / ${val} GB`;
-        showToast(`Đã thay đổi RAM ảo thành ${val} GB`);
-    });
-
-    // Hardware Actions
-    let isRotated = false;
-    btnRotate.addEventListener('click', () => {
-        isRotated = !isRotated;
-        showToast(isRotated ? "Đã xoay màn hình Ngang" : "Đã xoay màn hình Dọc");
-    });
-
-    btnScreenshot.addEventListener('click', () => {
-        showToast("Đã chụp màn hình Cloud Instance!");
-    });
-
-    btnClipboard.addEventListener('click', () => {
-        showToast("Đã đồng bộ bộ nhớ tạm (Clipboard)");
-    });
-
-    btnReboot.addEventListener('click', () => {
-        showToast("Đang khởi động lại Instance...");
-        closeAllApps();
-        phoneScreen.style.opacity = '0.2';
-        setTimeout(() => {
-            phoneScreen.style.opacity = '1';
-            showToast("Cloud Phone đã sẵn sàng!");
-        }, 1800);
-    });
-
-    hwPower.addEventListener('click', () => {
-        isScreenOn = !isScreenOn;
-        phoneScreen.style.filter = isScreenOn ? 'none' : 'brightness(0)';
-    });
-
-    // Interactive Game Animation Sim
-    const gameBall = document.getElementById('gameBall');
-    const gameArea = document.getElementById('gameArea');
-    let bx = 50, by = 50, vx = 2, vy = 2;
-
-    function animateGame() {
-        if (document.getElementById('app-game').classList.contains('active')) {
-            const w = gameArea.clientWidth - 24;
-            const h = gameArea.clientHeight - 24;
-            bx += vx;
-            by += vy;
-
-            if (bx <= 0 || bx >= w) vx *= -1;
-            if (by <= 0 || by >= h) vy *= -1;
-
-            gameBall.style.left = `${bx}px`;
-            gameBall.style.top = `${by}px`;
-        }
-        requestAnimationFrame(animateGame);
-    }
-    animateGame();
-
-    // Monitor App Dynamic Bars
-    setInterval(() => {
-        if (document.getElementById('app-perf').classList.contains('active')) {
-            const cpuVal = Math.floor(Math.random() * 25) + 15;
-            document.getElementById('cpuBar').style.width = `${cpuVal}%`;
-            document.getElementById('cpuUsageText').textContent = `${cpuVal}%`;
-        }
-    }, 1500);
-
-    // Speed Test Sim
-    document.getElementById('btnTestSpeed').addEventListener('click', () => {
-        const res = document.getElementById('speedResult');
-        res.textContent = "Đang đo tốc độ...";
-        setTimeout(() => {
-            res.innerHTML = "Tốc độ Tải xuống: <b>850 Mbps</b><br>Tốc độ Tải lên: <b>420 Mbps</b>";
-        }, 1200);
-    });
-</script>
+  </script>
 </body>
 </html>
