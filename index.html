@@ -1,4 +1,32 @@
-package com.example.virtualos2026
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.virtualandroid2026">
+
+    <!-- Cấp quyền cho Điện thoại Android Ảo -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+                     android:maxSdkVersion="28" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Neo Android OS"
+        android:usesCleartextTraffic="true"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+package com.example.virtualandroid2026
 
 import android.app.DownloadManager
 import android.content.Context
@@ -24,6 +52,7 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
+    // Khai báo khung chứa và linh kiện của Điện thoại Android Ảo
     private lateinit var rootContainer: FrameLayout
     private lateinit var homeScreenLayout: LinearLayout
     private lateinit var webViewContainer: LinearLayout
@@ -35,32 +64,34 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 1. Khai báo Khung chứa chính Nền Cyberpunk 2026
+        // 1. Tạo Khung viền và Nền Điện thoại Futurist 2026
         rootContainer = FrameLayout(this).apply {
             background = createGradientDrawable("#0D0B14", "#16052B", GradientDrawable.Orientation.TOP_BOTTOM, 0f)
         }
 
-        // 2. Tạo Status Bar (Đồng hồ & Pin)
+        // 2. Lắp ráp Thanh trạng thái (Status Bar - Đồng hồ & Pin)
         val statusBar = createStatusBar()
 
-        // 3. Setup Màn hình chính & Trình duyệt
+        // 3. Lắp ráp Màn hình chính (Home Screen) & Trình duyệt Web
         setupHomeScreen2026()
         setupWebViewApp2026()
 
-        // 4. Tạo Thanh Nút Home chuẩn Android Futurist
+        // 4. Lắp ráp Thanh điều hướng chứa NÚT HOME (◯)
         val navBar = createNavigationBar2026()
 
-        // Thêm tất cả vào bố cục chính
+        // Đưa tất cả linh kiện vào khung máy Điện thoại
         rootContainer.addView(homeScreenLayout)
         rootContainer.addView(webViewContainer)
         rootContainer.addView(statusBar)
         rootContainer.addView(navBar)
 
         setContentView(rootContainer)
+
+        // Mặc định hiển thị Màn hình chính
         showHomeScreen()
     }
 
-    // --- 1. THANH TRẠNG THÁI (STATUS BAR) ---
+    // --- 1. THANH TRẠNG THÁI ĐIỆN THOẠI (STATUS BAR) ---
     private fun createStatusBar(): LinearLayout {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -87,7 +118,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- 2. MÀN HÌNH CHÍNH ĐỒ HỌA 2026 ---
+    // --- 2. MÀN HÌNH CHÍNH ANDROID (HOME SCREEN) ---
     private fun setupHomeScreen2026() {
         homeScreenLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -98,10 +129,10 @@ class MainActivity : AppCompatActivity() {
             setPadding(40, 40, 40, 40)
         }
 
-        // Widget Tiêu đề Android 2026
+        // Widget Tiêu đề Android OS 2026
         val widgetTitle = TextView(this).apply {
             text = "NEO ANDROID OS"
-            textSize = 28f
+            textSize = 26f
             setTextColor(Color.parseColor("#00FFC6"))
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
@@ -109,7 +140,7 @@ class MainActivity : AppCompatActivity() {
         }
         homeScreenLayout.addView(widgetTitle)
 
-        // Lưới ứng dụng (Grid App Icons)
+        // Lưới ứng dụng (App Grid Icons)
         appsGrid = GridLayout(this).apply {
             columnCount = 3
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
@@ -125,7 +156,7 @@ class MainActivity : AppCompatActivity() {
         homeScreenLayout.addView(appsGrid)
     }
 
-    // --- 3. TRÌNH DUYỆT TÌM VÀ TẢI APK ---
+    // --- 3. TRÌNH DUYỆT GOOGLE & BỘ TẢI APK ẢO ---
     private fun setupWebViewApp2026() {
         webViewContainer = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -144,7 +175,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         edtUrl = EditText(this).apply {
-            hint = "Tìm Google hoặc dán URL..."
+            hint = "Tìm Google hoặc nhập URL APK..."
             setHintTextColor(Color.GRAY)
             setTextColor(Color.WHITE)
             textSize = 14f
@@ -170,11 +201,12 @@ class MainActivity : AppCompatActivity() {
             webViewClient = WebViewClient()
         }
 
+        // Mở sẵn Google
         val homeUrl = "https://www.google.com"
         webView.loadUrl(homeUrl)
         edtUrl.setText(homeUrl)
 
-        // Bắt sự kiện Tải APK
+        // BẮT LIÊN KẾT VÀ TỰ ĐỘNG TẢI FILE APK
         webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, _ ->
             try {
                 val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
@@ -183,7 +215,7 @@ class MainActivity : AppCompatActivity() {
                     addRequestHeader("cookie", CookieManager.getInstance().getCookie(url))
                     addRequestHeader("User-Agent", userAgent)
                     setTitle(fileName)
-                    setDescription("Đang tải xuống APK...")
+                    setDescription("Đang tải file APK ảo...")
                     setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                     setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
                 }
@@ -192,7 +224,9 @@ class MainActivity : AppCompatActivity() {
                 dm.enqueue(request)
 
                 val downloadedFile = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName)
-                Toast.makeText(this, "Đã bắt đầu tải: $fileName", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Bắt đầu tải: $fileName", Toast.LENGTH_SHORT).show()
+                
+                // Tự động tạo Icon ứng dụng mới ra Màn hình chính
                 addApkToHomeScreen(downloadedFile)
             } catch (e: Exception) {
                 Toast.makeText(this, "Lỗi tải: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -203,7 +237,7 @@ class MainActivity : AppCompatActivity() {
         webViewContainer.addView(webView, LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
     }
 
-    // --- 4. THANH NÚT HOME CHUẨN ANDROID 2026 ---
+    // --- 4. THANH NÚT HOME ĐIỆN THOẠI (◯) ---
     private fun createNavigationBar2026(): FrameLayout {
         val navContainer = FrameLayout(this).apply {
             layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, 150).apply {
@@ -212,7 +246,7 @@ class MainActivity : AppCompatActivity() {
             background = createGradientDrawable("#150A21", "#0B0512", GradientDrawable.Orientation.BOTTOM_TOP, 0f)
         }
 
-        // Nút Home dạng Vòng sáng Neumorphism (◯)
+        // Nút Home tròn chuẩn Android
         val btnHome = TextView(this).apply {
             text = "◯"
             textSize = 28f
@@ -229,7 +263,7 @@ class MainActivity : AppCompatActivity() {
         return navContainer
     }
 
-    // --- CÁC HÀM XỬ LÝ HỆ THỐNG & ĐỒ HỌA ---
+    // --- CÁC HÀM XỬ LÝ HỆ THỐNG ĐIỆN THOẠI ---
     private fun showHomeScreen() {
         webViewContainer.visibility = View.GONE
         homeScreenLayout.visibility = View.VISIBLE
@@ -241,7 +275,7 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl(targetUrl)
     }
 
-    // Tạo Icon ứng dụng phong cách Kính Mờ (Glassmorphism)
+    // Tạo Icon ứng dụng dạng Kính mờ (Glassmorphism UI)
     private fun createGlassIcon(name: String, colorStart: String, colorEnd: String, onClick: () -> Unit): LinearLayout {
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -268,7 +302,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Thêm Icon APK ảo vào Màn hình chính
+    // Cài đặt và đưa Icon APK mới ra Màn hình chính
     private fun addApkToHomeScreen(apkFile: File) {
         val appName = apkFile.name.replace(".apk", "")
         val apkIcon = createGlassIcon(appName, "#00C9FF", "#92FE9D") {
@@ -277,7 +311,7 @@ class MainActivity : AppCompatActivity() {
         appsGrid.addView(apkIcon)
     }
 
-    // Thực thi APK trong môi trường ảo
+    // Thực thi và chơi APK trong môi trường ảo
     private fun launchVirtualApk(apkPath: String) {
         try {
             val pkgInfo = packageManager.getPackageArchiveInfo(apkPath, PackageManager.GET_ACTIVITIES)
@@ -287,22 +321,23 @@ class MainActivity : AppCompatActivity() {
                 val dexOptDir = getDir("virtual_dex_2026", Context.MODE_PRIVATE)
                 val classLoader = DexClassLoader(apkPath, dexOptDir.absolutePath, null, classLoader)
                 classLoader.loadClass(mainActivityName)
-                Toast.makeText(this, "Đang chạy ứng dụng ảo 2026...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Đang khởi chạy Game/APK ảo...", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "Không tìm thấy Activity khởi chạy trong APK!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Không tìm thấy file khởi chạy trong APK!", Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
             Toast.makeText(this, "Lỗi thực thi APK: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // Tạo hiệu ứng chuyển màu Gradient
+    // Hỗ trợ tạo màu Gradient
     private fun createGradientDrawable(startColor: String, endColor: String, orientation: GradientDrawable.Orientation, cornerRadius: Float): GradientDrawable {
         return GradientDrawable(orientation, intArrayOf(Color.parseColor(startColor), Color.parseColor(endColor))).apply {
             this.cornerRadius = cornerRadius
         }
     }
 
+    // Bấm phím Back trên máy thật để thoát trang web hoặc về Home
     override fun onBackPressed() {
         if (webViewContainer.visibility == View.VISIBLE && webView.canGoBack()) {
             webView.goBack()
