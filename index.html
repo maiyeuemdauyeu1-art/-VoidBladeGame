@@ -1067,3 +1067,274 @@ class MainActivity : AppCompatActivity() {
         const val WRAP_CONTENT = LinearLayout.LayoutParams.WRAP_CONTENT
     }
 }
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mô phỏng Android Web</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Khung Điện thoại -->
+  <div class="phone">
+    
+    <!-- Màn hình -->
+    <div class="screen">
+      
+      <!-- Thanh trạng thái (Status Bar) -->
+      <div class="status-bar">
+        <span id="clock">12:00</span>
+        <div class="status-icons">
+          <span>📶</span>
+          <span>📡</span>
+          <span>🔋 85%</span>
+        </div>
+      </div>
+
+      <!-- Màn hình chính (Apps) -->
+      <div class="home-screen">
+        <div class="app-grid">
+          <div class="app" onclick="openApp('Google')">
+            <div class="app-icon google">G</div>
+            <span>Google</span>
+          </div>
+          <div class="app" onclick="openApp('Đồng hồ')">
+            <div class="app-icon clock-app">🕒</div>
+            <span>Đồng hồ</span>
+          </div>
+          <div class="app" onclick="openApp('Cài đặt')">
+            <div class="app-icon settings">⚙️</div>
+            <span>Cài đặt</span>
+          </div>
+          <div class="app" onclick="openApp('Cửa hàng')">
+            <div class="app-icon playstore">▶</div>
+            <span>CH Play</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Giao diện ứng dụng đang mở -->
+      <div id="app-window" class="app-window hidden">
+        <div class="app-header">
+          <span id="app-title">Tên Ứng Dụng</span>
+          <button class="close-btn" onclick="closeApp()">✕</button>
+        </div>
+        <div class="app-content" id="app-content">
+          Nội dung ứng dụng sẽ ở đây...
+        </div>
+      </div>
+
+      <!-- Thanh điều hướng Android (Navigation Bar) -->
+      <div class="nav-bar">
+        <button class="nav-btn" onclick="closeApp()">|||</button> <!-- Recent Apps -->
+        <button class="nav-btn" onclick="closeApp()">●</button>   <!-- Home -->
+        <button class="nav-btn" onclick="closeApp()">◄</button>   <!-- Back -->
+      </div>
+
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif, Arial;
+}
+
+body {
+  background-color: #1e1e24;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* Vỏ điện thoại */
+.phone {
+  width: 320px;
+  height: 640px;
+  background-color: #111;
+  border-radius: 40px;
+  padding: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.2);
+  position: relative;
+  border: 4px solid #333;
+}
+
+/* Màn hình hiển thị */
+.screen {
+  width: 100%;
+  height: 100%;
+  background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000') center/cover;
+  border-radius: 28px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Thanh trạng thái */
+.status-bar {
+  height: 25px;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 15px;
+  font-size: 12px;
+  backdrop-filter: blur(5px);
+}
+
+.status-icons {
+  display: flex;
+  gap: 5px;
+}
+
+/* Màn hình chính */
+.home-screen {
+  flex: 1;
+  padding: 20px 10px;
+}
+
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px 10px;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  color: white;
+  font-size: 11px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.app-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Màu biểu tượng ứng dụng */
+.google { background: #ffffff; color: #4285F4; }
+.clock-app { background: #263238; color: #fff; }
+.settings { background: #78909C; color: #fff; }
+.playstore { background: #00E676; color: #fff; }
+
+/* Cửa sổ Ứng dụng */
+.app-window {
+  position: absolute;
+  top: 25px;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 65px);
+  background: #ffffff;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease-in-out;
+}
+
+.app-window.hidden {
+  transform: translateY(100%);
+}
+
+.app-header {
+  height: 40px;
+  background: #f1f1f1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 15px;
+  font-weight: bold;
+  border-bottom: 1px solid #ccc;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.app-content {
+  padding: 15px;
+  flex: 1;
+  color: #333;
+}
+
+/* Thanh điều hướng bên dưới */
+.nav-bar {
+  height: 40px;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.nav-btn:hover {
+  opacity: 1;
+}
+// Cập nhật đồng hồ thời gian thực
+function updateClock() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('clock').innerText = `${hours}:${minutes}`;
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+
+// Mở ứng dụng
+function openApp(appName) {
+  const appWindow = document.getElementById('app-window');
+  const appTitle = document.getElementById('app-title');
+  const appContent = document.getElementById('app-content');
+
+  appTitle.innerText = appName;
+  
+  // Nội dung tùy chỉnh theo ứng dụng
+  if (appName === 'Google') {
+    appContent.innerHTML = '<h3>Tìm kiếm Google</h3><input type="text" placeholder="Nhập từ khóa..." style="width:100%; padding: 8px; margin-top:10px;">';
+  } else if (appName === 'Đồng hồ') {
+    appContent.innerHTML = '<h3>Báo thức & Giờ thế giới</h3><p style="margin-top:10px;">Chưa có báo thức nào được đặt.</p>';
+  } else if (appName === 'Cài đặt') {
+    appContent.innerHTML = '<h3>Cài đặt hệ thống</h3><ul><li>Mạng & Internet</li><li>Thiết bị đã kết nối</li><li>Pin</li></ul>';
+  } else {
+    appContent.innerHTML = `<p>Bạn vừa mở <b>${appName}</b></p>`;
+  }
+
+  appWindow.classList.remove('hidden');
+}
+
+// Đóng ứng dụng (Quay về Home)
+function closeApp() {
+  const appWindow = document.getElementById('app-window');
+  appWindow.classList.add('hidden');
+}
