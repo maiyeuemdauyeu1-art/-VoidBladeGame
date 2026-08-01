@@ -1,1337 +1,328 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ocean Legends 3D</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mô phỏng iOS Interactive</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      background: #121212;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+    
+    /* Khung iPhone */
+    #phone {
+      width: 360px;
+      height: 740px;
+      background: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000') center/cover;
+      border-radius: 50px;
+      border: 12px solid #2d2d2d;
+      position: relative;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+      overflow: hidden;
+    }
 
-<script src="https://cdn.babylonjs.com/babylon.js"></script>
+    /* Tai thỏ & Thanh trạng thái */
+    .notch {
+      width: 130px;
+      height: 28px;
+      background: #000;
+      margin: 0 auto;
+      border-bottom-left-radius: 18px;
+      border-bottom-right-radius: 18px;
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+    }
+    .status-bar {
+      position: absolute;
+      top: 6px; width: 100%;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 90;
+    }
 
-<style>
+    /* Màn hình chính */
+    .home-screen {
+      padding-top: 60px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      padding: 20px;
+    }
+    .app-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+    .app-icon {
+      width: 58px;
+      height: 58px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(15px);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: transform 0.1s;
+    }
+    .app-icon:active { transform: scale(0.9); }
+    .app-name {
+      color: #fff;
+      font-size: 11px;
+      margin-top: 5px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    }
 
-html,body{
-margin:0;
-padding:0;
-width:100%;
-height:100%;
-overflow:hidden;
-background:#6fcfff;
-touch-action:none;
-}
+    /* Dock bên dưới */
+    .dock {
+      margin: 20px 15px;
+      height: 78px;
+      background: rgba(255,255,255,0.25);
+      backdrop-filter: blur(20px);
+      border-radius: 28px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 0 10px;
+    }
 
-#renderCanvas{
-width:100%;
-height:100%;
-display:block;
-}
+    /* Cửa sổ ứng dụng (Modal) */
+    .app-window {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #fff;
+      z-index: 80;
+      display: none;
+      flex-direction: column;
+      padding-top: 40px;
+      animation: openApp 0.3s ease-out forwards;
+    }
+    .app-window.active { display: flex; }
 
-#loading{
-position:absolute;
-left:0;
-top:0;
-width:100%;
-height:100%;
-display:flex;
-justify-content:center;
-align-items:center;
-background:#111;
-color:white;
-font-size:30px;
-font-family:Arial;
-z-index:100;
-}
+    @keyframes openApp {
+      from { transform: scale(0.7); opacity: 0; border-radius: 40px; }
+      to { transform: scale(1); opacity: 1; border-radius: 0; }
+    }
 
-#hud{
-position:absolute;
-top:10px;
-left:10px;
-color:white;
-font-family:Arial;
-font-size:18px;
-background:rgba(0,0,0,.4);
-padding:10px;
-border-radius:10px;
-}
+    /* Thanh Gạch Home dưới cùng */
+    .home-bar {
+      position: absolute;
+      bottom: 8px; left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 5px;
+      background: #fff;
+      border-radius: 10px;
+      z-index: 200;
+      cursor: pointer;
+    }
 
-.bar{
-width:220px;
-height:20px;
-background:#333;
-margin-top:6px;
-border-radius:20px;
-overflow:hidden;
-}
+    /* Giao diện từng App */
+    /* 1. Calculator */
+    .calc-screen {
+      background: #000; height: 100%; color: #fff;
+      display: flex; flex-direction: column; justify-content: flex-end; padding: 20px;
+    }
+    .calc-display { font-size: 48px; text-align: right; margin-bottom: 20px; }
+    .calc-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .calc-btn {
+      height: 60px; border-radius: 50%; border: none; font-size: 20px; color: #fff;
+      background: #333; cursor: pointer;
+    }
+    .calc-btn.orange { background: #ff9f0a; }
+    .calc-btn.gray { background: #a5a5a5; color: #000; }
 
-.fill{
-height:100%;
-width:100%;
-background:#0f0;
-}
+    /* 2. Safari */
+    .safari-body { height: 100%; display: flex; flex-direction: column; }
+    .safari-bar { padding: 10px; background: #f1f1f1; display: flex; gap: 5px; }
+    .safari-bar input {
+      flex: 1; padding: 8px 12px; border-radius: 10px; border: 1px solid #ccc; outline: none;
+    }
+    .safari-content { flex: 1; border: none; }
 
-.exp{
-background:#00aaff;
-}
-
-button{
-position:absolute;
-border:none;
-border-radius:50%;
-color:white;
-font-size:22px;
-}
-
-#attack{
-right:20px;
-bottom:20px;
-width:90px;
-height:90px;
-background:#ff4444;
-}
-
-#skill{
-right:130px;
-bottom:70px;
-width:70px;
-height:70px;
-background:#00bbff;
-}
-
-#dash{
-right:40px;
-bottom:130px;
-width:60px;
-height:60px;
-background:#ffaa00;
-}
-
-</style>
-
+    /* 3. Settings */
+    .settings-list { padding: 20px; background: #f2f2f7; height: 100%; }
+    .settings-item {
+      background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 10px;
+      display: flex; justify-content: space-between; font-weight: 500;
+    }
+  </style>
 </head>
-
 <body>
 
-<div id="loading">
-Loading Ocean Legends...
-</div>
-
-<div id="hud">
-
-HP
-
-<div class="bar">
-<div class="fill" id="hpFill"></div>
-</div>
-
-EXP
-
-<div class="bar">
-<div class="fill exp" id="expFill"></div>
-</div>
-
-<div id="level">
-Level 1
-</div>
-
-</div>
-
-<canvas id="renderCanvas"></canvas>
-
-<button id="attack">⚔️</button>
-
-<button id="skill">💥</button>
-
-<button id="dash">⚡</button>
-
-<script>
-
-const canvas=document.getElementById("renderCanvas");
-
-const engine=new BABYLON.Engine(canvas,true);
-
-const scene=new BABYLON.Scene(engine);
-
-scene.clearColor=new BABYLON.Color4(
-0.55,
-0.82,
-1,
-1
-);
-
-const camera=new BABYLON.ArcRotateCamera(
-"Camera",
--Math.PI/2,
-1.2,
-25,
-new BABYLON.Vector3(0,3,0),
-scene
-);
-
-camera.attachControl(canvas,true);
-
-camera.lowerRadiusLimit=8;
-camera.upperRadiusLimit=40;
-
-const light=new BABYLON.HemisphericLight(
-"Light",
-new BABYLON.Vector3(0,1,0),
-scene
-);
-
-light.intensity=1.2;
-
-const sun=new BABYLON.DirectionalLight(
-"Sun",
-new BABYLON.Vector3(-1,-2,-1),
-scene
-);
-
-sun.position=new BABYLON.Vector3(50,100,50);
-
-const groundMat=new BABYLON.StandardMaterial("groundMat",scene);
-groundMat.diffuseColor=new BABYLON.Color3(0.3,0.8,0.3);
-
-const island=BABYLON.MeshBuilder.CreateGround(
-"Island",
-{
-width:120,
-height:120
-},
-scene
-);
-
-island.material=groundMat;
-
-const sea=BABYLON.MeshBuilder.CreateGround(
-"Sea",
-{
-width:1000,
-height:1000
-},
-scene
-);
-
-sea.position.y=-1;
-
-const seaMat=new BABYLON.StandardMaterial("SeaMat",scene);
-
-seaMat.diffuseColor=new BABYLON.Color3(0,0.4,1);
-
-sea.material=seaMat;
-
-const player=BABYLON.MeshBuilder.CreateCapsule(
-"Player",
-{
-height:2,
-radius:.5
-},
-scene
-);
-
-player.position.y=1;
-
-const playerMat=new BABYLON.StandardMaterial("PlayerMat",scene);
-
-playerMat.diffuseColor=new BABYLON.Color3(1,0.2,0.2);
-
-player.material=playerMat;
-
-camera.target=player.position;
-
-let hp=100;
-let exp=0;
-let level=1;
-
-document.getElementById("loading").style.display="none";
-
-const keys={};
-
-window.addEventListener("keydown",e=>{
-keys[e.key.toLowerCase()]=true;
-});
-
-window.addEventListener("keyup",e=>{
-keys[e.key.toLowerCase()]=false;
-});
-
-scene.onBeforeRenderObservable.add(()=>{
-
-const speed=0.15;
-
-if(keys["w"]) player.position.z+=speed;
-if(keys["s"]) player.position.z-=speed;
-if(keys["a"]) player.position.x-=speed;
-if(keys["d"]) player.position.x+=speed;
-
-camera.target.copyFrom(player.position);
-
-document.getElementById("hpFill").style.width=hp+"%";
-document.getElementById("expFill").style.width=exp+"%";
-document.getElementById("level").innerHTML="Level "+level;
-
-});
-
-document.getElementById("attack").onclick=function(){
-
-exp+=5;
-
-if(exp>=100){
-exp=0;
-level++;
-}
-
-};
-
-document.getElementById("skill").onclick=function(){
-
-let blast=BABYLON.MeshBuilder.CreateSphere(
-"blast",
-{diameter:3},
-scene
-);
-
-blast.position=player.position.clone();
-
-let mat=new BABYLON.StandardMaterial("blastMat",scene);
-mat.emissiveColor=new BABYLON.Color3(0,1,1);
-blast.material=mat;
-
-setTimeout(()=>{
-blast.dispose();
-},500);
-
-};
-
-document.getElementById("dash").onclick=function(){
-
-player.position.z+=3;
-
-};
-
-engine.runRenderLoop(function(){
-
-scene.render();
-
-});
-
-window.addEventListener("resize",function(){
-
-engine.resize();
-
-});
-
-</script>
-
+  <div id="phone">
+    <div class="notch"></div>
+    <div class="status-bar">
+      <span id="clock">09:41</span>
+      <span>📶 🔋</span>
+    </div>
+
+    <!-- Màn hình chính -->
+    <div class="home-screen">
+      <div class="grid">
+        <div class="app-item" onclick="openApp('calculator')">
+          <div class="app-icon" style="background:#ff9f0a">🧮</div>
+          <span class="app-name">Máy tính</span>
+        </div>
+        <div class="app-item" onclick="openApp('safari')">
+          <div class="app-icon" style="background:#007aff">🌐</div>
+          <span class="app-name">Safari</span>
+        </div>
+        <div class="app-item" onclick="openApp('settings')">
+          <div class="app-icon" style="background:#8e8e93">⚙️</div>
+          <span class="app-name">Cài đặt</span>
+        </div>
+        <div class="app-item" onclick="openApp('camera')">
+          <div class="app-icon" style="background:#34c759">📷</div>
+          <span class="app-name">Camera</span>
+        </div>
+      </div>
+
+      <div class="dock">
+        <div class="app-icon">📞</div>
+        <div class="app-icon">💬</div>
+        <div class="app-icon">✉️</div>
+        <div class="app-icon">🎵</div>
+      </div>
+    </div>
+
+    <!-- Cửa sổ App: Máy tính -->
+    <div id="app-calculator" class="app-window">
+      <div class="calc-screen">
+        <div class="calc-display" id="calc-val">0</div>
+        <div class="calc-btns">
+          <button class="calc-btn gray" onclick="calcReset()">C</button>
+          <button class="calc-btn gray">±</button>
+          <button class="calc-btn gray">%</button>
+          <button class="calc-btn orange">÷</button>
+          <button class="calc-btn" onclick="calcNum('7')">7</button>
+          <button class="calc-btn" onclick="calcNum('8')">8</button>
+          <button class="calc-btn" onclick="calcNum('9')">9</button>
+          <button class="calc-btn orange">×</button>
+          <button class="calc-btn" onclick="calcNum('4')">4</button>
+          <button class="calc-btn" onclick="calcNum('5')">5</button>
+          <button class="calc-btn" onclick="calcNum('6')">6</button>
+          <button class="calc-btn orange">-</button>
+          <button class="calc-btn" onclick="calcNum('1')">1</button>
+          <button class="calc-btn" onclick="calcNum('2')">2</button>
+          <button class="calc-btn" onclick="calcNum('3')">3</button>
+          <button class="calc-btn orange">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cửa sổ App: Safari -->
+    <div id="app-safari" class="app-window">
+      <div class="safari-body">
+        <div class="safari-bar">
+          <input type="text" id="web-url" value="https://bing.com" placeholder="Nhập địa chỉ web...">
+          <button onclick="loadWeb()" style="padding:0 10px; border-radius:8px;">Đi</button>
+        </div>
+        <iframe id="web-frame" class="safari-content" src="https://bing.com"></iframe>
+      </div>
+    </div>
+
+    <!-- Cửa sổ App: Cài đặt -->
+    <div id="app-settings" class="app-window">
+      <div class="settings-list">
+        <h2>Cài đặt</h2><br>
+        <div class="settings-item"><span>Wi-Fi</span><span>Bật 🔵</span></div>
+        <div class="settings-item"><span>Bluetooth</span><span>Tắt ⚪</span></div>
+        <div class="settings-item"><span>Chế độ máy bay</span><span>OFF</span></div>
+        <div class="settings-item"><span>Dung lượng</span><span>128 GB</span></div>
+      </div>
+    </div>
+
+    <!-- Cửa sổ App: Camera -->
+    <div id="app-camera" class="app-window" style="background:#000;">
+      <video id="webcam" autoplay playsinline style="width:100%; height:80%; object-fit:cover; margin-top:auto;"></video>
+    </div>
+
+    <!-- Thanh gạch Home (Nhấn để thoát app về Màn hình chính) -->
+    <div class="home-bar" onclick="closeAllApps()"></div>
+  </div>
+
+  <script>
+    // Đồng hồ thời gian thực
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('clock').innerText = `${hours}:${minutes}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Mở và Đóng App
+    function openApp(appName) {
+      closeAllApps();
+      const appWin = document.getElementById(`app-${appName}`);
+      if (appWin) {
+        appWin.classList.add('active');
+        if(appName === 'camera') startCamera();
+      }
+    }
+
+    function closeAllApps() {
+      document.querySelectorAll('.app-window').forEach(win => win.classList.remove('active'));
+      stopCamera();
+    }
+
+    // Logic Máy tính đơn giản
+    let calcVal = '0';
+    function calcNum(num) {
+      calcVal = calcVal === '0' ? num : calcVal + num;
+      document.getElementById('calc-val').innerText = calcVal;
+    }
+    function calcReset() {
+      calcVal = '0';
+      document.getElementById('calc-val').innerText = calcVal;
+    }
+
+    // Logic Safari
+    function loadWeb() {
+      let url = document.getElementById('web-url').value;
+      if (!url.startsWith('http')) url = 'https://' + url;
+      document.getElementById('web-frame').src = url;
+    }
+
+    // Logic Camera
+    let streamRef = null;
+    async function startCamera() {
+      try {
+        streamRef = await navigator.mediaDevices.getUserMedia({ video: true });
+        document.getElementById('webcam').srcObject = streamRef;
+      } catch (err) {
+        alert("Không thể truy cập Camera hoặc trình duyệt chặn quyền.");
+      }
+    }
+    function stopCamera() {
+      if (streamRef) {
+        streamRef.getTracks().forEach(track => track.stop());
+        streamRef = null;
+      }
+    }
+  </script>
 </body>
 </html>
-
-let level=1;
-
-// ===== JOYSTICK =====
-
-let move={
-x:0,
-z:0
-};
-
-let joyBase=document.createElement("div");
-joyBase.style.cssText=`
-position:fixed;
-left:30px;
-bottom:30px;
-width:120px;
-height:120px;
-border-radius:50%;
-background:rgba(255,255,255,.15);
-`;
-
-document.body.appendChild(joyBase);
-
-let joyStick=document.createElement("div");
-joyStick.style.cssText=`
-position:absolute;
-left:35px;
-top:35px;
-width:50px;
-height:50px;
-border-radius:50%;
-background:white;
-`;
-
-joyBase.appendChild(joyStick);
-
-let dragging=false;
-
-joyBase.addEventListener("touchstart",()=>{
-dragging=true;
-});
-
-joyBase.addEventListener("touchend",()=>{
-
-dragging=false;
-
-move.x=0;
-move.z=0;
-
-joyStick.style.left="35px";
-joyStick.style.top="35px";
-
-});
-
-joyBase.addEventListener("touchmove",e=>{
-
-if(!dragging)return;
-
-let t=e.touches[0];
-
-let r=joyBase.getBoundingClientRect();
-
-let x=t.clientX-r.left-60;
-let y=t.clientY-r.top-60;
-
-let d=Math.sqrt(x*x+y*y);
-
-if(d>40){
-
-x=x/d*40;
-y=y/d*40;
-
-}
-
-joyStick.style.left=(35+x)+"px";
-joyStick.style.top=(35+y)+"px";
-
-move.x=x/40;
-move.z=y/40;
-
-});
-
-const speed=0.15;
-
-player.position.x+=move.x*speed;
-player.position.z+=move.z*speed;
-
-if(keys["w"])player.position.z+=speed;
-if(keys["s"])player.position.z-=speed;
-if(keys["a"])player.position.x-=speed;
-if(keys["d"])player.position.x+=speed;
-
-camera.target.copyFrom(player.position);
-
-const enemies=[];
-
-for(let i=0;i<5;i++){
-
-let e=BABYLON.MeshBuilder.CreateBox(
-"enemy"+i,
-{size:2},
-scene
-);
-
-e.position.x=Math.random()*60-30;
-e.position.z=Math.random()*60-30;
-e.position.y=1;
-
-let mat=new BABYLON.StandardMaterial(
-"m"+i,
-scene
-)
-
-mat.diffuseColor=new BABYLON.Color3(
-0.8,
-0.1,
-0.1
-);
-
-e.material=mat;
-
-enemies.push(e);
-
-for(let e of enemies){
-
-let dx=player.position.x-e.position.x;
-let dz=player.position.z-e.position.z;
-
-let d=Math.sqrt(dx*dx+dz*dz);
-
-if(d<20){
-
-e.position.x+=dx/d*0.03;
-e.position.z+=dz/d*0.03;
-
-}
-
-}
-
-document.getElementById("attack").onclick=function(){
-
-for(let i=enemies.length-1;i>=0;i--){
-
-let e=enemies[i];
-
-let d=BABYLON.Vector3.Distance(
-player.position,
-e.position
-);
-
-if(d<4){
-
-e.dispose();
-
-enemies.splice(i,1);
-
-exp+=20;
-
-}
-
-}
-
-if(exp>=100){
-
-exp=0;
-level++;
-
-}
-
-}
-    //=====================
-// TREES
-//=====================
-
-const trees=[];
-
-for(let i=0;i<40;i++){
-
-let trunk=BABYLON.MeshBuilder.CreateCylinder(
-"trunk",
-{
-height:3,
-diameter:0.6
-},
-scene
-);
-
-trunk.position.x=Math.random()*90-45;
-trunk.position.z=Math.random()*90-45;
-trunk.position.y=1.5;
-
-let trunkMat=new BABYLON.StandardMaterial(
-"trunkMat"+i,
-scene
-);
-
-trunkMat.diffuseColor=
-new BABYLON.Color3(.45,.25,.1);
-
-trunk.material=trunkMat;
-
-let leaf=BABYLON.MeshBuilder.CreateSphere(
-"leaf",
-{
-diameter:2.5
-},
-scene
-);
-
-leaf.position=trunk.position.clone();
-
-leaf.position.y+=2;
-
-let leafMat=new BABYLON.StandardMaterial(
-"leafMat"+i,
-scene
-);
-
-leafMat.diffuseColor=
-new BABYLON.Color3(.1,.8,.2);
-
-leaf.material=leafMat;
-
-trees.push(trunk);
-trees.push(leaf);
-
-}
-
-//=====================
-// ROCKS
-//=====================
-
-for(let i=0;i<30;i++){
-
-let rock=
-BABYLON.MeshBuilder.CreateSphere(
-"rock",
-{
-diameter:
-Math.random()*2+1
-},
-scene
-);
-
-rock.position.x=
-Math.random()*100-50;
-
-rock.position.z=
-Math.random()*100-50;
-
-rock.position.y=.5;
-
-rock.scaling.y=.5;
-
-let mat=
-new BABYLON.StandardMaterial(
-"rockMat"+i,
-scene
-);
-
-mat.diffuseColor=
-new BABYLON.Color3(
-.5,
-.5,
-.5
-);
-
-rock.material=mat;
-
-}
-
-sea.position.y=
-Math.sin(
-performance.now()/400
-)*0.15;
-
-const sky=
-BABYLON.MeshBuilder.CreateBox(
-"sky",
-{
-size:4000
-},
-scene
-);
-
-let skyMat=
-new BABYLON.StandardMaterial(
-"skyMat",
-scene
-);
-
-skyMat.backFaceCulling=false;
-
-skyMat.disableLighting=true;
-
-skyMat.emissiveColor=
-new BABYLON.Color3(
-0.45,
-0.75,
-1
-);
-
-sky.material=skyMat;
-    const body=BABYLON.MeshBuilder.CreateCapsule(
-"body",
-{
-height:2.5,
-radius:0.45
-},
-scene
-);
-
-body.position.y=1.25;
-
-const head=BABYLON.MeshBuilder.CreateSphere(
-"head",
-{
-diameter:0.8
-},
-scene
-);
-
-head.position.y=2.8;
-
-head.parent=body;
-
-const player=body;
-
-const sword=BABYLON.MeshBuilder.CreateBox(
-"sword",
-{
-height:3,
-width:.15,
-depth:.3
-},
-scene
-);
-
-sword.parent=player;
-
-sword.position.x=.8;
-sword.position.y=.5;
-sword.position.z=0;
-
-let swordMat=
-new BABYLON.StandardMaterial(
-"swordMat",
-scene
-);
-
-swordMat.diffuseColor=
-new BABYLON.Color3(.9,.9,.9);
-
-sword.material=swordMat;
-
-scene.onBeforeRenderObservable
-
-let t=performance.now()/120;
-
-if(Math.abs(move.x)+Math.abs(move.z)>0){
-
-player.rotation.y=
-Math.atan2(
-move.x,
-move.z
-);
-
-player.position.y=
-1.25+
-Math.abs(Math.sin(t))*.08;
-
-}
-
-let combo=0;
-
-document
-.getElementById("attack")
-.onclick=function(){
-
-combo++;
-
-if(combo>3)
-combo=1;
-
-sword.rotation.z=
--.8*combo;
-
-setTimeout(()=>{
-
-sword.rotation.z=0;
-
-},150);
-
-};
-
-let slash=
-BABYLON.MeshBuilder.CreateTorus(
-"slash",
-{
-diameter:3,
-thickness:.08
-},
-scene
-);
-
-slash.position=
-player.position.clone();
-
-slash.rotation.x=
-Math.PI/2;
-
-let slashMat=
-new BABYLON.StandardMaterial(
-"slashMat",
-scene
-);
-
-slashMat.emissiveColor=
-new BABYLON.Color3(
-1,
-1,
-0
-);
-
-slash.material=slashMat;
-
-setTimeout(()=>{
-
-slash.dispose();
-
-},180);
-    let joystickRadius = 50;
-
-function updateJoystick(x, y){
-
-let length = Math.sqrt(x*x+y*y);
-
-if(length>joystickRadius){
-
-x = x/length*joystickRadius;
-y = y/length*joystickRadius;
-
-}
-
-joyStick.style.left=(35+x)+"px";
-joyStick.style.top=(35+y)+"px";
-
-move.x=x/joystickRadius;
-move.z=y/joystickRadius;
-
-}
-
-document.getElementById("dash").onclick=function(){
-
-let dir=new BABYLON.Vector3(
-move.x,
-0,
-move.z
-);
-
-if(dir.length()>0){
-
-dir.normalize();
-
-player.position.addInPlace(
-dir.scale(4)
-);
-
-}
-
-}
-
-scene.onBeforeRenderObservable
-
-if(d<2){
-
-hp-=0.1;
-
-if(hp<0)
-hp=0;
-
-}
-
-setInterval(()=>{
-
-if(hp<100){
-
-hp+=1;
-
-}
-
-},1000);
-
-document.getElementById("skill").onclick=function(){
-
-let ball=
-BABYLON.MeshBuilder.CreateSphere(
-"skill",
-{
-diameter:5
-},
-scene
-);
-
-ball.position=
-player.position.clone();
-
-let m=
-new BABYLON.StandardMaterial(
-"s",
-scene
-);
-
-m.emissiveColor=
-new BABYLON.Color3(
-0,
-1,
-1
-);
-
-ball.material=m;
-
-for(let e of enemies){
-
-if(BABYLON.Vector3.Distance(
-ball.position,
-e.position
-)<8){
-
-e.dispose();
-
-}
-
-}
-
-setTimeout(()=>{
-
-ball.dispose();
-
-},500);
-
-};
-    const island2 =
-BABYLON.MeshBuilder.CreateGround(
-"Island2",
-{
-width:180,
-height:180
-},
-scene
-);
-
-island2.position.x = 250;
-island2.position.z = 80;
-
-let island2Mat =
-new BABYLON.StandardMaterial(
-"island2Mat",
-scene
-);
-
-island2Mat.diffuseColor =
-new BABYLON.Color3(.35,.75,.25);
-
-island2.material = island2Mat;
-
-const house =
-BABYLON.MeshBuilder.CreateBox(
-"house",
-{
-width:8,
-height:6,
-depth:8
-},
-scene
-);
-
-house.position.set(12,3,15);
-
-let houseMat =
-new BABYLON.StandardMaterial(
-"houseMat",
-scene
-);
-
-houseMat.diffuseColor =
-new BABYLON.Color3(
-0.8,
-0.6,
-0.4
-);
-
-house.material = houseMat;
-
-let money = 0;
-
-const moneyUI =
-document.createElement("div");
-
-moneyUI.style.position="fixed";
-moneyUI.style.right="15px";
-moneyUI.style.top="10px";
-moneyUI.style.color="white";
-moneyUI.style.fontSize="22px";
-
-document.body.appendChild(
-moneyUI
-);
-
-moneyUI.innerHTML =
-"💰 "+money;
-
-const chest =
-BABYLON.MeshBuilder.CreateBox(
-"Chest",
-{
-size:2
-},
-scene
-);
-
-chest.position.set(
-8,
-1,
-20
-);
-
-let chestMat =
-new BABYLON.StandardMaterial(
-"ChestMat",
-scene
-);
-
-chestMat.diffuseColor =
-new BABYLON.Color3(
-0.6,
-0.3,
-0
-);
-
-chest.material=chestMat;
-
-if(
-BABYLON.Vector3.Distance(
-player.position,
-chest.position
-)<3
-){
-
-money+=100;
-
-chest.dispose();
-
-}
-
-for(let i=0;i<20;i++){
-
-let palm =
-BABYLON.MeshBuilder.CreateCylinder(
-"Palm",
-{
-height:5,
-diameter:0.5
-},
-scene
-);
-
-palm.position.x =
-Math.random()*120-60;
-
-palm.position.z =
-Math.random()*120-60;
-
-palm.position.y=2.5;
-
-}
-
-scene.registerBeforeRender(()=>{
-
-sea.rotation.y+=0.0005;
-
-});
-    local player = game.Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local humanoid = char:WaitForChild("Humanoid")
-
-local canAttack = true
-local damage = 10
-local cooldown = 0.5
-
-local mouse = player:GetMouse()
-
-mouse.Button1Down:Connect(function()
-	if not canAttack then return end
-	canAttack = false
-
-	local target = mouse.Target
-	if target and target.Parent then
-		local enemyHumanoid = target.Parent:FindFirstChild("Humanoid")
-
-		if enemyHumanoid and target.Parent ~= char then
-			enemyHumanoid:TakeDamage(damage)
-		end
-	end
-
-	task.wait(cooldown)
-	canAttack = true
-end)
-
-game.ReplicatedStorage:WaitForChild("DamageEvent").OnServerEvent:Connect(function(player, targetHumanoid, damage)
-	if targetHumanoid and targetHumanoid.Health > 0 then
-		targetHumanoid:TakeDamage(damage)
-	end
-end)
-
-ReplicatedStorage
-→ DamageEvent (RemoteEvent)
-    local player = game.Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local root = char:WaitForChild("HumanoidRootPart")
-
-local dashCooldown = false
-
-local function dash()
-	if dashCooldown then return end
-	dashCooldown = true
-
-	local direction = root.CFrame.LookVector
-	root.Velocity = direction * 80 + Vector3.new(0, 10, 0)
-
-	task.wait(0.6)
-	dashCooldown = false
-end
-
--- TẠO NÚT DASH
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-local btn = Instance.new("TextButton", gui)
-
-btn.Size = UDim2.new(0, 120, 0, 50)
-btn.Position = UDim2.new(0.8, 0, 0.8, 0)
-btn.Text = "DASH"
-
-btn.MouseButton1Click:Connect(dash)
-
-local UIS = game:GetService("UserInputService")
-local player = game.Players.LocalPlayer
-
-UIS.TouchTap:Connect(function(touchPositions, gameProcessed)
-	if gameProcessed then return end
-
-	local char = player.Character
-	if not char then return end
-
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-
-	local ray = Ray.new(root.Position, root.CFrame.LookVector * 5)
-	local part = workspace:FindPartOnRay(ray, char)
-
-	if part and part.Parent:FindFirstChild("Humanoid") then
-		part.Parent.Humanoid:TakeDamage(10)
-	end
-end)
-    local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local player = game.Players.LocalPlayer
-
-local char = player.Character or player.CharacterAdded:Wait()
-local root = char:WaitForChild("HumanoidRootPart")
-local humanoid = char:WaitForChild("Humanoid")
-
--- GUI
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-
-local base = Instance.new("Frame", gui)
-base.Size = UDim2.new(0, 120, 0, 120)
-base.Position = UDim2.new(0.1, 0, 0.7, 0)
-base.BackgroundTransparency = 0.3
-base.BackgroundColor3 = Color3.fromRGB(50,50,50)
-base.Active = true
-
-local corner1 = Instance.new("UICorner", base)
-corner1.CornerRadius = UDim.new(1,0)
-
-local knob = Instance.new("Frame", base)
-knob.Size = UDim2.new(0, 50, 0, 50)
-knob.Position = UDim2.new(0.3, 0, 0.3, 0)
-knob.BackgroundColor3 = Color3.fromRGB(200,200,200)
-knob.Active = true
-
-local corner2 = Instance.new("UICorner", knob)
-corner2.CornerRadius = UDim.new(1,0)
-
--- MOVE
-local dragging = false
-local moveVector = Vector3.zero
-
-knob.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-	end
-end)
-
-knob.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.Touch then
-		dragging = false
-		moveVector = Vector3.zero
-		knob.Position = UDim2.new(0.3,0,0.3,0)
-	end
-end)
-
-UIS.TouchMoved:Connect(function(input)
-	if not dragging then return end
-
-	local delta = input.Position - base.AbsolutePosition - Vector2.new(60,60)
-
-	if delta.Magnitude > 40 then
-		delta = delta.Unit * 40
-	end
-
-	knob.Position = UDim2.new(0.5, delta.X - 25, 0.5, delta.Y - 25)
-
-	moveVector = Vector3.new(delta.X, 0, delta.Y) * 0.1
-end)
-
--- APPLY MOVEMENT
-RunService.RenderStepped:Connect(function()
-	if moveVector.Magnitude > 0 then
-		local cam = workspace.CurrentCamera
-		local direction = cam.CFrame:VectorToWorldSpace(moveVector)
-
-		root.Velocity = Vector3.new(direction.X * 20, root.Velocity.Y, direction.Z * 20)
-	end
-end)
-	local player = game.Players.LocalPlayer
-
-player.CharacterAdded:Connect(function(char)
-	local humanoid = char:WaitForChild("Humanoid")
-
-	-- chỉnh nhẹ cho game combat
-	humanoid.WalkSpeed = 18
-	humanoid.JumpPower = 55
-end)
-	FireSkill (RemoteEvent)
-
-FireFruit
-
-local player = game.Players.LocalPlayer
-local tool = script.Parent
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local event = ReplicatedStorage:WaitForChild("FireSkill")
-
--- khi cầm trái
-tool.Equipped:Connect(function()
-	print("Đã ăn trái lửa")
-end)
-
--- bấm dùng chiêu
-tool.Activated:Connect(function()
-	event:FireServer()
-end)
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local event = ReplicatedStorage:WaitForChild("FireSkill")
-
-event.OnServerEvent:Connect(function(player)
-	local char = player.Character
-	if not char then return end
-
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-
-	-- hiệu ứng lửa đơn giản
-	local explosion = Instance.new("Explosion")
-	explosion.Position = root.Position + root.CFrame.LookVector * 5
-	explosion.BlastRadius = 6
-	explosion.BlastPressure = 0
-	explosion.Parent = workspace
-
-	-- damage gần
-	for _, obj in pairs(workspace:GetPartBoundsInRadius(root.Position, 8)) do
-		local hum = obj.Parent:FindFirstChild("Humanoid")
-		if hum and obj.Parent ~= char then
-			hum:TakeDamage(20)
-		end
-	end
-end)
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local player = game.Players.LocalPlayer
-
-local event = ReplicatedStorage:WaitForChild("FireSkill")
-
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-
-local btn = Instance.new("TextButton", gui)
-btn.Size = UDim2.new(0, 120, 0, 60)
-btn.Position = UDim2.new(0.8, 0, 0.75, 0)
-btn.Text = "🔥 Skill"
-
-btn.MouseButton1Click:Connect(function()
-	event:FireServer()
-end)
-local character = script.Parent
-local humanoid = character:WaitForChild("Humanoid")
-
-humanoid.WalkSpeed = 16
-humanoid.JumpPower = 50
-
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-
--- Tạo GUI
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-
-local button = Instance.new("TextButton")
-button.Size = UDim2.new(0, 120, 0, 120)
-button.Position = UDim2.new(0.8, 0, 0.7, 0)
-button.Text = "JUMP"
-button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-button.Parent = gui
-
--- Khi bấm nút
-button.MouseButton1Click:Connect(function()
-	humanoid.Jump = true
-end)
-
-local attack = Instance.new("TextButton")
-attack.Size = UDim2.new(0, 120, 0, 120)
-attack.Position = UDim2.new(0.65, 0, 0.7, 0)
-attack.Text = "ATTACK"
-attack.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-attack.Parent = gui
-
-attack.MouseButton1Click:Connect(function()
-	print("Đánh!")
-end)
-	local player = game.Players.LocalPlayer
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-local root = character:WaitForChild("HumanoidRootPart")
-
--- Tạo GUI joystick
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-
-local base = Instance.new("Frame")
-base.Size = UDim2.new(0, 150, 0, 150)
-base.Position = UDim2.new(0, 50, 1, -200)
-base.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-base.BackgroundTransparency = 0.4
-base.Parent = gui
-
-local knob = Instance.new("Frame")
-knob.Size = UDim2.new(0, 60, 0, 60)
-knob.Position = UDim2.new(0.5, -30, 0.5, -30)
-knob.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-knob.Parent = base
-
--- Điều khiển
-local dragging = false
-local startPos = Vector2.new()
-
-local moveVector = Vector3.zero
-
-local function update(input)
-	local delta = input.Position - startPos
-	local offset = Vector2.new(delta.X, delta.Y)
-
-	if offset.Magnitude > 50 then
-		offset = offset.Unit * 50
-	end
-
-	knob.Position = UDim2.new(0.5, offset.X - 30, 0.5, offset.Y - 30)
-
-	moveVector = Vector3.new(offset.X / 50, 0, offset.Y / 50)
-end
-
-base.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		startPos = input.Position
-	end
-end)
-
-base.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.Touch then
-		dragging = false
-		knob.Position = UDim2.new(0.5, -30, 0.5, -30)
-		moveVector = Vector3.zero
-	end
-end)
-
-UIS.InputChanged:Connect(function(input)
-	if dragging and input.UserInputType == Enum.UserInputType.Touch then
-		update(input)
-	end
-end)
-
--- Di chuyển nhân vật
-RunService.RenderStepped:Connect(function()
-	if character and humanoid then
-		local cam = workspace.CurrentCamera
-		local moveDir = cam.CFrame:VectorToWorldSpace(moveVector)
-		humanoid:Move(moveDir, false)
-	end
-end)
