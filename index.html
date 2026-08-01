@@ -137,3 +137,224 @@
   </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Pro AI - Virtual Smartphone</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    
+    body {
+      background: #090d16;
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* Khung điện thoại ảo */
+    .phone-container {
+      width: 360px;
+      height: 720px;
+      background: #000;
+      border-radius: 48px;
+      padding: 12px;
+      box-shadow: 0 0 40px rgba(56, 189, 248, 0.2), 0 25px 50px -12px rgba(0, 0, 0, 0.9);
+      border: 4px solid #334155;
+      position: relative;
+    }
+
+    /* Màn hình điện thoại */
+    .screen {
+      width: 100%;
+      height: 100%;
+      background: #0f172a;
+      border-radius: 36px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Dynamic Island / Camera ẩn */
+    .notch {
+      width: 120px;
+      height: 25px;
+      background: #000;
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 20px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 10px;
+    }
+    .camera-dot { width: 10px; height: 10px; background: #1e293b; border-radius: 50%; border: 1px solid #334155; }
+
+    /* Thanh trạng thái Status Bar */
+    .status-bar {
+      height: 40px;
+      padding: 10px 24px 0 24px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: bold;
+      color: #fff;
+      z-index: 90;
+    }
+
+    /* Thanh địa chỉ URL (Browser Bar) */
+    .browser-bar {
+      padding: 8px 12px;
+      background: #1e293b;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+    }
+
+    .url-input {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid #475569;
+      color: #38bdf8;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .btn-go {
+      background: #38bdf8;
+      color: #0f172a;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* Quick Bookmarks */
+    .quick-links {
+      display: flex;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #1e293b;
+      overflow-x: auto;
+    }
+    .chip {
+      background: #334155;
+      color: #94a3b8;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .chip:hover { background: #0284c7; color: #fff; }
+
+    /* Khung hiển thị Trang Web (Iframe) */
+    .web-viewport {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: #fff;
+    }
+
+    /* Màn hình chờ khi chưa tải trang */
+    .home-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+      background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
+    }
+
+    .home-title { font-size: 20px; font-weight: bold; color: #38bdf8; margin-bottom: 8px; }
+    .home-desc { font-size: 12px; color: #94a3b8; margin-bottom: 20px; }
+
+    /* Navigation Bar phía dưới */
+    .nav-bar {
+      height: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+    }
+    .home-indicator {
+      width: 120px;
+      height: 4px;
+      background: #fff;
+      border-radius: 2px;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="phone-container">
+    <div class="screen">
+      
+      <!-- Dynamic Island -->
+      <div class="notch">
+        <div class="camera-dot"></div>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <span>09:41</span>
+        <span>5G ⚡ 100%</span>
+      </div>
+
+      <!-- Thanh nhập địa chỉ Web -->
+      <div class="browser-bar">
+        <input type="text" id="urlInput" class="url-input" placeholder="Nhập địa chỉ URL (https://...)" value="https://wikipedia.org">
+        <button class="btn-go" onclick="loadWeb()">Duyệt</button>
+      </div>
+
+      <!-- Bookmark nhanh -->
+      <div class="quick-links">
+        <span class="chip" onclick="openPreset('https://wikipedia.org')">Wikipedia</span>
+        <span class="chip" onclick="openPreset('https://bing.com')">Bing Search</span>
+        <span class="chip" onclick="openPreset('https://example.com')">Example.com</span>
+      </div>
+
+      <!-- Màn hình hiển thị Web -->
+      <iframe id="webFrame" class="web-viewport" src="https://wikipedia.org" title="Virtual Browser"></iframe>
+
+      <!-- Thanh Home Indicator -->
+      <div class="nav-bar">
+        <div class="home-indicator"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function loadWeb() {
+      let url = document.getElementById('urlInput').value.trim();
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+      document.getElementById('webFrame').src = url;
+    }
+
+    function openPreset(url) {
+      document.getElementById('urlInput').value = url;
+      document.getElementById('webFrame').src = url;
+    }
+  </script>
+
+</body>
+</html>
