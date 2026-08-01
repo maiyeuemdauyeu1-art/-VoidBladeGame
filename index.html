@@ -1,1736 +1,971 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mô phỏng iOS Interactive</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body {
-      background: #121212;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    }
-    
-    /* Khung iPhone */
-    #phone {
-      width: 360px;
-      height: 740px;
-      background: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000') center/cover;
-      border-radius: 50px;
-      border: 12px solid #2d2d2d;
-      position: relative;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.8);
-      overflow: hidden;
-    }
-
-    /* Tai thỏ & Thanh trạng thái */
-    .notch {
-      width: 130px;
-      height: 28px;
-      background: #000;
-      margin: 0 auto;
-      border-bottom-left-radius: 18px;
-      border-bottom-right-radius: 18px;
-      position: absolute;
-      top: 0; left: 50%;
-      transform: translateX(-50%);
-      z-index: 100;
-    }
-    .status-bar {
-      position: absolute;
-      top: 6px; width: 100%;
-      padding: 0 24px;
-      display: flex;
-      justify-content: space-between;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 600;
-      z-index: 90;
-    }
-
-    /* Màn hình chính */
-    .home-screen {
-      padding-top: 60px;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      padding: 20px;
-    }
-    .app-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      cursor: pointer;
-    }
-    .app-icon {
-      width: 58px;
-      height: 58px;
-      background: rgba(255,255,255,0.2);
-      backdrop-filter: blur(15px);
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      transition: transform 0.1s;
-    }
-    .app-icon:active { transform: scale(0.9); }
-    .app-name {
-      color: #fff;
-      font-size: 11px;
-      margin-top: 5px;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-    }
-
-    /* Dock bên dưới */
-    .dock {
-      margin: 20px 15px;
-      height: 78px;
-      background: rgba(255,255,255,0.25);
-      backdrop-filter: blur(20px);
-      border-radius: 28px;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      padding: 0 10px;
-    }
-
-    /* Cửa sổ ứng dụng (Modal) */
-    .app-window {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: #fff;
-      z-index: 80;
-      display: none;
-      flex-direction: column;
-      padding-top: 40px;
-      animation: openApp 0.3s ease-out forwards;
-    }
-    .app-window.active { display: flex; }
-
-    @keyframes openApp {
-      from { transform: scale(0.7); opacity: 0; border-radius: 40px; }
-      to { transform: scale(1); opacity: 1; border-radius: 0; }
-    }
-
-    /* Thanh Gạch Home dưới cùng */
-    .home-bar {
-      position: absolute;
-      bottom: 8px; left: 50%;
-      transform: translateX(-50%);
-      width: 120px;
-      height: 5px;
-      background: #fff;
-      border-radius: 10px;
-      z-index: 200;
-      cursor: pointer;
-    }
-
-    /* Giao diện từng App */
-    /* 1. Calculator */
-    .calc-screen {
-      background: #000; height: 100%; color: #fff;
-      display: flex; flex-direction: column; justify-content: flex-end; padding: 20px;
-    }
-    .calc-display { font-size: 48px; text-align: right; margin-bottom: 20px; }
-    .calc-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .calc-btn {
-      height: 60px; border-radius: 50%; border: none; font-size: 20px; color: #fff;
-      background: #333; cursor: pointer;
-    }
-    .calc-btn.orange { background: #ff9f0a; }
-    .calc-btn.gray { background: #a5a5a5; color: #000; }
-
-    /* 2. Safari */
-    .safari-body { height: 100%; display: flex; flex-direction: column; }
-    .safari-bar { padding: 10px; background: #f1f1f1; display: flex; gap: 5px; }
-    .safari-bar input {
-      flex: 1; padding: 8px 12px; border-radius: 10px; border: 1px solid #ccc; outline: none;
-    }
-    .safari-content { flex: 1; border: none; }
-
-    /* 3. Settings */
-    .settings-list { padding: 20px; background: #f2f2f7; height: 100%; }
-    .settings-item {
-      background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 10px;
-      display: flex; justify-content: space-between; font-weight: 500;
-    }
-  </style>
-</head>
-<body>
-
-  <div id="phone">
-    <div class="notch"></div>
-    <div class="status-bar">
-      <span id="clock">09:41</span>
-      <span>📶 🔋</span>
-    </div>
-
-    <!-- Màn hình chính -->
-    <div class="home-screen">
-      <div class="grid">
-        <div class="app-item" onclick="openApp('calculator')">
-          <div class="app-icon" style="background:#ff9f0a">🧮</div>
-          <span class="app-name">Máy tính</span>
-        </div>
-        <div class="app-item" onclick="openApp('safari')">
-          <div class="app-icon" style="background:#007aff">🌐</div>
-          <span class="app-name">Safari</span>
-        </div>
-        <div class="app-item" onclick="openApp('settings')">
-          <div class="app-icon" style="background:#8e8e93">⚙️</div>
-          <span class="app-name">Cài đặt</span>
-        </div>
-        <div class="app-item" onclick="openApp('camera')">
-          <div class="app-icon" style="background:#34c759">📷</div>
-          <span class="app-name">Camera</span>
-        </div>
-      </div>
-
-      <div class="dock">
-        <div class="app-icon">📞</div>
-        <div class="app-icon">💬</div>
-        <div class="app-icon">✉️</div>
-        <div class="app-icon">🎵</div>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: Máy tính -->
-    <div id="app-calculator" class="app-window">
-      <div class="calc-screen">
-        <div class="calc-display" id="calc-val">0</div>
-        <div class="calc-btns">
-          <button class="calc-btn gray" onclick="calcReset()">C</button>
-          <button class="calc-btn gray">±</button>
-          <button class="calc-btn gray">%</button>
-          <button class="calc-btn orange">÷</button>
-          <button class="calc-btn" onclick="calcNum('7')">7</button>
-          <button class="calc-btn" onclick="calcNum('8')">8</button>
-          <button class="calc-btn" onclick="calcNum('9')">9</button>
-          <button class="calc-btn orange">×</button>
-          <button class="calc-btn" onclick="calcNum('4')">4</button>
-          <button class="calc-btn" onclick="calcNum('5')">5</button>
-          <button class="calc-btn" onclick="calcNum('6')">6</button>
-          <button class="calc-btn orange">-</button>
-          <button class="calc-btn" onclick="calcNum('1')">1</button>
-          <button class="calc-btn" onclick="calcNum('2')">2</button>
-          <button class="calc-btn" onclick="calcNum('3')">3</button>
-          <button class="calc-btn orange">+</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: Safari -->
-    <div id="app-safari" class="app-window">
-      <div class="safari-body">
-        <div class="safari-bar">
-          <input type="text" id="web-url" value="https://bing.com" placeholder="Nhập địa chỉ web...">
-          <button onclick="loadWeb()" style="padding:0 10px; border-radius:8px;">Đi</button>
-        </div>
-        <iframe id="web-frame" class="safari-content" src="https://bing.com"></iframe>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: Cài đặt -->
-    <div id="app-settings" class="app-window">
-      <div class="settings-list">
-        <h2>Cài đặt</h2><br>
-        <div class="settings-item"><span>Wi-Fi</span><span>Bật 🔵</span></div>
-        <div class="settings-item"><span>Bluetooth</span><span>Tắt ⚪</span></div>
-        <div class="settings-item"><span>Chế độ máy bay</span><span>OFF</span></div>
-        <div class="settings-item"><span>Dung lượng</span><span>128 GB</span></div>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: Camera -->
-    <div id="app-camera" class="app-window" style="background:#000;">
-      <video id="webcam" autoplay playsinline style="width:100%; height:80%; object-fit:cover; margin-top:auto;"></video>
-    </div>
-
-    <!-- Thanh gạch Home (Nhấn để thoát app về Màn hình chính) -->
-    <div class="home-bar" onclick="closeAllApps()"></div>
-  </div>
-
-  <script>
-    // Đồng hồ thời gian thực
-    function updateClock() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById('clock').innerText = `${hours}:${minutes}`;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // Mở và Đóng App
-    function openApp(appName) {
-      closeAllApps();
-      const appWin = document.getElementById(`app-${appName}`);
-      if (appWin) {
-        appWin.classList.add('active');
-        if(appName === 'camera') startCamera();
-      }
-    }
-
-    function closeAllApps() {
-      document.querySelectorAll('.app-window').forEach(win => win.classList.remove('active'));
-      stopCamera();
-    }
-
-    // Logic Máy tính đơn giản
-    let calcVal = '0';
-    function calcNum(num) {
-      calcVal = calcVal === '0' ? num : calcVal + num;
-      document.getElementById('calc-val').innerText = calcVal;
-    }
-    function calcReset() {
-      calcVal = '0';
-      document.getElementById('calc-val').innerText = calcVal;
-    }
-
-    // Logic Safari
-    function loadWeb() {
-      let url = document.getElementById('web-url').value;
-      if (!url.startsWith('http')) url = 'https://' + url;
-      document.getElementById('web-frame').src = url;
-    }
-
-    // Logic Camera
-    let streamRef = null;
-    async function startCamera() {
-      try {
-        streamRef = await navigator.mediaDevices.getUserMedia({ video: true });
-        document.getElementById('webcam').srcObject = streamRef;
-      } catch (err) {
-        alert("Không thể truy cập Camera hoặc trình duyệt chặn quyền.");
-      }
-    }
-    function stopCamera() {
-      if (streamRef) {
-        streamRef.getTracks().forEach(track => track.stop());
-        streamRef = null;
-      }
-    }
-  </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mô phỏng iOS Interactive + AssistiveTouch</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body {
-      background: #121212;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    }
-    
-    /* Khung iPhone */
-    #phone {
-      width: 360px;
-      height: 740px;
-      background: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000') center/cover;
-      border-radius: 50px;
-      border: 12px solid #2d2d2d;
-      position: relative;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.8);
-      overflow: hidden;
-    }
-
-    /* Tai thỏ & Thanh trạng thái */
-    .notch {
-      width: 130px;
-      height: 28px;
-      background: #000;
-      margin: 0 auto;
-      border-bottom-left-radius: 18px;
-      border-bottom-right-radius: 18px;
-      position: absolute;
-      top: 0; left: 50%;
-      transform: translateX(-50%);
-      z-index: 100;
-    }
-    .status-bar {
-      position: absolute;
-      top: 6px; width: 100%;
-      padding: 0 24px;
-      display: flex;
-      justify-content: space-between;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 600;
-      z-index: 90;
-    }
-
-    /* Màn hình chính */
-    .home-screen {
-      padding-top: 60px;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      padding: 20px;
-    }
-    .app-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      cursor: pointer;
-    }
-    .app-icon {
-      width: 58px;
-      height: 58px;
-      background: rgba(255,255,255,0.2);
-      backdrop-filter: blur(15px);
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      transition: transform 0.1s;
-    }
-    .app-icon:active { transform: scale(0.9); }
-    .app-name {
-      color: #fff;
-      font-size: 11px;
-      margin-top: 5px;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-    }
-
-    /* Dock bên dưới */
-    .dock {
-      margin: 20px 15px;
-      height: 78px;
-      background: rgba(255,255,255,0.25);
-      backdrop-filter: blur(20px);
-      border-radius: 28px;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      padding: 0 10px;
-    }
-
-    /* Cửa sổ ứng dụng */
-    .app-window {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: #fff;
-      z-index: 80;
-      display: none;
-      flex-direction: column;
-      padding-top: 40px;
-      animation: openApp 0.3s ease-out forwards;
-    }
-    .app-window.active { display: flex; }
-
-    @keyframes openApp {
-      from { transform: scale(0.7); opacity: 0; border-radius: 40px; }
-      to { transform: scale(1); opacity: 1; border-radius: 0; }
-    }
-
-    /* Thanh Gạch Home ở đáy */
-    .home-bar {
-      position: absolute;
-      bottom: 8px; left: 50%;
-      transform: translateX(-50%);
-      width: 120px;
-      height: 5px;
-      background: #fff;
-      border-radius: 10px;
-      z-index: 200;
-      cursor: pointer;
-    }
-
-    /* NÚT HOME ẢO (AssistiveTouch) */
-    #assistive-touch {
-      position: absolute;
-      top: 450px;
-      right: 15px;
-      width: 58px;
-      height: 58px;
-      background: rgba(0, 0, 0, 0.55);
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 18px;
-      z-index: 300;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: grab;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      backdrop-filter: blur(8px);
-      transition: opacity 0.2s;
-    }
-    #assistive-touch:active { cursor: grabbing; }
-    .touch-inner {
-      width: 36px;
-      height: 36px;
-      background: rgba(255, 255, 255, 0.85);
-      border-radius: 50%;
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
-      pointer-events: none;
-    }
-
-    /* MENU NÚT HOME ẢO */
-    #touch-menu {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(12px);
-      z-index: 350;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-    #touch-menu.active { display: flex; }
-    .menu-grid {
-      width: 240px;
-      height: 240px;
-      background: rgba(30, 30, 30, 0.85);
-      border-radius: 30px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(3, 1fr);
-      padding: 15px;
-      gap: 10px;
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    .menu-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 11px;
-      cursor: pointer;
-    }
-    .menu-item-icon {
-      font-size: 26px;
-      margin-bottom: 4px;
-    }
-
-    /* Giao diện App */
-    .calc-screen {
-      background: #000; height: 100%; color: #fff;
-      display: flex; flex-direction: column; justify-content: flex-end; padding: 20px;
-    }
-    .calc-display { font-size: 48px; text-align: right; margin-bottom: 20px; }
-    .calc-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .calc-btn {
-      height: 60px; border-radius: 50%; border: none; font-size: 20px; color: #fff;
-      background: #333; cursor: pointer;
-    }
-    .calc-btn.orange { background: #ff9f0a; }
-    .calc-btn.gray { background: #a5a5a5; color: #000; }
-
-    .safari-body { height: 100%; display: flex; flex-direction: column; }
-    .safari-bar { padding: 10px; background: #f1f1f1; display: flex; gap: 5px; }
-    .safari-bar input {
-      flex: 1; padding: 8px 12px; border-radius: 10px; border: 1px solid #ccc; outline: none;
-    }
-    .safari-content { flex: 1; border: none; }
-
-    .settings-list { padding: 20px; background: #f2f2f7; height: 100%; }
-    .settings-item {
-      background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 10px;
-      display: flex; justify-content: space-between; font-weight: 500;
-    }
-  </style>
-</head>
-<body>
-
-  <div id="phone">
-    <div class="notch"></div>
-    <div class="status-bar">
-      <span id="clock">09:41</span>
-      <span>📶 🔋</span>
-    </div>
-
-    <!-- Nút Home Ảo (AssistiveTouch) -->
-    <div id="assistive-touch" onclick="toggleMenu(event)">
-      <div class="touch-inner"></div>
-    </div>
-
-    <!-- Menu Nút Home Ảo -->
-    <div id="touch-menu" onclick="closeMenu()">
-      <div class="menu-grid" onclick="event.stopPropagation()">
-        <div></div>
-        <div class="menu-item" onclick="closeAllApps(); closeMenu();">
-          <div class="menu-item-icon">🏠</div>
-          <span>Màn hình chính</span>
-        </div>
-        <div></div>
-        <div class="menu-item" onclick="openApp('calculator'); closeMenu();">
-          <div class="menu-item-icon">🧮</div>
-          <span>Máy tính</span>
-        </div>
-        <div class="menu-item" onclick="closeMenu();">
-          <div class="menu-item-icon">⭕</div>
-          <span>Đóng</span>
-        </div>
-        <div class="menu-item" onclick="openApp('safari'); closeMenu();">
-          <div class="menu-item-icon">🌐</div>
-          <span>Safari</span>
-        </div>
-        <div></div>
-        <div class="menu-item" onclick="openApp('camera'); closeMenu();">
-          <div class="menu-item-icon">📷</div>
-          <span>Camera</span>
-        </div>
-        <div></div>
-      </div>
-    </div>
-
-    <!-- Màn hình chính -->
-    <div class="home-screen">
-      <div class="grid">
-        <div class="app-item" onclick="openApp('calculator')">
-          <div class="app-icon" style="background:#ff9f0a">🧮</div>
-          <span class="app-name">Máy tính</span>
-        </div>
-        <div class="app-item" onclick="openApp('safari')">
-          <div class="app-icon" style="background:#007aff">🌐</div>
-          <span class="app-name">Safari</span>
-        </div>
-        <div class="app-item" onclick="openApp('settings')">
-          <div class="app-icon" style="background:#8e8e93">⚙️</div>
-          <span class="app-name">Cài đặt</span>
-        </div>
-        <div class="app-item" onclick="openApp('camera')">
-          <div class="app-icon" style="background:#34c759">📷</div>
-          <span class="app-name">Camera</span>
-        </div>
-      </div>
-
-      <div class="dock">
-        <div class="app-icon">📞</div>
-        <div class="app-icon">💬</div>
-        <div class="app-icon">✉️</div>
-        <div class="app-icon">🎵</div>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: Máy tính -->
-    <div id="app-calculator" class="app-window">
-      <div class="calc-screen">
-        <div class="calc-display" id="calc-val">0</div>
-        <div class="calc-btns">
-          <button class="calc-btn gray" onclick="calcReset()">C</button>
-          <button class="calc-btn gray">±</button>
-          <button class="calc-btn gray">%</button>
-          <button class="calc-btn orange">÷</button>
-          <button class="calc-btn" onclick="calcNum('7')">7</button>
-          <button class="calc-btn" onclick="calcNum('8')">8</button>
-          <button class="calc-btn" onclick="calcNum('9')">9</button>
-          <button class="calc-btn orange">×</button>
-          <button class="calc-btn" onclick="calcNum('4')">4</button>
-          <button class="calc-btn" onclick="calcNum('5')">5</button>
-          <button class="calc-btn" onclick="calcNum('6')">6</button>
-          <button class="calc-btn orange">-</button>
-          <button class="calc-btn" onclick="calcNum('1')">1</button>
-          <button class="calc-btn" onclick="calcNum('2')">2</button>
-          <button class="calc-btn" onclick="calcNum('3')">3</button>
-          <button class="calc-btn orange">+</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: Safari -->
-    <div id="app-safari" class="app-window">
-      <div class="safari-body">
-        <div class="safari-bar">
-          <input type="text" id="web-url" value="https://bing.com" placeholder="Nhập địa chỉ web...">
-          <button onclick="loadWeb()" style="padding:0 10px; border-radius:8px;">Đi</button>
-        </div>
-        <iframe id="web-frame" class="safari-content" src="https://bing.com"></iframe>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: Cài đặt -->
-    <div id="app-settings" class="app-window">
-      <div class="settings-list">
-        <h2>Cài đặt</h2><br>
-        <div class="settings-item"><span>Wi-Fi</span><span>Bật 🔵</span></div>
-        <div class="settings-item"><span>Bluetooth</span><span>Tắt ⚪</span></div>
-        <div class="settings-item"><span>Chế độ máy bay</span><span>OFF</span></div>
-        <div class="settings-item"><span>Dung lượng</span><span>128 GB</span></div>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: Camera -->
-    <div id="app-camera" class="app-window" style="background:#000;">
-      <video id="webcam" autoplay playsinline style="width:100%; height:80%; object-fit:cover; margin-top:auto;"></video>
-    </div>
-
-    <!-- Thanh gạch Home dưới cùng -->
-    <div class="home-bar" onclick="closeAllApps()"></div>
-  </div>
-
-  <script>
-    // Đồng hồ thời gian thực
-    function updateClock() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById('clock').innerText = `${hours}:${minutes}`;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // Mở & Đóng App
-    function openApp(appName) {
-      closeAllApps();
-      const appWin = document.getElementById(`app-${appName}`);
-      if (appWin) {
-        appWin.classList.add('active');
-        if(appName === 'camera') startCamera();
-      }
-    }
-
-    function closeAllApps() {
-      document.querySelectorAll('.app-window').forEach(win => win.classList.remove('active'));
-      stopCamera();
-    }
-
-    // Logic Nút Home ảo (AssistiveTouch Menu)
-    function toggleMenu(e) {
-      if (isDragging) return; // Nếu đang kéo thả thì không mở menu
-      document.getElementById('touch-menu').classList.toggle('active');
-    }
-
-    function closeMenu() {
-      document.getElementById('touch-menu').classList.remove('active');
-    }
-
-    // Kéo thả Nút Home Ảo (Drag & Drop)
-    const touchBtn = document.getElementById('assistive-touch');
-    const phone = document.getElementById('phone');
-    let isDragging = false;
-    let offsetX, offsetY;
-
-    touchBtn.addEventListener('mousedown', startDrag);
-    touchBtn.addEventListener('touchstart', startDrag, {passive: false});
-
-    function startDrag(e) {
-      isDragging = false;
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const rect = touchBtn.getBoundingClientRect();
-      
-      offsetX = clientX - rect.left;
-      offsetY = clientY - rect.top;
-
-      document.addEventListener('mousemove', onDrag);
-      document.addEventListener('touchmove', onDrag, {passive: false});
-      document.addEventListener('mouseup', stopDrag);
-      document.addEventListener('touchend', stopDrag);
-    }
-
-    function onDrag(e) {
-      isDragging = true;
-      e.preventDefault();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const phoneRect = phone.getBoundingClientRect();
-
-      let x = clientX - phoneRect.left - offsetX;
-      let y = clientY - phoneRect.top - offsetY;
-
-      // Giới hạn trong khung điện thoại
-      x = Math.max(5, Math.min(x, phoneRect.width - 63));
-      y = Math.max(30, Math.min(y, phoneRect.height - 63));
-
-      touchBtn.style.left = `${x}px`;
-      touchBtn.style.top = `${y}px`;
-      touchBtn.style.right = 'auto';
-    }
-
-    function stopDrag() {
-      document.removeEventListener('mousemove', onDrag);
-      document.removeEventListener('touchmove', onDrag);
-      document.removeEventListener('mouseup', stopDrag);
-      document.removeEventListener('touchend', stopDrag);
-    }
-
-    // Máy tính
-    let calcVal = '0';
-    function calcNum(num) {
-      calcVal = calcVal === '0' ? num : calcVal + num;
-      document.getElementById('calc-val').innerText = calcVal;
-    }
-    function calcReset() {
-      calcVal = '0';
-      document.getElementById('calc-val').innerText = calcVal;
-    }
-
-    // Safari
-    function loadWeb() {
-      let url = document.getElementById('web-url').value;
-      if (!url.startsWith('http')) url = 'https://' + url;
-      document.getElementById('web-frame').src = url;
-    }
-
-    // Camera
-    let streamRef = null;
-    async function startCamera() {
-      try {
-        streamRef = await navigator.mediaDevices.getUserMedia({ video: true });
-        document.getElementById('webcam').srcObject = streamRef;
-      } catch (err) {
-        alert("Không thể truy cập Camera.");
-      }
-    }
-    function stopCamera() {
-      if (streamRef) {
-        streamRef.getTracks().forEach(track => track.stop());
-        streamRef = null;
-      }
-    }
-  </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mô phỏng iOS Interactive + Google & Play Store</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body {
-      background: #121212;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    }
-    
-    /* Khung iPhone */
-    #phone {
-      width: 360px;
-      height: 740px;
-      background: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000') center/cover;
-      border-radius: 50px;
-      border: 12px solid #2d2d2d;
-      position: relative;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.8);
-      overflow: hidden;
-    }
-
-    /* Tai thỏ & Thanh trạng thái */
-    .notch {
-      width: 130px;
-      height: 28px;
-      background: #000;
-      margin: 0 auto;
-      border-bottom-left-radius: 18px;
-      border-bottom-right-radius: 18px;
-      position: absolute;
-      top: 0; left: 50%;
-      transform: translateX(-50%);
-      z-index: 100;
-    }
-    .status-bar {
-      position: absolute;
-      top: 6px; width: 100%;
-      padding: 0 24px;
-      display: flex;
-      justify-content: space-between;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 600;
-      z-index: 90;
-    }
-
-    /* Màn hình chính */
-    .home-screen {
-      padding-top: 60px;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      padding: 20px;
-    }
-    .app-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      cursor: pointer;
-    }
-    .app-icon {
-      width: 58px;
-      height: 58px;
-      background: rgba(255,255,255,0.2);
-      backdrop-filter: blur(15px);
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      transition: transform 0.1s;
-    }
-    .app-icon:active { transform: scale(0.9); }
-    .app-name {
-      color: #fff;
-      font-size: 11px;
-      margin-top: 5px;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-      text-align: center;
-    }
-
-    /* Dock bên dưới */
-    .dock {
-      margin: 20px 15px;
-      height: 78px;
-      background: rgba(255,255,255,0.25);
-      backdrop-filter: blur(20px);
-      border-radius: 28px;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      padding: 0 10px;
-    }
-
-    /* Cửa sổ ứng dụng */
-    .app-window {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: #fff;
-      z-index: 80;
-      display: none;
-      flex-direction: column;
-      padding-top: 40px;
-      animation: openApp 0.3s ease-out forwards;
-    }
-    .app-window.active { display: flex; }
-
-    @keyframes openApp {
-      from { transform: scale(0.7); opacity: 0; border-radius: 40px; }
-      to { transform: scale(1); opacity: 1; border-radius: 0; }
-    }
-
-    /* Thanh Gạch Home ở đáy */
-    .home-bar {
-      position: absolute;
-      bottom: 8px; left: 50%;
-      transform: translateX(-50%);
-      width: 120px;
-      height: 5px;
-      background: #fff;
-      border-radius: 10px;
-      z-index: 200;
-      cursor: pointer;
-    }
-
-    /* NÚT HOME ẢO (AssistiveTouch) */
-    #assistive-touch {
-      position: absolute;
-      top: 450px;
-      right: 15px;
-      width: 58px;
-      height: 58px;
-      background: rgba(0, 0, 0, 0.55);
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 18px;
-      z-index: 300;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: grab;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      backdrop-filter: blur(8px);
-    }
-    .touch-inner {
-      width: 36px;
-      height: 36px;
-      background: rgba(255, 255, 255, 0.85);
-      border-radius: 50%;
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
-      pointer-events: none;
-    }
-
-    /* MENU NÚT HOME ẢO */
-    #touch-menu {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(12px);
-      z-index: 350;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-    #touch-menu.active { display: flex; }
-    .menu-grid {
-      width: 240px;
-      height: 240px;
-      background: rgba(30, 30, 30, 0.85);
-      border-radius: 30px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(3, 1fr);
-      padding: 15px;
-      gap: 10px;
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    .menu-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 11px;
-      cursor: pointer;
-    }
-    .menu-item-icon { font-size: 26px; margin-bottom: 4px; }
-
-    /* Giao diện Google */
-    .google-body { height: 100%; display: flex; flex-direction: column; background: #fff; }
-    .google-search-bar { padding: 10px; background: #f8f9fa; display: flex; gap: 5px; border-bottom: 1px solid #ddd; }
-    .google-search-bar input {
-      flex: 1; padding: 10px 15px; border-radius: 20px; border: 1px solid #ccc; outline: none; font-size: 14px;
-    }
-    .google-search-bar button { padding: 0 15px; border-radius: 15px; border: none; background: #1a73e8; color: white; cursor: pointer; }
-    .google-content { flex: 1; border: none; }
-
-    /* Giao diện CH Play */
-    .store-header { padding: 15px; background: #fff; border-bottom: 1px solid #eee; }
-    .store-title { font-size: 20px; font-weight: bold; color: #202124; }
-    .store-list { padding: 15px; background: #f8f9fa; height: 100%; overflow-y: auto; }
-    .store-card {
-      background: #fff; padding: 12px; border-radius: 12px; margin-bottom: 12px;
-      display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }
-    .store-card-info { display: flex; align-items: center; gap: 12px; }
-    .store-card-icon { font-size: 32px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: #eee; border-radius: 10px; }
-    .btn-install {
-      background: #01875f; color: #fff; border: none; padding: 6px 16px;
-      border-radius: 15px; font-weight: bold; cursor: pointer;
-    }
-
-    /* Các App cũ */
-    .calc-screen { background: #000; height: 100%; color: #fff; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; }
-    .calc-display { font-size: 48px; text-align: right; margin-bottom: 20px; }
-    .calc-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .calc-btn { height: 60px; border-radius: 50%; border: none; font-size: 20px; color: #fff; background: #333; cursor: pointer; }
-    .calc-btn.orange { background: #ff9f0a; }
-    .calc-btn.gray { background: #a5a5a5; color: #000; }
-
-    .safari-body { height: 100%; display: flex; flex-direction: column; }
-    .safari-bar { padding: 10px; background: #f1f1f1; display: flex; gap: 5px; }
-    .safari-bar input { flex: 1; padding: 8px 12px; border-radius: 10px; border: 1px solid #ccc; outline: none; }
-
-    .settings-list { padding: 20px; background: #f2f2f7; height: 100%; }
-    .settings-item { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; font-weight: 500; }
-  </style>
-</head>
-<body>
-
-  <div id="phone">
-    <div class="notch"></div>
-    <div class="status-bar">
-      <span id="clock">09:41</span>
-      <span>📶 🔋</span>
-    </div>
-
-    <!-- Nút Home Ảo (AssistiveTouch) -->
-    <div id="assistive-touch" onclick="toggleMenu(event)">
-      <div class="touch-inner"></div>
-    </div>
-
-    <!-- Menu Nút Home Ảo -->
-    <div id="touch-menu" onclick="closeMenu()">
-      <div class="menu-grid" onclick="event.stopPropagation()">
-        <div></div>
-        <div class="menu-item" onclick="closeAllApps(); closeMenu();">
-          <div class="menu-item-icon">🏠</div>
-          <span>Trang chủ</span>
-        </div>
-        <div></div>
-        <div class="menu-item" onclick="openApp('google'); closeMenu();">
-          <div class="menu-item-icon">🔍</div>
-          <span>Google</span>
-        </div>
-        <div class="menu-item" onclick="closeMenu();">
-          <div class="menu-item-icon">⭕</div>
-          <span>Đóng</span>
-        </div>
-        <div class="menu-item" onclick="openApp('playstore'); closeMenu();">
-          <div class="menu-item-icon">▶️</div>
-          <span>CH Play</span>
-        </div>
-        <div></div>
-        <div class="menu-item" onclick="openApp('camera'); closeMenu();">
-          <div class="menu-item-icon">📷</div>
-          <span>Camera</span>
-        </div>
-        <div></div>
-      </div>
-    </div>
-
-    <!-- Màn hình chính -->
-    <div class="home-screen">
-      <div class="grid">
-        <div class="app-item" onclick="openApp('google')">
-          <div class="app-icon" style="background:#fff;">🔍</div>
-          <span class="app-name">Google</span>
-        </div>
-        <div class="app-item" onclick="openApp('playstore')">
-          <div class="app-icon" style="background:#fff;">▶️</div>
-          <span class="app-name">CH Play</span>
-        </div>
-        <div class="app-item" onclick="openApp('calculator')">
-          <div class="app-icon" style="background:#ff9f0a">🧮</div>
-          <span class="app-name">Máy tính</span>
-        </div>
-        <div class="app-item" onclick="openApp('safari')">
-          <div class="app-icon" style="background:#007aff">🌐</div>
-          <span class="app-name">Safari</span>
-        </div>
-        <div class="app-item" onclick="openApp('settings')">
-          <div class="app-icon" style="background:#8e8e93">⚙️</div>
-          <span class="app-name">Cài đặt</span>
-        </div>
-        <div class="app-item" onclick="openApp('camera')">
-          <div class="app-icon" style="background:#34c759">📷</div>
-          <span class="app-name">Camera</span>
-        </div>
-      </div>
-
-      <div class="dock">
-        <div class="app-icon">📞</div>
-        <div class="app-icon">💬</div>
-        <div class="app-icon">✉️</div>
-        <div class="app-icon">🎵</div>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: Google -->
-    <div id="app-google" class="app-window">
-      <div class="google-body">
-        <div class="google-search-bar">
-          <input type="text" id="google-query" value="https://www.google.com/search?igu=1" placeholder="Tìm kiếm trên Google...">
-          <button onclick="searchGoogle()">Tìm</button>
-        </div>
-        <iframe id="google-frame" class="google-content" src="https://www.google.com/search?igu=1"></iframe>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: CH Play -->
-    <div id="app-playstore" class="app-window">
-      <div class="store-header">
-        <div class="store-title">Google Play</div>
-      </div>
-      <div class="store-list">
-        <div class="store-card">
-          <div class="store-card-info">
-            <div class="store-card-icon">🎮</div>
-            <div>
-              <strong style="font-size:14px;">Subway Surfers</strong>
-              <div style="font-size:11px; color:#666;">Trò chơi</div>
-            </div>
-          </div>
-          <button class="btn-install" onclick="installApp('Subway Surfers')">Cài đặt</button>
-        </div>
-
-        <div class="store-card">
-          <div class="store-card-info">
-            <div class="store-card-icon">🎵</div>
-            <div>
-              <strong style="font-size:14px;">TikTok</strong>
-              <div style="font-size:11px; color:#666;">Mạng xã hội</div>
-            </div>
-          </div>
-          <button class="btn-install" onclick="installApp('TikTok')">Cài đặt</button>
-        </div>
-
-        <div class="store-card">
-          <div class="store-card-info">
-            <div class="store-card-icon">📘</div>
-            <div>
-              <strong style="font-size:14px;">Facebook</strong>
-              <div style="font-size:11px; color:#666;">Mạng xã hội</div>
-            </div>
-          </div>
-          <button class="btn-install" onclick="installApp('Facebook')">Cài đặt</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: Máy tính -->
-    <div id="app-calculator" class="app-window">
-      <div class="calc-screen">
-        <div class="calc-display" id="calc-val">0</div>
-        <div class="calc-btns">
-          <button class="calc-btn gray" onclick="calcReset()">C</button>
-          <button class="calc-btn gray">±</button>
-          <button class="calc-btn gray">%</button>
-          <button class="calc-btn orange">÷</button>
-          <button class="calc-btn" onclick="calcNum('7')">7</button>
-          <button class="calc-btn" onclick="calcNum('8')">8</button>
-          <button class="calc-btn" onclick="calcNum('9')">9</button>
-          <button class="calc-btn orange">×</button>
-          <button class="calc-btn" onclick="calcNum('4')">4</button>
-          <button class="calc-btn" onclick="calcNum('5')">5</button>
-          <button class="calc-btn" onclick="calcNum('6')">6</button>
-          <button class="calc-btn orange">-</button>
-          <button class="calc-btn" onclick="calcNum('1')">1</button>
-          <button class="calc-btn" onclick="calcNum('2')">2</button>
-          <button class="calc-btn" onclick="calcNum('3')">3</button>
-          <button class="calc-btn orange">+</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: Safari -->
-    <div id="app-safari" class="app-window">
-      <div class="safari-body">
-        <div class="safari-bar">
-          <input type="text" id="web-url" value="https://bing.com" placeholder="Nhập địa chỉ web...">
-          <button onclick="loadWeb()" style="padding:0 10px; border-radius:8px;">Đi</button>
-        </div>
-        <iframe id="web-frame" class="google-content" src="https://bing.com"></iframe>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: Cài đặt -->
-    <div id="app-settings" class="app-window">
-      <div class="settings-list">
-        <h2>Cài đặt</h2><br>
-        <div class="settings-item"><span>Wi-Fi</span><span>Bật 🔵</span></div>
-        <div class="settings-item"><span>Bluetooth</span><span>Tắt ⚪</span></div>
-        <div class="settings-item"><span>Chế độ máy bay</span><span>OFF</span></div>
-        <div class="settings-item"><span>Dung lượng</span><span>128 GB</span></div>
-      </div>
-    </div>
-
-    <!-- Cửa sổ App: Camera -->
-    <div id="app-camera" class="app-window" style="background:#000;">
-      <video id="webcam" autoplay playsinline style="width:100%; height:80%; object-fit:cover; margin-top:auto;"></video>
-    </div>
-
-    <!-- Thanh gạch Home dưới cùng -->
-    <div class="home-bar" onclick="closeAllApps()"></div>
-  </div>
-
-  <script>
-    // Đồng hồ thời gian thực
-    function updateClock() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById('clock').innerText = `${hours}:${minutes}`;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // Mở & Đóng App
-    function openApp(appName) {
-      closeAllApps();
-      const appWin = document.getElementById(`app-${appName}`);
-      if (appWin) {
-        appWin.classList.add('active');
-        if(appName === 'camera') startCamera();
-      }
-    }
-
-    function closeAllApps() {
-      document.querySelectorAll('.app-window').forEach(win => win.classList.remove('active'));
-      stopCamera();
-    }
-
-    // Logic Nút Home ảo
-    function toggleMenu(e) {
-      if (isDragging) return;
-      document.getElementById('touch-menu').classList.toggle('active');
-    }
-
-    function closeMenu() {
-      document.getElementById('touch-menu').classList.remove('active');
-    }
-
-    // Kéo thả Nút Home Ảo
-    const touchBtn = document.getElementById('assistive-touch');
-    const phone = document.getElementById('phone');
-    let isDragging = false;
-    let offsetX, offsetY;
-
-    touchBtn.addEventListener('mousedown', startDrag);
-    touchBtn.addEventListener('touchstart', startDrag, {passive: false});
-
-    function startDrag(e) {
-      isDragging = false;
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const rect = touchBtn.getBoundingClientRect();
-      
-      offsetX = clientX - rect.left;
-      offsetY = clientY - rect.top;
-
-      document.addEventListener('mousemove', onDrag);
-      document.addEventListener('touchmove', onDrag, {passive: false});
-      document.addEventListener('mouseup', stopDrag);
-      document.addEventListener('touchend', stopDrag);
-    }
-
-    function onDrag(e) {
-      isDragging = true;
-      e.preventDefault();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const phoneRect = phone.getBoundingClientRect();
-
-      let x = clientX - phoneRect.left - offsetX;
-      let y = clientY - phoneRect.top - offsetY;
-
-      x = Math.max(5, Math.min(x, phoneRect.width - 63));
-      y = Math.max(30, Math.min(y, phoneRect.height - 63));
-
-      touchBtn.style.left = `${x}px`;
-      touchBtn.style.top = `${y}px`;
-      touchBtn.style.right = 'auto';
-    }
-
-    function stopDrag() {
-      document.removeEventListener('mousemove', onDrag);
-      document.removeEventListener('touchmove', onDrag);
-      document.removeEventListener('mouseup', stopDrag);
-      document.removeEventListener('touchend', stopDrag);
-    }
-
-    // Google Search Logic
-    function searchGoogle() {
-      let query = document.getElementById('google-query').value;
-      if (!query.startsWith('http')) {
-        query = 'https://www.google.com/search?q=' + encodeURIComponent(query) + '&igu=1';
-      }
-      document.getElementById('google-frame').src = query;
-    }
-
-    // CH Play Logic
-    function installApp(appName) {
-      alert(`Đã cài đặt thành công ${appName}! (Ứng dụng đã sẵn sàng)`);
-    }
-
-    // Máy tính
-    let calcVal = '0';
-    function calcNum(num) {
-      calcVal = calcVal === '0' ? num : calcVal + num;
-      document.getElementById('calc-val').innerText = calcVal;
-    }
-    function calcReset() {
-      calcVal = '0';
-      document.getElementById('calc-val').innerText = calcVal;
-    }
-
-    // Safari
-    function loadWeb() {
-      let url = document.getElementById('web-url').value;
-      if (!url.startsWith('http')) url = 'https://' + url;
-      document.getElementById('web-frame').src = url;
-    }
-
-    // Camera
-    let streamRef = null;
-    async function startCamera() {
-      try {
-        streamRef = await navigator.mediaDevices.getUserMedia({ video: true });
-        document.getElementById('webcam').srcObject = streamRef;
-      } catch (err) {
-        alert("Không thể truy cập Camera.");
-      }
-    }
-    function stopCamera() {
-      if (streamRef) {
-        streamRef.getTracks().forEach(track => track.stop());
-        streamRef = null;
-      }
-    }
-  </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mô phỏng iOS - Tải & Cài đặt APK</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body {
-      background: #121212;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    }
-    
-    /* Khung iPhone */
-    #phone {
-      width: 360px;
-      height: 740px;
-      background: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000') center/cover;
-      border-radius: 50px;
-      border: 12px solid #2d2d2d;
-      position: relative;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.8);
-      overflow: hidden;
-    }
-
-    /* Notch & Status bar */
-    .notch {
-      width: 130px; height: 28px; background: #000; margin: 0 auto;
-      border-bottom-left-radius: 18px; border-bottom-right-radius: 18px;
-      position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 100;
-    }
-    .status-bar {
-      position: absolute; top: 6px; width: 100%; padding: 0 24px;
-      display: flex; justify-content: space-between; color: #fff; font-size: 12px; font-weight: 600; z-index: 90;
-    }
-
-    /* Màn hình chính */
-    .home-screen {
-      padding-top: 60px; height: 100%; display: flex; flex-direction: column; justify-content: space-between;
-    }
-    .grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 20px;
-    }
-    .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-    .app-icon {
-      width: 58px; height: 58px; background: rgba(255,255,255,0.2);
-      backdrop-filter: blur(15px); border-radius: 14px; display: flex;
-      align-items: center; justify-content: center; font-size: 28px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.1s;
-    }
-    .app-icon:active { transform: scale(0.9); }
-    .app-name { color: #fff; font-size: 11px; margin-top: 5px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); text-align: center; }
-
-    .dock {
-      margin: 20px 15px; height: 78px; background: rgba(255,255,255,0.25);
-      backdrop-filter: blur(20px); border-radius: 28px; display: flex;
-      justify-content: space-around; align-items: center; padding: 0 10px;
-    }
-
-    /* Cửa sổ App */
-    .app-window {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: #fff; z-index: 80; display: none; flex-direction: column; padding-top: 40px;
-      animation: openApp 0.3s ease-out forwards;
-    }
-    .app-window.active { display: flex; }
-
-    @keyframes openApp {
-      from { transform: scale(0.7); opacity: 0; border-radius: 40px; }
-      to { transform: scale(1); opacity: 1; border-radius: 0; }
-    }
-
-    .home-bar {
-      position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-      width: 120px; height: 5px; background: #fff; border-radius: 10px; z-index: 200; cursor: pointer;
-    }
-
-    /* Assistive Touch */
-    #assistive-touch {
-      position: absolute; top: 450px; right: 15px; width: 58px; height: 58px;
-      background: rgba(0, 0, 0, 0.55); border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 18px; z-index: 300; display: flex; align-items: center; justify-content: center; cursor: grab;
-      backdrop-filter: blur(8px);
-    }
-    .touch-inner { width: 36px; height: 36px; background: rgba(255, 255, 255, 0.85); border-radius: 50%; }
-
-    /* CH Play & APK Installer */
-    .store-header { padding: 15px; background: #fff; border-bottom: 1px solid #eee; }
-    .store-title { font-size: 20px; font-weight: bold; color: #202124; }
-    .store-list { padding: 15px; background: #f8f9fa; height: 100%; overflow-y: auto; }
-    
-    .apk-installer-box {
-      background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px dashed #01875f;
-    }
-    .apk-installer-box input {
-      width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; margin: 8px 0; outline: none;
-    }
-
-    .store-card {
-      background: #fff; padding: 12px; border-radius: 12px; margin-bottom: 12px;
-      display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }
-    .store-card-info { display: flex; align-items: center; gap: 12px; }
-    .store-card-icon { font-size: 32px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: #eee; border-radius: 10px; }
-    
-    .btn-install {
-      background: #01875f; color: #fff; border: none; padding: 8px 14px;
-      border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 12px;
-    }
-
-    /* Modal Tiến trình cài đặt APK */
-    #install-modal {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7); z-index: 400; display: none;
-      align-items: center; justify-content: center; padding: 20px;
-    }
-    .install-card {
-      background: #fff; width: 100%; padding: 20px; border-radius: 20px; text-align: center;
-    }
-    .progress-bar-bg {
-      width: 100%; height: 10px; background: #eee; border-radius: 5px; margin: 15px 0; overflow: hidden;
-    }
-    .progress-bar-fill {
-      width: 0%; height: 100%; background: #01875f; transition: width 0.2s;
-    }
-  </style>
-</head>
-<body>
-
-  <div id="phone">
-    <div class="notch"></div>
-    <div class="status-bar">
-      <span id="clock">09:41</span>
-      <span>📶 🔋</span>
-    </div>
-
-    <!-- AssistiveTouch -->
-    <div id="assistive-touch" onclick="closeAllApps()">
-      <div class="touch-inner"></div>
-    </div>
-
-    <!-- Màn hình chính -->
-    <div class="home-screen">
-      <div class="grid" id="app-grid">
-        <div class="app-item" onclick="openApp('playstore')">
-          <div class="app-icon" style="background:#fff;">▶️</div>
-          <span class="app-name">CH Play / APK</span>
-        </div>
-        <div class="app-item" onclick="openApp('calculator')">
-          <div class="app-icon" style="background:#ff9f0a">🧮</div>
-          <span class="app-name">Máy tính</span>
-        </div>
-        <div class="app-item" onclick="openApp('settings')">
-          <div class="app-icon" style="background:#8e8e93">⚙️</div>
-          <span class="app-name">Cài đặt</span>
-        </div>
-      </div>
-
-      <div class="dock">
-        <div class="app-icon">📞</div>
-        <div class="app-icon">💬</div>
-        <div class="app-icon">✉️</div>
-        <div class="app-icon">🎵</div>
-      </div>
-    </div>
-
-    <!-- Cửa sổ CH Play & Cài APK -->
-    <div id="app-playstore" class="app-window">
-      <div class="store-header">
-        <div class="store-title">Trình cài đặt APK & CH Play</div>
-      </div>
-      <div class="store-list">
-        
-        <!-- Ô Nhập Link APK Ngoại Mạng -->
-        <div class="apk-installer-box">
-          <strong style="font-size:13px; color:#333;">📦 Cài ứng dụng từ File APK (Link)</strong>
-          <input type="text" id="apk-url" placeholder="Dán đường dẫn .apk vào đây...">
-          <button class="btn-install" style="width:100%; margin-top:5px;" onclick="installCustomAPK()">Cài đặt APK này</button>
-        </div>
-
-        <strong style="font-size:14px; color:#555; display:block; margin-bottom:10px;">Ứng dụng APK phổ biến</strong>
-
-        <div class="store-card">
-          <div class="store-card-info">
-            <div class="store-card-icon">🎮</div>
-            <div>
-              <strong style="font-size:14px;">Flappy Bird</strong>
-              <div style="font-size:11px; color:#666;">File APK: 2.5 MB</div>
-            </div>
-          </div>
-          <button class="btn-install" onclick="startAPKInstall('Flappy Bird', '🐤', 'https://example.com/flappy.apk')">Tải & Cài APK</button>
-        </div>
-
-        <div class="store-card">
-          <div class="store-card-info">
-            <div class="store-card-icon">🎵</div>
-            <div>
-              <strong style="font-size:14px;">TikTok Lite</strong>
-              <div style="font-size:11px; color:#666;">File APK: 15 MB</div>
-            </div>
-          </div>
-          <button class="btn-install" onclick="startAPKInstall('TikTok Lite', '🎵', 'https://example.com/tiktok.apk')">Tải & Cài APK</button>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- Cửa sổ App động cho APK cài thêm -->
-    <div id="app-dynamic" class="app-window">
-      <div style="padding:20px; text-align:center;" id="dynamic-content">
-        <h2>Ứng dụng APK</h2>
-      </div>
-    </div>
-
-    <!-- Modal Tiến trình cài đặt APK -->
-    <div id="install-modal">
-      <div class="install-card">
-        <div id="install-icon" style="font-size:40px; margin-bottom:10px;">📦</div>
-        <h3 id="install-title">Đang quét tệp APK...</h3>
-        <p style="font-size:12px; color:#666; margin-top:5px;" id="install-status">Đang giải nén gói cài đặt...</p>
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill" id="progress-fill"></div>
-        </div>
-        <span id="progress-text" style="font-size:12px; font-weight:bold;">0%</span>
-      </div>
-    </div>
-
-    <!-- Máy tính -->
-    <div id="app-calculator" class="app-window">
-      <div style="padding:20px;"><h2>Máy tính</h2></div>
-    </div>
-    
-    <!-- Cài đặt -->
-    <div id="app-settings" class="app-window">
-      <div style="padding:20px;"><h2>Cài đặt</h2></div>
-    </div>
-
-    <div class="home-bar" onclick="closeAllApps()"></div>
-  </div>
-
-  <script>
-    function updateClock() {
-      const now = new Date();
-      document.getElementById('clock').innerText = 
-        `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    function openApp(appName) {
-      closeAllApps();
-      const appWin = document.getElementById(`app-${appName}`);
-      if (appWin) appWin.classList.add('active');
-    }
-
-    function closeAllApps() {
-      document.querySelectorAll('.app-window').forEach(win => win.classList.remove('active'));
-    }
-
-    // Xử lý Cài đặt APK
-    function installCustomAPK() {
-      const url = document.getElementById('apk-url').value;
-      if (!url) {
-        alert("Vui lòng dán link file .apk vào ô!");
-        return;
-      }
-      startAPKInstall("App Tùy Chỉnh", "📱", url);
-    }
-
-    function startAPKInstall(appName, icon, downloadUrl) {
-      const modal = document.getElementById('install-modal');
-      const fill = document.getElementById('progress-fill');
-      const text = document.getElementById('progress-text');
-      const title = document.getElementById('install-title');
-      const status = document.getElementById('install-status');
-      
-      document.getElementById('install-icon').innerText = icon;
-      title.innerText = `Đang cài đặt ${appName}`;
-      status.innerText = "Đang tải xuống tệp APK...";
-      modal.style.display = 'flex';
-      
-      let progress = 0;
-      fill.style.width = '0%';
-      text.innerText = '0%';
-
-      // Tự động kích hoạt tải file thật về thiết bị nếu đường dẫn hợp lệ
-      if (downloadUrl && downloadUrl.startsWith('http')) {
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = `${appName}.apk`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      }
-
-      // Giả lập tiến trình cài đặt
-      const interval = setInterval(() => {
-        progress += Math.floor(Math.random() * 15) + 5;
-        if (progress >= 100) {
-          progress = 100;
-          clearInterval(interval);
-          status.innerText = "Phân tích gói & Tạo biểu tượng...";
-          
-          setTimeout(() => {
-            modal.style.display = 'none';
-            addAppToHomeScreen(appName, icon);
-            alert(`Cài đặt thành công ${appName}! Biểu tượng đã được thêm ra màn hình chính.`);
-          }, 800);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trình Giả Lập Điện Thoại Đám Mây (Cloud Phone)</title>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: #1e293b;
+            --border-color: #334155;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --phone-border: #1e1e24;
+            --phone-screen: #000000;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
         }
-        fill.style.width = progress + '%';
-        text.innerText = progress + '%';
-      }, 300);
-    }
 
-    // Tạo App mới ra màn hình chính sau khi cài APK thành công
-    function addAppToHomeScreen(name, icon) {
-      const grid = document.getElementById('app-grid');
-      const appId = 'apk-' + Date.now();
-      
-      const appHTML = `
-        <div class="app-item" onclick="openDynamicApp('${name}', '${icon}')">
-          <div class="app-icon" style="background:#333; color:#fff;">${icon}</div>
-          <span class="app-name">${name}</span>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        /* Container Layout */
+        .simulator-container {
+            display: flex;
+            gap: 24px;
+            max-width: 1200px;
+            width: 100%;
+            height: 640px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Left Side Panel - Control Center */
+        .control-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: var(--panel-bg);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .panel-header h2 {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #60a5fa;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .setting-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+        }
+
+        select, button.action-btn {
+            background: #0f172a;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            outline: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        select:hover, button.action-btn:hover {
+            border-color: var(--accent-color);
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .btn-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            background: var(--accent-color);
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        /* Phone Frame */
+        .phone-wrapper {
+            position: relative;
+            width: 290px;
+            height: 580px;
+            background: var(--phone-border);
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8), inset 0 0 4px rgba(255,255,255,0.2);
+            border: 2px solid #2a2a35;
+            display: flex;
+            flex-direction: column;
+            align-self: center;
+        }
+
+        /* Phone Hardware Buttons */
+        .phone-btn-power {
+            position: absolute;
+            right: -6px;
+            top: 100px;
+            width: 4px;
+            height: 40px;
+            background: #2a2a35;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+
+        .phone-btn-vol-up {
+            position: absolute;
+            left: -6px;
+            top: 80px;
+            width: 4px;
+            height: 35px;
+            background: #2a2a35;
+            border-radius: 4px 0 0 4px;
+            cursor: pointer;
+        }
+
+        .phone-btn-vol-down {
+            position: absolute;
+            left: -6px;
+            top: 125px;
+            width: 4px;
+            height: 35px;
+            background: #2a2a35;
+            border-radius: 4px 0 0 4px;
+            cursor: pointer;
+        }
+
+        .phone-screen {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: var(--phone-screen);
+            border-radius: 30px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Dynamic Island / Notch */
+        .notch {
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 18px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 6px;
+        }
+
+        .camera-lens {
+            width: 8px;
+            height: 8px;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 50%;
+        }
+
+        /* Top Status Bar */
+        .status-bar {
+            height: 28px;
+            padding: 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
+            color: #fff;
+            z-index: 100;
+            margin-top: 2px;
+        }
+
+        .status-bar-icons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        /* Android Screen Content */
+        .app-display {
+            flex: 1;
+            position: relative;
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            overflow: hidden;
+        }
+
+        /* Launcher Home Screen */
+        .home-screen {
+            position: absolute;
+            inset: 0;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.3s ease;
+        }
+
+        .widget-clock {
+            margin-top: 20px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .widget-clock .time {
+            font-size: 2.5rem;
+            font-weight: 200;
+            letter-spacing: -1px;
+        }
+
+        .widget-clock .date {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px 8px;
+            margin-bottom: 10px;
+        }
+
+        .app-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+
+        .app-icon:active {
+            transform: scale(0.9);
+        }
+
+        .icon-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .app-name {
+            font-size: 0.65rem;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+
+        /* Views (Individual App Windows) */
+        .app-view {
+            position: absolute;
+            inset: 0;
+            background: #1e293b;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .app-view.active {
+            transform: translateY(0);
+        }
+
+        .app-header {
+            height: 40px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .app-body {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+        }
+
+        /* Specific App Views */
+        /* 1. Cloud Gaming Sim */
+        .game-canvas {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #gameBall {
+            width: 24px;
+            height: 24px;
+            background: #3b82f6;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 0 15px #3b82f6;
+        }
+
+        .game-stats {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0,0,0,0.6);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.65rem;
+            color: #22c55e;
+        }
+
+        /* 2. Performance Monitor App */
+        .perf-chart-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .perf-bar-bg {
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .perf-bar-fill {
+            height: 100%;
+            background: var(--accent-color);
+            width: 40%;
+            transition: width 0.5s ease;
+        }
+
+        /* Bottom Nav Bar */
+        .nav-bar {
+            height: 32px;
+            background: #000;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 4px 12px;
+            transition: color 0.2s;
+        }
+
+        .nav-btn:hover {
+            color: #fff;
+        }
+
+        /* Toast Notice */
+        .toast {
+            position: absolute;
+            bottom: 45px;
+            left: 50%;
+            transform: translateX(-50%) translateY(50px);
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--accent-color);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+            z-index: 2000;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Stream Latency Overlay inside Screen */
+        .stream-overlay {
+            position: absolute;
+            top: 32px;
+            right: 8px;
+            background: rgba(0,0,0,0.5);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-family: monospace;
+            color: #22c55e;
+            z-index: 99;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="simulator-container">
+    
+    <!-- Left Control Dashboard -->
+    <div class="control-panel">
+        <div class="panel-header">
+            <h2><i data-lucide="cloud"></i> Cloud Phone Instance</h2>
+            <div class="status-badge">
+                <div class="pulse-dot"></div>
+                <span id="instanceState">Đang chạy</span>
+            </div>
         </div>
-      `;
-      grid.insertAdjacentHTML('beforeend', appHTML);
+
+        <!-- Spec Config -->
+        <div class="section-title">Cấu hình Đám mây (Specs)</div>
+        <div class="setting-group">
+            <div class="setting-item">
+                <span class="setting-label"><i data-lucide="cpu" size="16"></i> CPU ảo (vCPU)</span>
+                <select id="cpuSelect">
+                    <option value="4">4 Cores</option>
+                    <option value="8" selected>8 Cores (Khuyên dùng)</option>
+                    <option value="16">16 Cores Ultra</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label"><i data-lucide="memory-stick" size="16"></i> RAM ảo (vRAM)</span>
+                <select id="ramSelect">
+                    <option value="8">8 GB</option>
+                    <option value="16" selected>16 GB</option>
+                    <option value="32">32 GB Gaming</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label"><i data-lucide="globe" size="16"></i> Khu vực Server</span>
+                <select id="regionSelect">
+                    <option value="sg">Singapore (12ms)</option>
+                    <option value="hk">Hong Kong (28ms)</option>
+                    <option value="jp">Japan (45ms)</option>
+                    <option value="us">US West (160ms)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Streaming Config -->
+        <div class="section-title">Luồng Truyền Tải (Stream Quality)</div>
+        <div class="setting-group">
+            <div class="setting-item">
+                <span class="setting-label"><i data-lucide="monitor" size="16"></i> Độ phân giải</span>
+                <select id="resSelect">
+                    <option value="720p">720p HD (Tiết kiệm Băng thông)</option>
+                    <option value="1080p" selected>1080p FHD (Tối ưu)</option>
+                    <option value="2k">2K QHD (Sắc nét)</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label"><i data-lucide="gauge" size="16"></i> Tốc độ khung hình</span>
+                <select id="fpsSelect">
+                    <option value="30">30 FPS</option>
+                    <option value="60" selected>60 FPS</option>
+                    <option value="120">120 FPS Ultra</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section-title">Thao tác Nhanh</div>
+        <div class="btn-grid">
+            <button class="btn-action" id="btnScreenshot"><i data-lucide="camera" size="16"></i> Chụp ảnh</button>
+            <button class="btn-action" id="btnClipboard"><i data-lucide="clipboard" size="16"></i> Đồng bộ Khay nhớ</button>
+            <button class="btn-action" id="btnRotate"><i data-lucide="screen-share-off" size="16"></i> Xoay màn hình</button>
+            <button class="btn-action btn-danger" id="btnReboot"><i data-lucide="rotate-ccw" size="16"></i> Khởi động lại</button>
+        </div>
+    </div>
+
+    <!-- Right Phone Device -->
+    <div class="phone-wrapper">
+        <!-- Hardware buttons -->
+        <div class="phone-btn-power" id="hwPower" title="Nguồn"></div>
+        <div class="phone-btn-vol-up" id="hwVolUp" title="Tăng âm lượng"></div>
+        <div class="phone-btn-vol-down" id="hwVolDown" title="Giảm âm lượng"></div>
+
+        <div class="phone-screen" id="phoneScreen">
+            <!-- Dynamic Island -->
+            <div class="notch">
+                <div class="camera-lens"></div>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span id="clockTime">12:00</span>
+                <div class="status-bar-icons">
+                    <i data-lucide="wifi" size="12"></i>
+                    <i data-lucide="signal" size="12"></i>
+                    <i data-lucide="battery-charging" size="12"></i>
+                </div>
+            </div>
+
+            <!-- Stream Overlay info -->
+            <div class="stream-overlay" id="streamOverlay">12ms | 60 FPS</div>
+
+            <!-- Display Area -->
+            <div class="app-display">
+                
+                <!-- Home Launcher -->
+                <div class="home-screen" id="homeScreen">
+                    <div class="widget-clock">
+                        <div class="time" id="homeTime">12:00</div>
+                        <div class="date" id="homeDate">Thứ Bảy, 1 Tháng 8</div>
+                    </div>
+
+                    <div class="app-grid">
+                        <div class="app-icon" data-app="game">
+                            <div class="icon-box" style="background: linear-gradient(45deg, #f59e0b, #ef4444);">
+                                <i data-lucide="gamepad-2"></i>
+                            </div>
+                            <span class="app-name">Cloud Game</span>
+                        </div>
+                        <div class="app-icon" data-app="browser">
+                            <div class="icon-box" style="background: linear-gradient(45deg, #3b82f6, #06b6d4);">
+                                <i data-lucide="globe"></i>
+                            </div>
+                            <span class="app-name">Trình duyệt</span>
+                        </div>
+                        <div class="app-icon" data-app="perf">
+                            <div class="icon-box" style="background: linear-gradient(45deg, #10b981, #059669);">
+                                <i data-lucide="activity"></i>
+                            </div>
+                            <span class="app-name">Giám sát</span>
+                        </div>
+                        <div class="app-icon" data-app="files">
+                            <div class="icon-box" style="background: linear-gradient(45deg, #8b5cf6, #6366f1);">
+                                <i data-lucide="folder"></i>
+                            </div>
+                            <span class="app-name">Tệp tin</span>
+                        </div>
+                        <div class="app-icon" data-app="settings">
+                            <div class="icon-box" style="background: linear-gradient(45deg, #64748b, #475569);">
+                                <i data-lucide="settings"></i>
+                            </div>
+                            <span class="app-name">Cài đặt</span>
+                        </div>
+                        <div class="app-icon" data-app="store">
+                            <div class="icon-box" style="background: linear-gradient(45deg, #ec4899, #f43f5e);">
+                                <i data-lucide="shopping-bag"></i>
+                            </div>
+                            <span class="app-name">Cửa hàng</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- APP 1: Cloud Game -->
+                <div class="app-view" id="app-game">
+                    <div class="app-header">
+                        <span>Cloud Gaming Simulation</span>
+                        <i data-lucide="x" size="16" class="close-app"></i>
+                    </div>
+                    <div class="app-body" style="padding:0;">
+                        <div class="game-canvas" id="gameArea">
+                            <div class="game-stats">Engine: Unity v2024.1<br>Render: Vulkan Cloud</div>
+                            <div id="gameBall"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- APP 2: Browser -->
+                <div class="app-view" id="app-browser">
+                    <div class="app-header">
+                        <span>Chrome Cloud</span>
+                        <i data-lucide="x" size="16" class="close-app"></i>
+                    </div>
+                    <div class="app-body">
+                        <div style="background: #0f172a; padding: 6px 10px; border-radius: 6px; margin-bottom: 12px; font-size: 0.75rem; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="lock" size="12"></i> https://cloud.google.com
+                        </div>
+                        <h3 style="margin-bottom: 8px;">Tải xuống Tốc độ cao</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 12px;">
+                            Kết nối băng thông máy chủ Cloud Phone lên tới 1Gbps, giúp tải và xử lý dữ liệu nặng trong vài giây.
+                        </p>
+                        <button class="btn-action" id="btnTestSpeed" style="width: 100%;"><i data-lucide="zap" size="14"></i> Kiểm tra Tốc độ Mạng Cloud</button>
+                        <div id="speedResult" style="margin-top: 10px; font-family: monospace; font-size: 0.75rem; color: #38bdf8;"></div>
+                    </div>
+                </div>
+
+                <!-- APP 3: Perf Monitor -->
+                <div class="app-view" id="app-perf">
+                    <div class="app-header">
+                        <span>Giám sát Hệ thống</span>
+                        <i data-lucide="x" size="16" class="close-app"></i>
+                    </div>
+                    <div class="app-body">
+                        <div class="perf-chart-box">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>sử dụng vCPU</span>
+                                <span id="cpuUsageText">24%</span>
+                            </div>
+                            <div class="perf-bar-bg">
+                                <div class="perf-bar-fill" id="cpuBar" style="width: 24%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="perf-chart-box">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>sử dụng vRAM</span>
+                                <span id="ramUsageText">4.2 / 16 GB</span>
+                            </div>
+                            <div class="perf-bar-bg">
+                                <div class="perf-bar-fill" id="ramBar" style="width: 30%; background: #a855f7;"></div>
+                            </div>
+                        </div>
+
+                        <div class="perf-chart-box">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Băng thông Stream</span>
+                                <span>18.4 Mbps</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generic view for other icons -->
+                <div class="app-view" id="app-generic">
+                    <div class="app-header">
+                        <span id="genericTitle">Ứng dụng</span>
+                        <i data-lucide="x" size="16" class="close-app"></i>
+                    </div>
+                    <div class="app-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--text-secondary);">
+                        <i data-lucide="box" size="40" style="margin-bottom: 8px;"></i>
+                        <p>Ứng dụng đang chạy hoàn toàn trên đám mây 24/7 mà không ảnh hưởng tới tài nguyên máy thật.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Android Nav Bar -->
+            <div class="nav-bar">
+                <div class="nav-btn" id="navRecents"><i data-lucide="square" size="14"></i></div>
+                <div class="nav-btn" id="navHome"><i data-lucide="circle" size="14"></i></div>
+                <div class="nav-btn" id="navBack"><i data-lucide="triangle" size="14" style="transform: rotate(-90deg);"></i></div>
+            </div>
+
+            <!-- Toast notification inside screen -->
+            <div class="toast" id="phoneToast">Ảnh màn hình đã lưu vào Cloud storage</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Elements
+    const clockTime = document.getElementById('clockTime');
+    const homeTime = document.getElementById('homeTime');
+    const homeDate = document.getElementById('homeDate');
+    const streamOverlay = document.getElementById('streamOverlay');
+    const phoneToast = document.getElementById('phoneToast');
+    const phoneScreen = document.getElementById('phoneScreen');
+
+    // System Settings Controls
+    const cpuSelect = document.getElementById('cpuSelect');
+    const ramSelect = document.getElementById('ramSelect');
+    const regionSelect = document.getElementById('regionSelect');
+    const resSelect = document.getElementById('resSelect');
+    const fpsSelect = document.getElementById('fpsSelect');
+    const ramUsageText = document.getElementById('ramUsageText');
+
+    // App Controls
+    const appIcons = document.querySelectorAll('.app-icon');
+    const appViews = document.querySelectorAll('.app-view');
+    const closeBtns = document.querySelectorAll('.close-app');
+    const navHome = document.getElementById('navHome');
+    const navBack = document.getElementById('navBack');
+
+    // Hardware Buttons
+    const hwPower = document.getElementById('hwPower');
+    const btnReboot = document.getElementById('btnReboot');
+    const btnScreenshot = document.getElementById('btnScreenshot');
+    const btnClipboard = document.getElementById('btnClipboard');
+    const btnRotate = document.getElementById('btnRotate');
+
+    let currentRegionPing = "12ms";
+    let currentFps = "60";
+    let isScreenOn = true;
+
+    // Real-time Clock
+    function updateClock() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const timeStr = `${hours}:${minutes}`;
+        
+        clockTime.textContent = timeStr;
+        homeTime.textContent = timeStr;
+
+        const options = { weekday: 'long', month: 'numeric', day: 'numeric' };
+        homeDate.textContent = now.toLocaleDateString('vi-VN', options);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Show Toast Inside Phone Screen
+    function showToast(msg) {
+        phoneToast.textContent = msg;
+        phoneToast.classList.add('show');
+        setTimeout(() => {
+            phoneToast.classList.remove('show');
+        }, 2200);
     }
 
-    function openDynamicApp(name, icon) {
-      closeAllApps();
-      const win = document.getElementById('app-dynamic');
-      document.getElementById('dynamic-content').innerHTML = `
-        <div style="font-size:60px; margin-top:40px;">${icon}</div>
-        <h2 style="margin-top:10px;">${name}</h2>
-        <p style="color:#666; margin-top:10px; font-size:13px;">Ứng dụng APK này đã được chạy thành công trên giao diện mô phỏng!</p>
-      `;
-      win.classList.add('active');
+    // App Navigation Logic
+    function openApp(appId, title = "") {
+        closeAllApps();
+        let targetApp = document.getElementById(`app-${appId}`);
+        if (!targetApp) {
+            targetApp = document.getElementById('app-generic');
+            document.getElementById('genericTitle').textContent = title || "Ứng dụng Đám mây";
+        }
+        targetApp.classList.add('active');
     }
-  </script>
+
+    function closeAllApps() {
+        appViews.forEach(view => view.classList.remove('active'));
+    }
+
+    appIcons.forEach(icon => {
+        icon.addEventListener('click', () => {
+            const app = icon.getAttribute('data-app');
+            const name = icon.querySelector('.app-name').textContent;
+            openApp(app, name);
+        });
+    });
+
+    closeBtns.forEach(btn => {
+        btn.addEventListener('click', closeAllApps);
+    });
+
+    navHome.addEventListener('click', closeAllApps);
+    navBack.addEventListener('click', closeAllApps);
+
+    // Dynamic Latency & FPS overlay update
+    function updateOverlay() {
+        streamOverlay.textContent = `${currentRegionPing} | ${currentFps} FPS`;
+    }
+
+    regionSelect.addEventListener('change', (e) => {
+        const pings = { sg: '12ms', hk: '28ms', jp: '45ms', us: '160ms' };
+        currentRegionPing = pings[e.target.value] || '12ms';
+        updateOverlay();
+        showToast(`Đã chuyển máy chủ: ${e.target.options[e.target.selectedIndex].text}`);
+    });
+
+    fpsSelect.addEventListener('change', (e) => {
+        currentFps = e.target.value;
+        updateOverlay();
+        showToast(`Cấu hình luồng: ${currentFps} FPS`);
+    });
+
+    ramSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        ramUsageText.textContent = `4.2 / ${val} GB`;
+        showToast(`Đã thay đổi RAM ảo thành ${val} GB`);
+    });
+
+    // Hardware Actions
+    let isRotated = false;
+    btnRotate.addEventListener('click', () => {
+        isRotated = !isRotated;
+        showToast(isRotated ? "Đã xoay màn hình Ngang" : "Đã xoay màn hình Dọc");
+    });
+
+    btnScreenshot.addEventListener('click', () => {
+        showToast("Đã chụp màn hình Cloud Instance!");
+    });
+
+    btnClipboard.addEventListener('click', () => {
+        showToast("Đã đồng bộ bộ nhớ tạm (Clipboard)");
+    });
+
+    btnReboot.addEventListener('click', () => {
+        showToast("Đang khởi động lại Instance...");
+        closeAllApps();
+        phoneScreen.style.opacity = '0.2';
+        setTimeout(() => {
+            phoneScreen.style.opacity = '1';
+            showToast("Cloud Phone đã sẵn sàng!");
+        }, 1800);
+    });
+
+    hwPower.addEventListener('click', () => {
+        isScreenOn = !isScreenOn;
+        phoneScreen.style.filter = isScreenOn ? 'none' : 'brightness(0)';
+    });
+
+    // Interactive Game Animation Sim
+    const gameBall = document.getElementById('gameBall');
+    const gameArea = document.getElementById('gameArea');
+    let bx = 50, by = 50, vx = 2, vy = 2;
+
+    function animateGame() {
+        if (document.getElementById('app-game').classList.contains('active')) {
+            const w = gameArea.clientWidth - 24;
+            const h = gameArea.clientHeight - 24;
+            bx += vx;
+            by += vy;
+
+            if (bx <= 0 || bx >= w) vx *= -1;
+            if (by <= 0 || by >= h) vy *= -1;
+
+            gameBall.style.left = `${bx}px`;
+            gameBall.style.top = `${by}px`;
+        }
+        requestAnimationFrame(animateGame);
+    }
+    animateGame();
+
+    // Monitor App Dynamic Bars
+    setInterval(() => {
+        if (document.getElementById('app-perf').classList.contains('active')) {
+            const cpuVal = Math.floor(Math.random() * 25) + 15;
+            document.getElementById('cpuBar').style.width = `${cpuVal}%`;
+            document.getElementById('cpuUsageText').textContent = `${cpuVal}%`;
+        }
+    }, 1500);
+
+    // Speed Test Sim
+    document.getElementById('btnTestSpeed').addEventListener('click', () => {
+        const res = document.getElementById('speedResult');
+        res.textContent = "Đang đo tốc độ...";
+        setTimeout(() => {
+            res.innerHTML = "Tốc độ Tải xuống: <b>850 Mbps</b><br>Tốc độ Tải lên: <b>420 Mbps</b>";
+        }, 1200);
+    });
+</script>
 </body>
 </html>
-có thể treo
