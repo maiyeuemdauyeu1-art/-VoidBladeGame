@@ -619,3 +619,356 @@
     </script>
 </body>
 </html>
+// Đoạn cũ (Đang cố mở trong khung iframe nên bị Google chặn)
+function triggerSearch() {
+    const query = document.getElementById('main-search-input').value.trim();
+    if (query !== '') {
+        // ...
+        openWeb(searchUrl); 
+    }
+}
+// Đoạn mới (Mở Google thật mượt mà)
+function triggerSearch() {
+    const query = document.getElementById('main-search-input').value.trim();
+    if (query !== '') {
+        if (query.startsWith('http://') || query.startsWith('https://')) {
+            openWeb(query); // Mở web hỗ trợ nhúng trong điện thoại
+        } else {
+            // Mở Google tìm kiếm thật ở Tab mới
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+        }
+    }
+}
+// 1. Quản lý danh sách các cửa sổ
+function getOpenWindows() {
+    return Array.from(document.querySelectorAll('.window')).filter(win => win.style.display === 'flex');
+}
+
+// 2. Nút Home (□) - Trở về màn hình chính (Ẩn tất cả ứng dụng)
+function pressHome() {
+    document.querySelectorAll('.window').forEach(win => {
+        win.style.display = 'none';
+    });
+}
+
+// 3. Nút Back (◄) - Tắt cửa sổ đang nằm ở trên cùng
+function pressBack() {
+    const openWins = getOpenWindows();
+    if (openWins.length > 0) {
+        // Tìm cửa sổ có z-index cao nhất (đang tương tác)
+        let topWin = openWins.reduce((max, win) => {
+            return (parseInt(win.style.zIndex || 0) > parseInt(max.style.zIndex || 0)) ? win : max;
+        });
+        topWin.style.display = 'none';
+    }
+}
+
+// 4. Nút Menu Đa Nhiệm (≡) - Hiện lại tất cả cửa sổ đã mở
+function pressRecent() {
+    document.querySelectorAll('.window').forEach(win => {
+        win.style.display = 'flex';
+        // Xếp lại vị trí nhẹ để dễ nhìn
+        win.style.top = '60px';
+    });
+}
+<!-- Bottom Navigation Bar -->
+<div class="nav-bar">
+    <i class="fa-solid fa-bars nav-btn" onclick="pressRecent()" title="Đa nhiệm"></i>
+    <i class="fa-regular fa-square nav-btn" onclick="pressHome()" title="Trang chủ"></i>
+    <i class="fa-solid fa-chevron-left nav-btn" onclick="pressBack()" title="Quay lại"></i>
+</div>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Web Ultra Simulation & Gaming</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Roboto', sans-serif; }
+        body { background: #0d0f12; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+
+        .phone-bezel {
+            width: 920px; height: 520px;
+            background: linear-gradient(135deg, #2c3240 0%, #151821 100%);
+            border-radius: 42px; padding: 12px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.3), 0 0 0 2px #090a0d;
+            position: relative; display: flex;
+        }
+
+        .screen {
+            width: 100%; height: 100%;
+            background: linear-gradient(125deg, #0f172a 0%, #1e1b4b 40%, #311042 100%);
+            border-radius: 32px; position: relative; overflow: hidden; display: flex; flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .notch {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 140px; height: 22px; background: #000; border-bottom-left-radius: 14px; border-bottom-right-radius: 14px;
+            z-index: 100; display: flex; align-items: center; justify-content: center; gap: 12px;
+        }
+        .camera-lens { width: 10px; height: 10px; background: #0a1128; border-radius: 50%; border: 1px solid #1e293b; }
+        .sensor { width: 6px; height: 6px; background: #1e1b4b; border-radius: 50%; }
+
+        .status-bar {
+            height: 28px; padding: 0 24px; display: flex; justify-content: space-between; align-items: center;
+            color: #fff; font-size: 11px; font-weight: 500; z-index: 90; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(8px);
+        }
+        .status-bar-right { display: flex; align-items: center; gap: 10px; }
+        .pill-badge { background: rgba(255, 255, 255, 0.2); padding: 1px 6px; border-radius: 8px; font-size: 10px; }
+
+        .desktop { flex: 1; position: relative; padding: 15px; overflow: hidden; }
+
+        .widget-column { width: 280px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 1; }
+        .search-bar {
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(15px); border-radius: 20px;
+            padding: 8px 14px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255, 255, 255, 0.2); color: white;
+        }
+        .search-bar input { background: transparent; border: none; outline: none; color: white; font-size: 12px; width: 100%; }
+        .search-bar input::placeholder { color: rgba(255, 255, 255, 0.6); }
+
+        .time-widget {
+            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(20px); border-radius: 20px;
+            padding: 12px 18px; color: white; border: 1px solid rgba(255, 255, 255, 0.15); display: flex; justify-content: space-between; align-items: center;
+        }
+        .time-widget .clock { font-size: 26px; font-weight: 700; }
+
+        .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 5px; }
+        .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.1s; }
+        .app-item:active { transform: scale(0.92); }
+        .app-icon {
+            width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-bottom: 4px; border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .app-label { color: white; font-size: 10px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+
+        /* Cửa sổ Game / App */
+        .window {
+            position: absolute; background: #121824; border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            display: none; flex-direction: column; overflow: hidden; z-index: 10;
+        }
+        .window-header {
+            height: 32px; background: rgba(255, 255, 255, 0.08); padding: 0 12px;
+            display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255, 255, 255, 0.08); cursor: move;
+        }
+        .window-title { color: #e2e8f0; font-size: 11px; font-weight: 500; }
+        .window-actions { display: flex; gap: 8px; color: #94a3b8; font-size: 11px; cursor: pointer; }
+        .window-body { flex: 1; overflow: hidden; background: #000; }
+
+        #game-window { width: 500px; height: 380px; top: 25px; left: 190px; }
+
+        .game-iframe { width: 100%; height: 100%; border: none; }
+
+        /* HUD Stats */
+        .hud-overlay {
+            position: absolute; bottom: 20px; left: 20px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(15px);
+            border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 10px; width: 170px; color: #e2e8f0; font-size: 10px; z-index: 5;
+        }
+        .hud-header { color: #38bdf8; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; }
+        .hud-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+
+        .nav-bar {
+            height: 32px; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(10px);
+            display: flex; justify-content: center; align-items: center; gap: 60px; color: rgba(255, 255, 255, 0.8); font-size: 13px; z-index: 90;
+        }
+        .nav-btn { cursor: pointer; padding: 4px 12px; }
+
+        .dock {
+            position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 14px; background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(20px);
+            padding: 6px 14px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.2); z-index: 2;
+        }
+        .dock .app-icon { width: 38px; height: 38px; font-size: 16px; margin-bottom: 0; }
+    </style>
+</head>
+<body>
+
+    <div class="phone-bezel">
+        <div class="screen">
+            <div class="notch"><div class="camera-lens"></div><div class="sensor"></div></div>
+
+            <div class="status-bar">
+                <span id="status-clock">8:45 AM</span>
+                <div class="status-bar-right">
+                    <span class="pill-badge">120Hz</span>
+                    <i class="fa-solid fa-wifi"></i>
+                    <i class="fa-solid fa-signal"></i>
+                    <span>5G+</span>
+                    <i class="fa-solid fa-battery-full"></i>
+                    <span>100%</span>
+                </div>
+            </div>
+
+            <div class="desktop">
+                <div class="hud-overlay">
+                    <div class="hud-header"><span>GAMING MODE</span><span style="color:#4ade80;">ON</span></div>
+                    <div class="hud-row"><span>FPS:</span> <span style="color:#4ade80;">120 FPS</span></div>
+                    <div class="hud-row"><span>TEMP:</span> <span>38°C</span></div>
+                    <div class="hud-row"><span>RAM:</span> <span>12GB / 24GB</span></div>
+                </div>
+
+                <div class="widget-column">
+                    <div class="search-bar">
+                        <i class="fa-brands fa-google" style="color: #4285f4;"></i>
+                        <input type="text" id="main-search-input" placeholder="Tìm kiếm hoặc nhập URL...">
+                        <i class="fa-solid fa-arrow-right" onclick="triggerSearch()" style="cursor:pointer;"></i>
+                    </div>
+
+                    <div class="time-widget">
+                        <div>
+                            <div class="clock" id="widget-clock">8:45 <span style="font-size:12px">AM</span></div>
+                            <div class="date">SUN, AUG 2</div>
+                        </div>
+                        <i class="fa-solid fa-gamepad" style="font-size:24px; color:#ec4899;"></i>
+                    </div>
+
+                    <!-- Màn hình chính chứa danh sách Game -->
+                    <div class="app-grid">
+                        <div class="app-item" onclick="launchGame('https://play2048.co/')">
+                            <div class="app-icon" style="background: linear-gradient(135deg, #edc22e, #b78a00);">
+                                <i class="fa-solid fa-cubes"></i>
+                            </div>
+                            <span class="app-label">Game 2048</span>
+                        </div>
+                        <div class="app-item" onclick="launchGame('https://flappybird.io/')">
+                            <div class="app-icon" style="background: linear-gradient(135deg, #22c55e, #15803d);">
+                                <i class="fa-solid fa-kiwi-bird"></i>
+                            </div>
+                            <span class="app-label">Flappy Bird</span>
+                        </div>
+                        <div class="app-item" onclick="launchGame('https://playsnake.org/')">
+                            <div class="app-icon" style="background: linear-gradient(135deg, #ef4444, #991b1b);">
+                                <i class="fa-solid fa-staff-snake"></i>
+                            </div>
+                            <span class="app-label">Rắn Săn Mồi</span>
+                        </div>
+                        <div class="app-item" onclick="launchGame('https://pacman.live/')">
+                            <div class="app-icon" style="background: linear-gradient(135deg, #eab308, #a16207);">
+                                <i class="fa-solid fa-ghost"></i>
+                            </div>
+                            <span class="app-label">Pac-Man</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cửa sổ màn hình Game -->
+                <div class="window" id="game-window">
+                    <div class="window-header">
+                        <div class="window-title" id="game-title"><i class="fa-solid fa-gamepad"></i> Game Player</div>
+                        <div class="window-actions">
+                            <i class="fa-solid fa-xmark" onclick="toggleWindow('game-window')"></i>
+                        </div>
+                    </div>
+                    <div class="window-body">
+                        <iframe id="game-frame" class="game-iframe" src="about:blank"></iframe>
+                    </div>
+                </div>
+
+                <div class="dock">
+                    <div class="app-icon" style="background: #2563eb;" onclick="launchGame('https://play2048.co/')"><i class="fa-solid fa-gamepad"></i></div>
+                    <div class="app-icon" style="background: #ea580c;" onclick="launchGame('https://www.bing.com')"><i class="fa-brands fa-chrome"></i></div>
+                    <div class="app-icon" style="background: #16a34a;" onclick="launchGame('https://wikipedia.org')"><i class="fa-solid fa-globe"></i></div>
+                </div>
+            </div>
+
+            <!-- Thanh 3 Nút Điều Hướng chuẩn Android -->
+            <div class="nav-bar">
+                <i class="fa-solid fa-bars nav-btn" onclick="pressRecent()" title="Đa nhiệm"></i>
+                <i class="fa-regular fa-square nav-btn" onclick="pressHome()" title="Home"></i>
+                <i class="fa-solid fa-chevron-left nav-btn" onclick="pressBack()" title="Quay lại"></i>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let highestZIndex = 20;
+
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            
+            document.getElementById('widget-clock').innerHTML = `${hours}:${minutes} <span style="font-size:12px">${ampm}</span>`;
+            document.getElementById('status-clock').innerText = `${hours}:${minutes} ${ampm}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Bật Game vào màn hình điện thoại
+        function launchGame(url) {
+            const win = document.getElementById('game-window');
+            const frame = document.getElementById('game-frame');
+            frame.src = url;
+            
+            win.style.display = 'flex';
+            highestZIndex++;
+            win.style.zIndex = highestZIndex;
+        }
+
+        function toggleWindow(id) {
+            const win = document.getElementById(id);
+            if (win) win.style.display = 'none';
+        }
+
+        // 3 Nút Chức Năng Android
+        function pressHome() {
+            document.querySelectorAll('.window').forEach(win => win.style.display = 'none');
+        }
+
+        function pressBack() {
+            const gameWin = document.getElementById('game-window');
+            if (gameWin.style.display === 'flex') gameWin.style.display = 'none';
+        }
+
+        function pressRecent() {
+            const gameWin = document.getElementById('game-window');
+            if (gameWin) {
+                gameWin.style.display = 'flex';
+                highestZIndex++;
+                gameWin.style.zIndex = highestZIndex;
+            }
+        }
+
+        // Tìm kiếm
+        function triggerSearch() {
+            const query = document.getElementById('main-search-input').value.trim();
+            if (query !== '') {
+                if (query.startsWith('http://') || query.startsWith('https://')) {
+                    launchGame(query);
+                } else {
+                    window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                }
+            }
+        }
+
+        document.getElementById('main-search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') triggerSearch();
+        });
+
+        // Kéo thả cửa sổ
+        const win = document.getElementById('game-window');
+        const header = win.querySelector('.window-header');
+        let isDragging = false, offsetX = 0, offsetY = 0;
+
+        header.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('fa-xmark')) return;
+            isDragging = true;
+            offsetX = e.clientX - win.offsetLeft;
+            offsetY = e.clientY - win.offsetTop;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            win.style.left = `${e.clientX - offsetX}px`;
+            win.style.top = `${e.clientY - offsetY}px`;
+        });
+
+        document.addEventListener('mouseup', () => { isDragging = false; });
+    </script>
+</body>
+</html>
