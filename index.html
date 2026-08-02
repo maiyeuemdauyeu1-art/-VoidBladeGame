@@ -154,6 +154,8 @@
             width: 100%;
         }
 
+        .search-bar input::placeholder { color: rgba(255, 255, 255, 0.7); }
+
         .time-widget {
             background: rgba(0, 0, 0, 0.35);
             backdrop-filter: blur(20px);
@@ -219,12 +221,12 @@
         /* Cửa sổ ứng dụng nổi (Multitasking Windows) */
         .window {
             position: absolute;
-            background: rgba(24, 28, 38, 0.88);
+            background: rgba(24, 28, 38, 0.95);
             backdrop-filter: blur(25px);
             border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.18);
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-            display: flex;
+            display: none;
             flex-direction: column;
             overflow: hidden;
             z-index: 10;
@@ -232,24 +234,27 @@
 
         .window-header {
             height: 32px;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.08);
             padding: 0 12px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: move;
         }
 
-        .window-title { color: #e2e8f0; font-size: 11px; }
+        .window-title { color: #e2e8f0; font-size: 11px; font-weight: 500; }
         .window-actions { display: flex; gap: 8px; color: #94a3b8; font-size: 10px; cursor: pointer; }
 
-        .window-body { flex: 1; padding: 10px; overflow-y: auto; color: #cbd5e1; font-size: 11px; }
+        .window-body { flex: 1; overflow: hidden; color: #cbd5e1; font-size: 11px; }
 
+        /* Vị trí các cửa sổ */
+        #browser-window { width: 550px; height: 360px; top: 30px; left: 160px; }
         #photos-window { width: 220px; height: 250px; top: 25px; left: 20px; }
         #messages-window { width: 220px; height: 270px; top: 30px; right: 170px; }
         #settings-window { width: 200px; height: 220px; top: 80px; right: 20px; }
 
-        .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 10px; }
         .photo-grid img { width: 100%; height: 55px; object-fit: cover; border-radius: 6px; }
 
         /* Bảng HUD thông số hệ thống */
@@ -288,6 +293,8 @@
             z-index: 90;
         }
 
+        .nav-btn { cursor: pointer; padding: 4px 12px; }
+
         .dock {
             position: absolute;
             bottom: 12px;
@@ -304,6 +311,31 @@
         }
 
         .dock .app-icon { width: 38px; height: 38px; font-size: 16px; margin-bottom: 0; }
+
+        /* Trình duyệt nhúng */
+        .browser-bar {
+            display: flex;
+            align-items: center;
+            padding: 6px;
+            background: #1e293b;
+            gap: 6px;
+        }
+        .browser-bar input {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            outline: none;
+        }
+        .browser-iframe {
+            width: 100%;
+            height: calc(100% - 35px);
+            border: none;
+            background: #fff;
+        }
     </style>
 </head>
 <body>
@@ -318,7 +350,7 @@
 
             <!-- Status Bar -->
             <div class="status-bar">
-                <span>8:45 AM &nbsp; SUN, AUG 2</span>
+                <span id="status-clock">8:45 AM</span>
                 <div class="status-bar-right">
                     <span class="pill-badge">120Hz</span>
                     <i class="fa-solid fa-wifi"></i>
@@ -349,13 +381,13 @@
                 <div class="widget-column">
                     <div class="search-bar">
                         <i class="fa-brands fa-google" style="color: #4285f4;"></i>
-                        <input type="text" placeholder="Search or type URL">
-                        <i class="fa-solid fa-microphone"></i>
+                        <input type="text" id="main-search-input" placeholder="Nhập từ khóa hoặc trang web...">
+                        <i class="fa-solid fa-arrow-right" onclick="triggerSearch()" style="cursor:pointer;"></i>
                     </div>
 
                     <div class="time-widget">
                         <div>
-                            <div class="clock">8:45 <span style="font-size:12px">AM</span></div>
+                            <div class="clock" id="widget-clock">8:45 <span style="font-size:12px">AM</span></div>
                             <div class="date">SUN, AUG 2</div>
                         </div>
                         <i class="fa-solid fa-cloud-sun" style="font-size:24px; color:#fde047;"></i>
@@ -391,12 +423,29 @@
                             </div>
                             <span class="app-label">Settings</span>
                         </div>
-                        <div class="app-item">
+                        <div class="app-item" onclick="openWeb('https://www.wikipedia.org')">
                             <div class="app-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                                <i class="fa-solid fa-gamepad"></i>
+                                <i class="fa-solid fa-globe"></i>
                             </div>
-                            <span class="app-label">Game Hub</span>
+                            <span class="app-label">Browser</span>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Window 0: Trình duyệt Web chính -->
+                <div class="window" id="browser-window">
+                    <div class="window-header">
+                        <div class="window-title"><i class="fa-brands fa-chrome"></i> Chrome Web Browser</div>
+                        <div class="window-actions">
+                            <i class="fa-solid fa-xmark" onclick="toggleWindow('browser-window')"></i>
+                        </div>
+                    </div>
+                    <div class="window-body">
+                        <div class="browser-bar">
+                            <input type="text" id="browser-url-input" placeholder="https://...">
+                            <button onclick="navigateBrowser()" style="background:#2563eb; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Đi</button>
+                        </div>
+                        <iframe id="browser-frame" class="browser-iframe" src="about:blank"></iframe>
                     </div>
                 </div>
 
@@ -425,8 +474,8 @@
                             <i class="fa-solid fa-xmark" onclick="toggleWindow('messages-window')"></i>
                         </div>
                     </div>
-                    <div class="window-body">
-                        <div><b>Alex Rivera:</b> How is your Android prototype working?</div>
+                    <div class="window-body" style="padding:10px;">
+                        <div><b>Alex Rivera:</b> Prototype đang chạy trình duyệt rất mượt!</div>
                     </div>
                 </div>
 
@@ -438,7 +487,7 @@
                             <i class="fa-solid fa-xmark" onclick="toggleWindow('settings-window')"></i>
                         </div>
                     </div>
-                    <div class="window-body">
+                    <div class="window-body" style="padding:10px;">
                         <div>CPU SPEED: OPTIMIZED</div>
                         <div>RAM: 8.2 GB / 24 GB</div>
                     </div>
@@ -446,177 +495,127 @@
 
                 <!-- Dock -->
                 <div class="dock">
-                    <div class="app-icon" style="background: #2563eb;"><i class="fa-solid fa-phone"></i></div>
-                    <div class="app-icon" style="background: #0284c7;"><i class="fa-solid fa-comment"></i></div>
-                    <div class="app-icon" style="background: #ea580c;"><i class="fa-brands fa-chrome"></i></div>
-                    <div class="app-icon" style="background: #16a34a;"><i class="fa-solid fa-camera"></i></div>
+                    <div class="app-icon" style="background: #2563eb;" onclick="openWeb('https://www.bing.com')"><i class="fa-solid fa-phone"></i></div>
+                    <div class="app-icon" style="background: #0284c7;" onclick="toggleWindow('messages-window')"><i class="fa-solid fa-comment"></i></div>
+                    <div class="app-icon" style="background: #ea580c;" onclick="openWeb('https://www.bing.com')"><i class="fa-brands fa-chrome"></i></div>
+                    <div class="app-icon" style="background: #16a34a;" onclick="toggleWindow('photos-window')"><i class="fa-solid fa-camera"></i></div>
                 </div>
 
             </div>
 
             <!-- Bottom Navigation Bar -->
             <div class="nav-bar">
-                <i class="fa-solid fa-bars"></i>
-                <i class="fa-regular fa-square"></i>
-                <i class="fa-solid fa-chevron-left"></i>
+                <i class="fa-solid fa-bars nav-btn" onclick="closeAllWindows()"></i>
+                <i class="fa-regular fa-square nav-btn" onclick="closeAllWindows()"></i>
+                <i class="fa-solid fa-chevron-left nav-btn" onclick="closeAllWindows()"></i>
             </div>
         </div>
     </div>
 
     <script>
+        let highestZIndex = 20;
+
+        // Cập nhật đồng hồ thời gian thực
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            
+            document.getElementById('widget-clock').innerHTML = `${hours}:${minutes} <span style="font-size:12px">${ampm}</span>`;
+            document.getElementById('status-clock').innerText = `${hours}:${minutes} ${ampm}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Ẩn/Hiện cửa sổ
         function toggleWindow(id) {
             const win = document.getElementById(id);
-            if (win.style.display === 'none') {
+            if (!win) return;
+
+            if (win.style.display === 'none' || win.style.display === '') {
                 win.style.display = 'flex';
+                highestZIndex++;
+                win.style.zIndex = highestZIndex;
             } else {
                 win.style.display = 'none';
             }
         }
+
+        // Đóng tất cả cửa sổ
+        function closeAllWindows() {
+            document.querySelectorAll('.window').forEach(win => {
+                win.style.display = 'none';
+            });
+        }
+
+        // Mở trình duyệt Web
+        function openWeb(url) {
+            const browserWin = document.getElementById('browser-window');
+            const iframe = document.getElementById('browser-frame');
+            const urlInput = document.getElementById('browser-url-input');
+
+            iframe.src = url;
+            urlInput.value = url;
+            
+            browserWin.style.display = 'flex';
+            highestZIndex++;
+            browserWin.style.zIndex = highestZIndex;
+        }
+
+        // Điều hướng trình duyệt khi gõ URL
+        function navigateBrowser() {
+            let url = document.getElementById('browser-url-input').value.trim();
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+            document.getElementById('browser-frame').src = url;
+        }
+
+        // Kích hoạt tìm kiếm từ thanh Google chính
+        function triggerSearch() {
+            const query = document.getElementById('main-search-input').value.trim();
+            if (query !== '') {
+                let searchUrl;
+                if (query.startsWith('http://') || query.startsWith('https://') || query.includes('.')) {
+                    searchUrl = query.startsWith('http') ? query : 'https://' + query;
+                } else {
+                    searchUrl = `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
+                }
+                openWeb(searchUrl);
+            }
+        }
+
+        document.getElementById('main-search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') triggerSearch();
+        });
+
+        // Cho phép Kéo thả Cửa sổ (Drag & Drop)
+        document.querySelectorAll('.window').forEach(win => {
+            const header = win.querySelector('.window-header');
+            let isDragging = false, offsetX = 0, offsetY = 0;
+
+            win.addEventListener('mousedown', () => {
+                highestZIndex++;
+                win.style.zIndex = highestZIndex;
+            });
+
+            header.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('fa-xmark')) return;
+                isDragging = true;
+                offsetX = e.clientX - win.offsetLeft;
+                offsetY = e.clientY - win.offsetTop;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                win.style.left = `${e.clientX - offsetX}px`;
+                win.style.top = `${e.clientY - offsetY}px`;
+            });
+
+            document.addEventListener('mouseup', () => { isDragging = false; });
+        });
     </script>
 </body>
-</html> 
-
-
-8:45 AM   SUN, AUG 2
-120Hz
-
-
-5G+
-
-100%
-DEVELOPER OPTIONS
-ACTIVE
-GPU LOAD:
-78%
-
-TEMP:
-39°C
-FPS:
-120 (STABLE)
-MEMORY:
-20GB / 24GB
-
-
-
-
-8:45 AM
-SUN, AUG 2
-
-26°C
-Tho Tang, Vietnam
-Health Score
-38.7 / 12%
-
-Photos
-
-Messages
-
-Settings
-
-Game Hub
-
-Photos
-
-
-
-
-Messages
-
-
-Alex Rivera
-How is your new Android prototype working?
-Sarah Chen
-We can plug in the 120Hz display module tomorrow.
-Dev Group
-Build v1.0.1 deployed successfully!
-
-Device Care
-
-
-CPU SPEED: OPTIMIZED
-Storage
-190 GB / 512 GB
-
-RAM Usage
-8.2 GB / 24 GB
-
-
-
-
-
-
-
-
-
-
-
-8:45 AM   SUN, AUG 2
-120Hz
-
-
-5G+
-
-100%
-DEVELOPER OPTIONS
-ACTIVE
-GPU LOAD:
-78%
-
-TEMP:
-39°C
-FPS:
-120 (STABLE)
-MEMORY:
-20GB / 24GB
-
-
-
-
-8:45 AM
-SUN, AUG 2
-
-26°C
-Tho Tang, Vietnam
-Health Score
-38.7 / 12%
-
-Photos
-
-Messages
-
-Settings
-
-Game Hub
-
-Photos
-
-
-
-
-Messages
-
-
-Alex Rivera
-How is your new Android prototype working?
-Sarah Chen
-We can plug in the 120Hz display module tomorrow.
-Dev Group
-Build v1.0.1 deployed successfully!
-
-Device Care
-
-
-CPU SPEED: OPTIMIZED
-Storage
-190 GB / 512 GB
-
-RAM Usage
-8.2 GB / 24 GB
-
-
-
-
-
-
-
-
+</html>
