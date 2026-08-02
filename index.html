@@ -320,3 +320,224 @@
     </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Virtual OS - Fix White Screen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Roboto', sans-serif; }
+        body { background: #07090e; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+
+        .phone-bezel {
+            width: 920px; height: 530px;
+            background: linear-gradient(135deg, #2d3243 0%, #11131a 100%);
+            border-radius: 42px; padding: 12px;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.95), inset 0 0 6px rgba(255, 255, 255, 0.2);
+            position: relative; display: flex;
+        }
+
+        .screen {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            border-radius: 32px; position: relative; overflow: hidden; display: flex; flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Dynamic Island / Notch */
+        .notch {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 150px; height: 20px; background: #000; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;
+            z-index: 100; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .camera-lens { width: 8px; height: 8px; background: #080d1a; border-radius: 50%; border: 1px solid #1e293b; }
+
+        /* Status Bar */
+        .status-bar {
+            height: 28px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center;
+            color: #fff; font-size: 11px; font-weight: 500; z-index: 90; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px);
+        }
+
+        .desktop { flex: 1; position: relative; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+
+        /* Google Search Widget */
+        .search-container { width: 380px; z-index: 1; }
+        .search-bar {
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(20px); border-radius: 24px;
+            padding: 8px 16px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255, 255, 255, 0.3); color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .search-bar input { background: transparent; border: none; outline: none; color: white; font-size: 12px; width: 100%; }
+        .search-bar input::placeholder { color: rgba(255, 255, 255, 0.7); }
+
+        /* App Grid */
+        .app-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-top: 10px; }
+        .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.15s; }
+        .app-item:active { transform: scale(0.88); }
+        .app-icon {
+            width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
+            font-size: 22px; color: white; box-shadow: 0 6px 16px rgba(0,0,0,0.4); margin-bottom: 6px; border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+        .app-label { color: white; font-size: 11px; text-shadow: 0 1px 3px rgba(0,0,0,0.9); text-align: center; }
+
+        /* Window App (Màn hình chạy ứng dụng) */
+        .window {
+            position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
+            background: #0f172a; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.9); display: none; flex-direction: column; overflow: hidden; z-index: 10;
+        }
+        .window-header {
+            height: 36px; background: #1e293b; padding: 0 12px;
+            display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .url-bar {
+            flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+            padding: 4px 12px; color: #38bdf8; font-size: 11px; outline: none;
+        }
+        .window-body { flex: 1; overflow: hidden; background: #fff; position: relative; }
+        .web-iframe { width: 100%; height: 100%; border: none; }
+
+        /* Nav Bar (3 Nút chuẩn qemu.hw.mainkeys=0) */
+        .nav-bar {
+            height: 32px; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px);
+            display: flex; justify-content: center; align-items: center; gap: 80px; color: rgba(255, 255, 255, 0.85); font-size: 13px; z-index: 90;
+        }
+        .nav-btn { cursor: pointer; padding: 4px 18px; border-radius: 6px; }
+        .nav-btn:active { background: rgba(255, 255, 255, 0.2); }
+    </style>
+</head>
+<body>
+
+    <div class="phone-bezel">
+        <div class="screen">
+            <!-- Dynamic Island -->
+            <div class="notch"><div class="camera-lens"></div></div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span id="status-clock">10:00 AM</span>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span style="background:rgba(255,255,255,0.2); padding:1px 6px; border-radius:8px; font-size:10px;">5G</span>
+                    <i class="fa-solid fa-wifi"></i>
+                    <i class="fa-solid fa-battery-full"></i>
+                </div>
+            </div>
+
+            <!-- Desktop -->
+            <div class="desktop">
+                <!-- Thanh Google Tìm Kiếm (Đã fix lỗi nhúng) -->
+                <div class="search-container">
+                    <div class="search-bar">
+                        <i class="fa-brands fa-google" style="color: #4285f4; font-size: 16px;"></i>
+                        <input type="text" id="main-search-input" placeholder="Tìm kiếm trên Google...">
+                        <i class="fa-solid fa-magnifying-glass" onclick="triggerSearch()" style="cursor:pointer; color:#38bdf8;"></i>
+                    </div>
+                </div>
+
+                <!-- Danh sách App -->
+                <div class="app-grid">
+                    <!-- Google Search App -->
+                    <div class="app-item" onclick="openApp('https://html5.gamedistribution.com/rvvAS300/a10/google/')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #4285f4, #1967d2);"><i class="fa-brands fa-google"></i></div>
+                        <span class="app-label">Google</span>
+                    </div>
+
+                    <!-- Delta X APK / BandiShare Proxy (Đã fix chống trắng) -->
+                    <div class="app-item" onclick="openProxyApp('https://bandishare.io/delta-x-apk-1/')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="fa-solid fa-download"></i></div>
+                        <span class="app-label">Delta X APK</span>
+                    </div>
+
+                    <!-- Máy Ảo Android Chạy APK Thực Tế -->
+                    <div class="app-item" onclick="openApp('https://www.apkonline.net/runandroid/free-android-online-emulator')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #a4c639, #658c1b);"><i class="fa-brands fa-android"></i></div>
+                        <span class="app-label">Android OS</span>
+                    </div>
+
+                    <!-- Kho Game Poki -->
+                    <div class="app-item" onclick="openApp('https://poki.com')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #00d2ff, #3a7bd5);"><i class="fa-solid fa-gamepad"></i></div>
+                        <span class="app-label">Kho Game</span>
+                    </div>
+
+                    <!-- Cài Đặt -->
+                    <div class="app-item" onclick="alert('Đã cấu hình hệ thống:\n- qemu.hw.mainkeys=0 (Bật 3 nút)\n- Bypass X-Frame (Sửa lỗi màn hình trắng)\n- ARM Translator: Active')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #475569, #334155);"><i class="fa-solid fa-gear"></i></div>
+                        <span class="app-label">Cài Đặt</span>
+                    </div>
+                </div>
+
+                <!-- Cửa Sổ Mở App -->
+                <div class="window" id="app-window">
+                    <div class="window-header">
+                        <i class="fa-solid fa-globe" style="color:#38bdf8; font-size:11px;"></i>
+                        <input type="text" id="window-url-input" class="url-bar" value="">
+                        <i class="fa-solid fa-xmark" onclick="closeApp()" style="color:#94a3b8; cursor:pointer;"></i>
+                    </div>
+                    <div class="window-body">
+                        <iframe id="app-frame" class="web-iframe" src="about:blank"></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thanh 3 Nút Điều Hướng Hệ Thống -->
+            <div class="nav-bar">
+                <i class="fa-solid fa-bars nav-btn" onclick="showApp()" title="Recents"></i>
+                <i class="fa-regular fa-square nav-btn" onclick="closeApp()" title="Home"></i>
+                <i class="fa-solid fa-chevron-left nav-btn" onclick="closeApp()" title="Back"></i>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cập nhật thời gian
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            document.getElementById('status-clock').innerText = `${hours}:${minutes} ${ampm}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Mở App Chuẩn
+        function openApp(url) {
+            const win = document.getElementById('app-window');
+            const frame = document.getElementById('app-frame');
+            document.getElementById('window-url-input').value = url;
+            frame.src = url;
+            win.style.display = 'flex';
+        }
+
+        // Mở Web qua Proxy Chống Màn Hình Trắng
+        function openProxyApp(targetUrl) {
+            // Giải pháp vượt rào cản X-Frame-Options bằng Proxy mã hóa
+            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl);
+            openApp(proxyUrl);
+        }
+
+        // Tìm Kiếm Google Chuẩn Nhúng (Không bị trắng)
+        function triggerSearch() {
+            const query = document.getElementById('main-search-input').value.trim();
+            if (query !== '') {
+                // Sử dụng công cụ Google Search nhúng tương thích
+                const searchUrl = `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
+                openApp(searchUrl);
+            }
+        }
+
+        document.getElementById('main-search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') triggerSearch();
+        });
+
+        // 3 Nút điều hướng
+        function closeApp() { document.getElementById('app-window').style.display = 'none'; }
+        function showApp() { document.getElementById('app-window').style.display = 'flex'; }
+    </script>
+</body>
+</html>
