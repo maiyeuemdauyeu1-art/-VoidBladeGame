@@ -972,3 +972,258 @@ function pressRecent() {
     </script>
 </body>
 </html>
+// Thay thế hàm tìm kiếm mới:
+function triggerSearch() {
+    const input = document.getElementById('main-search-input');
+    const query = input.value.trim();
+    
+    if (query !== '') {
+        let targetUrl;
+        
+        // Nếu người dùng gõ đường dẫn web trực tiếp
+        if (query.startsWith('http://') || query.startsWith('https://')) {
+            targetUrl = query;
+        } else if (query.includes('.') && !query.includes(' ')) {
+            targetUrl = 'https://' + query;
+        } else {
+            // Sử dụng Bing Search (Hỗ trợ nhúng khung cực tốt, không bị Google chặn)
+            targetUrl = `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
+        }
+        
+        // Mở kết quả ngay trong Cửa sổ Điện thoại!
+        launchGame(targetUrl);
+    }
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Cloud Phone - Run Real APK</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Roboto', sans-serif; }
+        body { background: #0a0c10; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+
+        /* Khung viền điện thoại Flagship */
+        .phone-bezel {
+            width: 940px; height: 540px;
+            background: linear-gradient(135deg, #232733 0%, #111318 100%);
+            border-radius: 42px; padding: 12px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), inset 0 0 4px rgba(255, 255, 255, 0.3);
+            position: relative; display: flex;
+        }
+
+        .screen {
+            width: 100%; height: 100%;
+            background: linear-gradient(125deg, #091325 0%, #1a103c 50%, #2b0938 100%);
+            border-radius: 32px; position: relative; overflow: hidden; display: flex; flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Tai thỏ */
+        .notch {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 140px; height: 22px; background: #000; border-bottom-left-radius: 14px; border-bottom-right-radius: 14px;
+            z-index: 100; display: flex; align-items: center; justify-content: center; gap: 12px;
+        }
+        .camera-lens { width: 10px; height: 10px; background: #0a1128; border-radius: 50%; border: 1px solid #1e293b; }
+        .sensor { width: 6px; height: 6px; background: #1e1b4b; border-radius: 50%; }
+
+        /* Status bar */
+        .status-bar {
+            height: 28px; padding: 0 24px; display: flex; justify-content: space-between; align-items: center;
+            color: #fff; font-size: 11px; font-weight: 500; z-index: 90; background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(8px);
+        }
+
+        .desktop { flex: 1; position: relative; padding: 15px; overflow: hidden; }
+
+        /* Widget & App grid */
+        .widget-column { width: 320px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; position: relative; z-index: 1; }
+        
+        .cloud-badge {
+            background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #38bdf8; padding: 6px 12px; border-radius: 12px; font-size: 11px; text-align: center; font-weight: bold;
+        }
+
+        .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 5px; }
+        .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .app-item:active { transform: scale(0.92); }
+        .app-icon {
+            width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: 22px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.4); margin-bottom: 4px; border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .app-label { color: white; font-size: 10px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); text-align: center; }
+
+        /* Màn hình hiển thị Máy ảo Android */
+        .window {
+            position: absolute; background: #000; border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+            display: none; flex-direction: column; overflow: hidden; z-index: 10;
+        }
+        .window-header {
+            height: 32px; background: #1e293b; padding: 0 12px;
+            display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255, 255, 255, 0.08); cursor: move;
+        }
+        .window-title { color: #38bdf8; font-size: 11px; font-weight: bold; }
+        .window-actions { display: flex; gap: 8px; color: #94a3b8; font-size: 11px; cursor: pointer; }
+        .window-body { flex: 1; overflow: hidden; background: #000; }
+
+        #android-window { width: 700px; height: 420px; top: 10px; left: 105px; }
+        .android-iframe { width: 100%; height: 100%; border: none; }
+
+        /* Navigation Bar */
+        .nav-bar {
+            height: 32px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px);
+            display: flex; justify-content: center; align-items: center; gap: 60px; color: rgba(255, 255, 255, 0.8); font-size: 13px; z-index: 90;
+        }
+        .nav-btn { cursor: pointer; padding: 4px 12px; }
+
+        .dock {
+            position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 14px; background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(20px);
+            padding: 6px 14px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.2); z-index: 2;
+        }
+        .dock .app-icon { width: 40px; height: 40px; font-size: 18px; margin-bottom: 0; }
+    </style>
+</head>
+<body>
+
+    <div class="phone-bezel">
+        <div class="screen">
+            <div class="notch"><div class="camera-lens"></div><div class="sensor"></div></div>
+
+            <div class="status-bar">
+                <span id="status-clock">10:00 AM</span>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span style="background:rgba(255,255,255,0.2); padding:1px 6px; border-radius:8px; font-size:10px;">ANDROID OS</span>
+                    <i class="fa-solid fa-wifi"></i>
+                    <i class="fa-solid fa-battery-full"></i>
+                    <span>100%</span>
+                </div>
+            </div>
+
+            <div class="desktop">
+                <div class="widget-column">
+                    <div class="cloud-badge">
+                        <i class="fa-solid fa-server"></i> ANDROID CLOUD SYSTEM (APK RUNNER)
+                    </div>
+
+                    <div class="app-grid">
+                        <!-- Mở Giả Lập Android Thật -->
+                        <div class="app-item" onclick="startAndroid('https://www.apkonline.net/runandroid/free-android-online-emulator')">
+                            <div class="app-icon" style="background: linear-gradient(135deg, #a4c639, #769c24);">
+                                <i class="fa-brands fa-android"></i>
+                            </div>
+                            <span class="app-label">Android Máy Ảo</span>
+                        </div>
+
+                        <!-- Mở Kho Tải APK (APKPure) -->
+                        <div class="app-item" onclick="startAndroid('https://apkpure.net')">
+                            <div class="app-icon" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+                                <i class="fa-solid fa-file-arrow-down"></i>
+                            </div>
+                            <span class="app-label">Web Tải APK</span>
+                        </div>
+
+                        <!-- Poki Web Games -->
+                        <div class="app-item" onclick="startAndroid('https://poki.com')">
+                            <div class="app-icon" style="background: linear-gradient(135deg, #00d2ff, #3a7bd5);">
+                                <i class="fa-solid fa-gamepad"></i>
+                            </div>
+                            <span class="app-label">Kho Game Web</span>
+                        </div>
+
+                        <!-- Browser -->
+                        <div class="app-item" onclick="startAndroid('https://www.bing.com')">
+                            <div class="app-icon" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);">
+                                <i class="fa-brands fa-chrome"></i>
+                            </div>
+                            <span class="app-label">Trình Duyệt</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Màn Hình Giả Lập Android Nổi -->
+                <div class="window" id="android-window">
+                    <div class="window-header">
+                        <div class="window-title" id="window-title"><i class="fa-brands fa-android"></i> Android System Running...</div>
+                        <div class="window-actions">
+                            <i class="fa-solid fa-xmark" onclick="closeAndroid()"></i>
+                        </div>
+                    </div>
+                    <div class="window-body">
+                        <iframe id="android-frame" class="android-iframe" src="about:blank"></iframe>
+                    </div>
+                </div>
+
+                <!-- Dock -->
+                <div class="dock">
+                    <div class="app-icon" style="background: #a4c639;" onclick="startAndroid('https://www.apkonline.net/runandroid/free-android-online-emulator')"><i class="fa-brands fa-android"></i></div>
+                    <div class="app-icon" style="background: #11998e;" onclick="startAndroid('https://apkpure.net')"><i class="fa-solid fa-file-arrow-down"></i></div>
+                    <div class="app-icon" style="background: #2563eb;" onclick="startAndroid('https://poki.com')"><i class="fa-solid fa-gamepad"></i></div>
+                </div>
+            </div>
+
+            <!-- Thanh điều hướng Android -->
+            <div class="nav-bar">
+                <i class="fa-solid fa-bars nav-btn" onclick="openAndroid()"></i>
+                <i class="fa-regular fa-square nav-btn" onclick="closeAndroid()"></i>
+                <i class="fa-solid fa-chevron-left nav-btn" onclick="closeAndroid()"></i>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cập nhật giờ
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            document.getElementById('status-clock').innerText = `${hours}:${minutes} ${ampm}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Khởi động Hệ thống Android Cloud
+        function startAndroid(url) {
+            const win = document.getElementById('android-window');
+            const frame = document.getElementById('android-frame');
+            
+            frame.src = url;
+            win.style.display = 'flex';
+        }
+
+        function closeAndroid() {
+            document.getElementById('android-window').style.display = 'none';
+        }
+
+        function openAndroid() {
+            document.getElementById('android-window').style.display = 'flex';
+        }
+
+        // Kéo thả cửa sổ máy ảo
+        const win = document.getElementById('android-window');
+        const header = win.querySelector('.window-header');
+        let isDragging = false, offsetX = 0, offsetY = 0;
+
+        header.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('fa-xmark')) return;
+            isDragging = true;
+            offsetX = e.clientX - win.offsetLeft;
+            offsetY = e.clientY - win.offsetTop;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            win.style.left = `${e.clientX - offsetX}px`;
+            win.style.top = `${e.clientY - offsetY}px`;
+        });
+
+        document.addEventListener('mouseup', () => { isDragging = false; });
+    </script>
+</body>
+</html>
