@@ -276,3 +276,70 @@ gold;
 
 
 }
+let difficulty = "normal";
+
+let stage = 1;
+
+
+let bosses = [
+    {
+        name:"🔥 Gojo",
+        image:"assets/enemies/gojo.png"
+    },
+
+    {
+        name:"🐉 Goku",
+        image:"assets/enemies/goku.png"
+    },
+
+    {
+        name:"🍥 Naruto",
+        image:"assets/enemies/naruto.png"
+    },
+
+    {
+        name:"👽 Ben 10",
+        image:"assets/enemies/ben10.png"
+    }
+];
+function setDifficulty(mode){
+
+    difficulty = mode;
+
+    alert(
+        "Đã chọn chế độ: "
+        + mode
+    );
+
+}
+
+
+
+function nextStage(){
+
+    stage++;
+
+    let boss =
+    bosses[
+        (stage-1)
+        %
+        bosses.length
+    ];
+
+
+    document.getElementById("bossName")
+    .innerHTML=boss.name;
+
+
+    document.querySelector(".enemy img")
+    .src=boss.image;
+
+
+    enemyHp=100;
+
+
+    document.getElementById("stageNumber")
+    .innerHTML=stage;
+
+
+}
