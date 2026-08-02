@@ -1,487 +1,99 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AndzOS</title>
-
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rick & Morty Multiverse Battle</title>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div id="app">
+<h1>🌀 Rick & Morty: Multiverse Battle</h1>
 
-    <div id="bootLogo">
-        <div class="apple">🍎</div>
-        <h1>AndzOS</h1>
-    </div>
+<div id="select">
+
+<h2>Chọn nhân vật</h2>
+
+<button onclick="pickPlayer('rick')">
+🧪 Rick
+</button>
+
+<button onclick="pickPlayer('morty')">
+👦 Morty
+</button>
+
+<h2>Chọn Skin</h2>
+
+<select id="skin">
+<option value="normal">Skin thường</option>
+<option value="battle">Skin chiến đấu</option>
+<option value="prime">Skin thức tỉnh</option>
+</select>
+
+</div>
+
+
+<div id="arena">
+
+<div class="team">
+
+<h2 id="playerName">Rick</h2>
+
+<img id="playerImg" src="assets/rick/normal.png">
+
+<div class="bar">
+<div id="hp"></div>
+</div>
+
+<div class="rage">
+<div id="rage"></div>
+</div>
 
 </div>
 
-<script src="script.js"></script>
 
-</body>
-</html>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;
-}
 
-body{
-width:100vw;
-height:100vh;
-overflow:hidden;
-background:url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1920&auto=format&fit=crop") center/cover no-repeat;
-}
+<h1>VS</h1>
 
-#app{
-width:100%;
-height:100%;
-display:flex;
-justify-content:center;
-align-items:center;
-}
 
-#bootLogo{
-display:flex;
-flex-direction:column;
-align-items:center;
-gap:20px;
-color:white;
-animation:fade 2s ease;
-}
 
-.apple{
-font-size:80px;
-}
+<div class="enemy">
 
-#bootLogo h1{
-font-size:42px;
-font-weight:600;
-letter-spacing:2px;
-text-shadow:0 0 20px rgba(255,255,255,.5);
-}
+<h2>🔥 Gojo</h2>
 
-@keyframes fade{
-0%{
-opacity:0;
-transform:scale(.8);
-}
-100%{
-opacity:1;
-transform:scale(1);
-}
-}
-setTimeout(()=>{
-document.getElementById("bootLogo").innerHTML=`
-<h1 style="font-size:70px;">12:00</h1>
-<p>Thứ Bảy, 1 tháng 8</p>
-<p style="margin-top:40px;">⬆️ Vuốt lên để mở khóa</p>
-`;
-},2500);
-const boot = document.getElementById("bootLogo");
+<img src="assets/enemies/gojo.png">
 
-function updateClock() {
-    const now = new Date();
-
-    const time =
-        now.getHours().toString().padStart(2,"0") +
-        ":" +
-        now.getMinutes().toString().padStart(2,"0");
-
-    const days = [
-        "Chủ Nhật",
-        "Thứ Hai",
-        "Thứ Ba",
-        "Thứ Tư",
-        "Thứ Năm",
-        "Thứ Sáu",
-        "Thứ Bảy"
-    ];
-
-    const date =
-        days[now.getDay()] +
-        ", " +
-        now.getDate() +
-        " tháng " +
-        (now.getMonth()+1);
-
-    boot.innerHTML = `
-        <h1 class="clock">${time}</h1>
-        <p class="date">${date}</p>
-        <div class="unlock">
-            ⬆ Vuốt lên để mở khóa
-        </div>
-    `;
-}
-
-setTimeout(() => {
-    updateClock();
-    setInterval(updateClock,1000);
-},2500);
-.clock{
-font-size:80px;
-font-weight:300;
-color:white;
-text-shadow:0 0 20px rgba(0,0,0,.4);
-}
-
-.date{
-margin-top:10px;
-font-size:24px;
-color:white;
-}
-
-.unlock{
-margin-top:60px;
-padding:12px 30px;
-border-radius:40px;
-backdrop-filter:blur(20px);
-background:rgba(255,255,255,.15);
-color:white;
-animation:float 2s infinite;
-}
-
-@keyframes float{
-0%,100%{
-transform:translateY(0);
-}
-50%{
-transform:translateY(-8px);
-}
-}
-#home{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-display:none;
-padding:30px;
-background:rgba(0,0,0,.15);
-backdrop-filter:blur(20px);
-}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:25px;
-margin-top:70px;
-}
-
-.app{
-display:flex;
-flex-direction:column;
-align-items:center;
-color:white;
-font-size:14px;
-}
-
-.icon{
-width:70px;
-height:70px;
-border-radius:18px;
-display:flex;
-justify-content:center;
-align-items:center;
-font-size:34px;
-background:rgba(255,255,255,.2);
-backdrop-filter:blur(15px);
-margin-bottom:8px;
-cursor:pointer;
-transition:.2s;
-}
-
-.icon:active{
-transform:scale(.9);
-}
-document.addEventListener("touchstart",e=>{
-startY=e.touches[0].clientY;
-});
-
-document.addEventListener("touchend",e=>{
-let endY=e.changedTouches[0].clientY;
-
-if(startY-endY>120){
-
-document.getElementById("bootLogo").style.display="none";
-
-document.getElementById("home").style.display="block";
-
-}
-
-});
-.statusBar{
-position:fixed;
-top:12px;
-left:0;
-width:100%;
-padding:0 20px;
-display:flex;
-justify-content:space-between;
-color:white;
-font-size:15px;
-font-weight:600;
-z-index:100;
-}
-
-.dock{
-position:fixed;
-bottom:20px;
-left:50%;
-transform:translateX(-50%);
-width:90%;
-max-width:420px;
-height:90px;
-border-radius:30px;
-background:rgba(255,255,255,.18);
-backdrop-filter:blur(30px);
-display:flex;
-justify-content:space-evenly;
-align-items:center;
-box-shadow:0 10px 30px rgba(0,0,0,.25);
-}
-
-.dock .icon{
-width:65px;
-height:65px;
-font-size:32px;
-background:rgba(255,255,255,.22);
-transition:.25s;
-}
-
-.dock .icon:hover{
-transform:translateY(-5px) scale(1.08);
-}
-
-.appOpen{
-animation:zoomOpen .28s ease;
-}
-
-@keyframes zoomOpen{
-0%{
-transform:scale(.6);
-opacity:0;
-}
-100%{
-transform:scale(1);
-opacity:1;
-}
-}
-<div class="statusBar">
-    <span id="liveTime">12:00</span>
-    <span>📶 5G 🔋100%</span>
+<div class="bar">
+<div id="enemyHp"></div>
 </div>
-<div class="dock">
-
-<div class="icon">📞</div>
-
-<div class="icon">💬</div>
-
-<div class="icon">🌐</div>
-
-<div class="icon">🎵</div>
-
-</div>
-function updateStatusTime(){
-
-const now=new Date();
-
-document.getElementById("liveTime").innerHTML=
-
-now.getHours().toString().padStart(2,"0")
-
-+":"
-
-+now.getMinutes().toString().padStart(2,"0");
-
-}
-
-setInterval(updateStatusTime,1000);
-
-updateStatusTime();
-
-document.querySelectorAll(".icon").forEach(icon=>{
-
-icon.addEventListener("click",()=>{
-
-icon.classList.add("appOpen");
-
-setTimeout(()=>{
-
-icon.classList.remove("appOpen");
-
-},300);
-
-});
-
-});
-<div id="dynamicIsland">
-    <div class="camera"></div>
-</div>
-
-<div id="widget">
-    <h2>☀️ 30°C</h2>
-    <p>Hôm nay trời nắng đẹp</p>
-</div>
-
-<div id="spotlight">
-    <input type="text" id="search" placeholder="🔍 Tìm kiếm">
-</div>
-#dynamicIsland{
-position:fixed;
-top:10px;
-left:50%;
-transform:translateX(-50%);
-width:130px;
-height:36px;
-background:black;
-border-radius:30px;
-display:flex;
-justify-content:center;
-align-items:center;
-z-index:999;
-transition:.35s;
-}
-
-#dynamicIsland:hover{
-width:220px;
-}
-
-.camera{
-width:12px;
-height:12px;
-border-radius:50%;
-background:#333;
-}
-
-#widget{
-margin-top:70px;
-margin-bottom:20px;
-padding:20px;
-border-radius:28px;
-background:rgba(255,255,255,.18);
-backdrop-filter:blur(30px);
-color:white;
-}
-
-#spotlight{
-margin-bottom:20px;
-}
-
-#search{
-width:100%;
-padding:14px;
-border:none;
-border-radius:18px;
-background:rgba(255,255,255,.2);
-backdrop-filter:blur(20px);
-color:white;
-font-size:16px;
-outline:none;
-}
-
-#search::placeholder{
-color:white;
-opacity:.8;
-}
-document.getElementById("search").addEventListener("input",e=>{
-
-let value=e.target.value.toLowerCase();
-
-document.querySelectorAll(".app").forEach(app=>{
-
-app.style.display=
-
-app.innerText.toLowerCase().includes(value)
-
-?"flex":"none";
-
-});
-
-});
-<div id="appWindow">
-
-<div class="appHeader">
-
-<button id="closeApp">✕</button>
-
-<span id="appTitle">Ứng dụng</span>
 
 </div>
 
-<iframe id="appFrame"></iframe>
 
 </div>
-#appWindow{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:white;
-display:none;
-flex-direction:column;
-z-index:9999;
-animation:openApp .28s ease;
-}
 
-.appHeader{
-height:55px;
-display:flex;
-align-items:center;
-padding:0 15px;
-background:#f5f5f7;
-border-bottom:1px solid #ddd;
-}
 
-#closeApp{
-border:none;
-background:none;
-font-size:22px;
-cursor:pointer;
-margin-right:15px;
-}
 
-#appTitle{
-font-weight:600;
-}
+<div id="buttons">
 
-#appFrame{
-flex:1;
-border:none;
-width:100%;
-}
+<button onclick="attack()">⚔️</button>
 
-@keyframes openApp{
-0%{
-transform:scale(.85);
-opacity:0;
-}
-100%{
-transform:scale(1);
-opacity:1;
-}
-}
-const appWindow=document.getElementById("appWindow");
-const appTitle=document.getElementById("appTitle");
-const appFrame=document.getElementById("appFrame");
+<button onclick="skill1()">🔵</button>
 
-document.querySelectorAll(".app").forEach(app=>{
+<button onclick="skill2()">🟣</button>
 
-app.onclick=()=>{
+<button onclick="ultimate()">🔥</button>
 
-let name=app.innerText.trim();
+</div>
 
-appTitle.innerText=name;
 
-appFrame.srcdoc=`
-<!DOCTYPE html>
-<html>
-<body style="margin:0;font-family:-apple-system;background:#fff;display:flex;justify-content:center;align-items:center;height:100vh;">
-<h1>${name}</h1>
+<h2>
+🟡 Vàng: <span id="gold">0</span>
+</h2>
+
+
+<script src="game.js"></script>
+
 </body>
 </html>
