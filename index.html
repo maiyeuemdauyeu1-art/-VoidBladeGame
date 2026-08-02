@@ -3,105 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Android Virtual OS - Fully Integrated System</title>
+    <title>Android 14 Ultra Simulator - Full Apps</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Roboto', sans-serif; }
-        body { background: #08090c; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        body { background: #07090e; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
 
-        /* Khung viền điện thoại Flagship */
+        /* Khung Viền Điện Thoại Flagship */
         .phone-bezel {
-            width: 960px; height: 550px;
-            background: linear-gradient(135deg, #2a2e3d 0%, #12141c 100%);
-            border-radius: 44px; padding: 12px;
-            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.9), inset 0 0 5px rgba(255, 255, 255, 0.25);
+            width: 1000px; height: 570px;
+            background: linear-gradient(135deg, #2d3243 0%, #11131a 100%);
+            border-radius: 46px; padding: 12px;
+            box-shadow: 0 35px 80px rgba(0, 0, 0, 0.95), inset 0 0 6px rgba(255, 255, 255, 0.25);
             position: relative; display: flex;
         }
 
         .screen {
             width: 100%; height: 100%;
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
-            border-radius: 34px; position: relative; overflow: hidden; display: flex; flex-direction: column;
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000') center/cover no-repeat;
+            border-radius: 36px; position: relative; overflow: hidden; display: flex; flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
-        /* Notch Camera */
+        /* Notch Tai Thỏ / Dynamic Island */
         .notch {
             position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            width: 150px; height: 22px; background: #000; border-bottom-left-radius: 14px; border-bottom-right-radius: 14px;
+            width: 160px; height: 22px; background: #000; border-bottom-left-radius: 14px; border-bottom-right-radius: 14px;
             z-index: 100; display: flex; align-items: center; justify-content: center; gap: 12px;
         }
-        .camera-lens { width: 10px; height: 10px; background: #091026; border-radius: 50%; border: 1px solid #1e293b; }
+        .camera-lens { width: 10px; height: 10px; background: #080d1a; border-radius: 50%; border: 1px solid #1e293b; }
         .sensor { width: 6px; height: 6px; background: #1a103c; border-radius: 50%; }
 
         /* Status Bar */
         .status-bar {
             height: 28px; padding: 0 24px; display: flex; justify-content: space-between; align-items: center;
-            color: #fff; font-size: 11px; font-weight: 500; z-index: 90; background: rgba(0, 0, 0, 0.35); backdrop-filter: blur(10px);
+            color: #fff; font-size: 11px; font-weight: 500; z-index: 90; background: rgba(0, 0, 0, 0.35); backdrop-filter: blur(12px);
         }
 
-        .desktop { flex: 1; position: relative; padding: 16px; overflow: hidden; }
+        .desktop { flex: 1; position: relative; padding: 16px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
 
-        /* Widget & Thanh Tìm Kiếm */
-        .widget-column { width: 360px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 1; }
+        /* Widget Đồng Hồ & Tìm Kiếm */
+        .system-widget { width: 380px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; z-index: 1; }
         
         .search-bar {
-            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(15px); border-radius: 20px;
-            padding: 8px 14px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255, 255, 255, 0.2); color: white;
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(20px); border-radius: 24px;
+            padding: 9px 16px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255, 255, 255, 0.3); color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        .search-bar input { background: transparent; border: none; outline: none; color: white; font-size: 11px; width: 100%; }
-        .search-bar input::placeholder { color: rgba(255, 255, 255, 0.6); }
+        .search-bar input { background: transparent; border: none; outline: none; color: white; font-size: 12px; width: 100%; }
+        .search-bar input::placeholder { color: rgba(255, 255, 255, 0.7); }
 
-        .system-tag {
-            font-size: 9px; color: #38bdf8; text-align: center; background: rgba(56, 189, 248, 0.1);
-            padding: 3px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2); font-family: monospace;
-        }
-
-        /* Lưới Ứng Dụng */
-        .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 6px; }
-        .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.1s; }
-        .app-item:active { transform: scale(0.9); }
+        /* Lưới App Phong Phú */
+        .app-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+        .app-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.15s; }
+        .app-item:active { transform: scale(0.88); }
         .app-icon {
-            width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
-            font-size: 22px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.4); margin-bottom: 4px; border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 52px; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: white; box-shadow: 0 6px 16px rgba(0,0,0,0.4); margin-bottom: 5px; border: 1px solid rgba(255, 255, 255, 0.25);
         }
-        .app-label { color: white; font-size: 10px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); text-align: center; }
+        .app-label { color: white; font-size: 10px; text-shadow: 0 1px 3px rgba(0,0,0,0.9); text-align: center; font-weight: 500; }
 
-        /* Màn hình Cửa sổ Android */
+        /* Cửa Sổ App Hoạt Động */
         .window {
-            position: absolute; background: #0f172a; border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.85);
+            position: absolute; background: #0f172a; border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.9);
             display: none; flex-direction: column; overflow: hidden; z-index: 10;
         }
         .window-header {
-            height: 36px; background: #1e293b; padding: 0 10px;
-            display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); cursor: move;
+            height: 38px; background: #1e293b; padding: 0 12px;
+            display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); cursor: move;
         }
         .url-bar {
             flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 8px;
-            padding: 4px 10px; color: #38bdf8; font-size: 11px; outline: none;
+            padding: 4px 12px; color: #38bdf8; font-size: 11px; outline: none;
         }
-        .window-actions { display: flex; gap: 8px; color: #94a3b8; font-size: 12px; cursor: pointer; }
+        .window-actions { display: flex; gap: 10px; color: #94a3b8; font-size: 13px; cursor: pointer; }
         .window-body { flex: 1; overflow: hidden; background: #fff; position: relative; }
 
-        #app-window { width: 740px; height: 420px; top: 10px; left: 95px; }
+        #app-window { width: 780px; height: 440px; top: 10px; left: 98px; }
         .web-iframe { width: 100%; height: 100%; border: none; }
 
-        /* Dock Dưới */
+        /* Thanh Dock Dưới */
         .dock {
-            position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 14px; background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(20px);
-            padding: 6px 14px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.2); z-index: 2;
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 16px; background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(25px);
+            padding: 8px 18px; border-radius: 26px; border: 1px solid rgba(255, 255, 255, 0.3); z-index: 2;
         }
-        .dock .app-icon { width: 40px; height: 40px; font-size: 18px; margin-bottom: 0; }
+        .dock .app-icon { width: 44px; height: 44px; font-size: 20px; margin-bottom: 0; }
 
-        /* 3 Nút Điều Hướng chuẩn qemu.hw.mainkeys=0 */
+        /* Thanh 3 Nút Điều Hướng Hệ Thống (qemu.hw.mainkeys=0) */
         .nav-bar {
-            height: 32px; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(10px);
-            display: flex; justify-content: center; align-items: center; gap: 70px; color: rgba(255, 255, 255, 0.85); font-size: 13px; z-index: 90;
+            height: 32px; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(12px);
+            display: flex; justify-content: center; align-items: center; gap: 80px; color: rgba(255, 255, 255, 0.85); font-size: 13px; z-index: 90;
         }
-        .nav-btn { cursor: pointer; padding: 4px 16px; border-radius: 6px; transition: background 0.2s; }
+        .nav-btn { cursor: pointer; padding: 4px 18px; border-radius: 6px; }
         .nav-btn:active { background: rgba(255, 255, 255, 0.2); }
     </style>
 </head>
@@ -109,10 +105,10 @@
 
     <div class="phone-bezel">
         <div class="screen">
-            <!-- Tai Thỏ / Camera -->
+            <!-- Dynamic Island / Camera -->
             <div class="notch"><div class="camera-lens"></div><div class="sensor"></div></div>
 
-            <!-- Thanh Trạng Thái -->
+            <!-- Thanh Trạng Thái (Status Bar) -->
             <div class="status-bar">
                 <span id="status-clock">10:00 AM</span>
                 <div style="display:flex; gap:10px; align-items:center;">
@@ -123,60 +119,98 @@
                 </div>
             </div>
 
-            <!-- Màn Hình Chính -->
+            <!-- Màn Hình Chính Android -->
             <div class="desktop">
-                <div class="widget-column">
-                    <div class="system-tag">qemu.hw.mainkeys=0 | GPU: OpenGL ES | ARM-Translator: Active</div>
-
-                    <!-- Thanh Google / Search -->
+                <div class="system-widget">
+                    <!-- Thanh Tìm Kiếm Google -->
                     <div class="search-bar">
-                        <i class="fa-brands fa-google" style="color: #4285f4;"></i>
-                        <input type="text" id="main-search-input" value="https://bandishare.io/delta-x-apk-1/" placeholder="Tìm kiếm trên Google hoặc nhập URL...">
+                        <i class="fa-brands fa-google" style="color: #4285f4; font-size: 16px;"></i>
+                        <input type="text" id="main-search-input" placeholder="Tìm kiếm trên Google hoặc nhập URL...">
                         <i class="fa-solid fa-magnifying-glass" onclick="triggerSearch()" style="cursor:pointer; color:#38bdf8;"></i>
-                    </div>
-
-                    <!-- Danh sách App & Game -->
-                    <div class="app-grid">
-                        <!-- Tải APK BandiShare Delta X -->
-                        <div class="app-item" onclick="openApp('https://bandishare.io/delta-x-apk-1/')">
-                            <div class="app-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-                                <i class="fa-solid fa-download"></i>
-                            </div>
-                            <span class="app-label">Delta X APK</span>
-                        </div>
-
-                        <!-- Giả Lập Máy Ảo Chạy APK -->
-                        <div class="app-item" onclick="openApp('https://www.apkonline.net/runandroid/free-android-online-emulator')">
-                            <div class="app-icon" style="background: linear-gradient(135deg, #a4c639, #658c1b);">
-                                <i class="fa-brands fa-android"></i>
-                            </div>
-                            <span class="app-label">Android Virtual</span>
-                        </div>
-
-                        <!-- Poki Games -->
-                        <div class="app-item" onclick="openApp('https://poki.com')">
-                            <div class="app-icon" style="background: linear-gradient(135deg, #00d2ff, #3a7bd5);">
-                                <i class="fa-solid fa-gamepad"></i>
-                            </div>
-                            <span class="app-label">Kho Game Web</span>
-                        </div>
-
-                        <!-- APKPure Store -->
-                        <div class="app-item" onclick="openApp('https://apkpure.net')">
-                            <div class="app-icon" style="background: linear-gradient(135deg, #00b09b, #96c93d);">
-                                <i class="fa-solid fa-store"></i>
-                            </div>
-                            <span class="app-label">APKPure</span>
-                        </div>
                     </div>
                 </div>
 
-                <!-- Cửa Sổ Chạy Ứng Dụng -->
+                <!-- Danh Sách 12 App Android Chuẩn -->
+                <div class="app-grid">
+                    <!-- 1. Delta X APK (BandiShare) -->
+                    <div class="app-item" onclick="openApp('https://bandishare.io/delta-x-apk-1/')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="fa-solid fa-file-zipper"></i></div>
+                        <span class="app-label">Delta X APK</span>
+                    </div>
+
+                    <!-- 2. Android Máy Ảo (ApkOnline) -->
+                    <div class="app-item" onclick="openApp('https://www.apkonline.net/runandroid/free-android-online-emulator')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #a4c639, #658c1b);"><i class="fa-brands fa-android"></i></div>
+                        <span class="app-label">Android OS</span>
+                    </div>
+
+                    <!-- 3. Google Play Store (CH Play) -->
+                    <div class="app-item" onclick="openApp('https://apkpure.net')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #0284c7, #0369a1);"><i class="fa-solid fa-play"></i></div>
+                        <span class="app-label">CH Play</span>
+                    </div>
+
+                    <!-- 4. Kho Game Poki -->
+                    <div class="app-item" onclick="openApp('https://poki.com')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #00d2ff, #3a7bd5);"><i class="fa-solid fa-gamepad"></i></div>
+                        <span class="app-label">Kho Game</span>
+                    </div>
+
+                    <!-- 5. Chrome / Browser -->
+                    <div class="app-item" onclick="openApp('https://www.bing.com')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #ea580c, #c2410c);"><i class="fa-brands fa-chrome"></i></div>
+                        <span class="app-label">Chrome</span>
+                    </div>
+
+                    <!-- 6. Youtube -->
+                    <div class="app-item" onclick="openApp('https://www.youtube.com/embed/')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);"><i class="fa-brands fa-youtube"></i></div>
+                        <span class="app-label">YouTube</span>
+                    </div>
+
+                    <!-- 7. TikTok -->
+                    <div class="app-item" onclick="openApp('https://www.tiktok.com')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #111827, #000000);"><i class="fa-brands fa-tiktok"></i></div>
+                        <span class="app-label">TikTok</span>
+                    </div>
+
+                    <!-- 8. Wikipedia (Kiến thức) -->
+                    <div class="app-item" onclick="openApp('https://vi.wikipedia.org')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #64748b, #475569);"><i class="fa-solid fa-book"></i></div>
+                        <span class="app-label">Wikipedia</span>
+                    </div>
+
+                    <!-- 9. Game 2048 (Mượt nhẹ) -->
+                    <div class="app-item" onclick="openApp('https://play2048.co')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i class="fa-solid fa-cubes"></i></div>
+                        <span class="app-label">Game 2048</span>
+                    </div>
+
+                    <!-- 10. Máy Tính (Calculator) -->
+                    <div class="app-item" onclick="openApp('https://www.google.com/search?q=calculator')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);"><i class="fa-solid fa-calculator"></i></div>
+                        <span class="app-label">Máy Tính</span>
+                    </div>
+
+                    <!-- 11. Thời Tiết (Weather) -->
+                    <div class="app-item" onclick="openApp('https://www.msn.com/vi-vn/weather')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #38bdf8, #0284c7);"><i class="fa-solid fa-cloud-sun"></i></div>
+                        <span class="app-label">Thời Tiết</span>
+                    </div>
+
+                    <!-- 12. Cài Đặt (Settings) -->
+                    <div class="app-item" onclick="alert('Đã bật tính năng: qemu.hw.mainkeys=0\nĐồ họa GPU: Hardware OpenGL\nThư viện ARM-Translator: Đã kích hoạt!')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, #475569, #334155);"><i class="fa-solid fa-gear"></i></div>
+                        <span class="app-label">Cài Đặt</span>
+                    </div>
+                </div>
+
+                <!-- Cửa Sổ Khung Ứng Dụng -->
                 <div class="window" id="app-window">
                     <div class="window-header">
                         <i class="fa-solid fa-globe" style="color:#38bdf8; font-size:11px;"></i>
                         <input type="text" id="window-url-input" class="url-bar" value="">
-                        <button onclick="navigateWindowUrl()" style="background:#2563eb; color:#fff; border:none; padding:3px 10px; border-radius:6px; cursor:pointer; font-size:10px;">Mở</button>
+                        <button onclick="navigateWindowUrl()" style="background:#2563eb; color:#fff; border:none; padding:3px 10px; border-radius:6px; cursor:pointer; font-size:10px;">Truy cập</button>
                         <div class="window-actions">
                             <i class="fa-solid fa-xmark" onclick="closeApp()"></i>
                         </div>
@@ -186,19 +220,20 @@
                     </div>
                 </div>
 
-                <!-- Thanh Dock -->
+                <!-- Thanh Dock Dưới Màn Hình -->
                 <div class="dock">
-                    <div class="app-icon" style="background: #10b981;" onclick="openApp('https://bandishare.io/delta-x-apk-1/')"><i class="fa-solid fa-download"></i></div>
+                    <div class="app-icon" style="background: #10b981;" onclick="openApp('https://bandishare.io/delta-x-apk-1/')"><i class="fa-solid fa-file-zipper"></i></div>
+                    <div class="app-icon" style="background: #ea580c;" onclick="openApp('https://www.bing.com')"><i class="fa-brands fa-chrome"></i></div>
                     <div class="app-icon" style="background: #a4c639;" onclick="openApp('https://www.apkonline.net/runandroid/free-android-online-emulator')"><i class="fa-brands fa-android"></i></div>
                     <div class="app-icon" style="background: #2563eb;" onclick="openApp('https://poki.com')"><i class="fa-solid fa-gamepad"></i></div>
                 </div>
             </div>
 
-            <!-- Thanh 3 Nút Điều Hướng Hệ Thống (Recents - Home - Back) -->
+            <!-- Thanh 3 Nút Điều Hướng Android Chuẩn (Recents - Home - Back) -->
             <div class="nav-bar">
-                <i class="fa-solid fa-bars nav-btn" onclick="showApp()" title="Recents (Đa nhiệm)"></i>
-                <i class="fa-regular fa-square nav-btn" onclick="closeApp()" title="Home (Trang chủ)"></i>
-                <i class="fa-solid fa-chevron-left nav-btn" onclick="closeApp()" title="Back (Quay lại)"></i>
+                <i class="fa-solid fa-bars nav-btn" onclick="showApp()" title="Đa nhiệm"></i>
+                <i class="fa-regular fa-square nav-btn" onclick="closeApp()" title="Trang chủ"></i>
+                <i class="fa-solid fa-chevron-left nav-btn" onclick="closeApp()" title="Quay lại"></i>
             </div>
         </div>
     </div>
@@ -216,18 +251,17 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Mở ứng dụng / Web trong điện thoại ảo
+        // Hàm mở App/Web bảo vệ chống màn hình trắng
         function openApp(url) {
             const win = document.getElementById('app-window');
             const frame = document.getElementById('app-frame');
             const urlInput = document.getElementById('window-url-input');
 
-            // Khắc phục chống màn hình trắng: Lọc các trang cấm nhúng iframe
-            const blockedSites = ['google.com', 'youtube.com', 'facebook.com', 'tiktok.com'];
-            const isBlocked = blockedSites.some(site => url.toLowerCase().includes(site));
+            // Xử lý chống chặn iframe gây màn hình trắng
+            const blockedSites = ['google.com', 'facebook.com'];
+            const isBlocked = blockedSites.some(site => url.toLowerCase().includes(site) && !url.includes('google.com/search'));
 
             if (isBlocked) {
-                // Nếu cấm nhúng, mở bằng Bing Search để không bị màn hình trắng
                 url = `https://www.bing.com/search?q=${encodeURIComponent(url)}`;
             }
 
@@ -244,16 +278,11 @@
             openApp(url);
         }
 
-        // Chức năng 3 nút điều hướng
-        function closeApp() {
-            document.getElementById('app-window').style.display = 'none';
-        }
+        // Chức năng 3 nút bấm hệ thống
+        function closeApp() { document.getElementById('app-window').style.display = 'none'; }
+        function showApp() { document.getElementById('app-window').style.display = 'flex'; }
 
-        function showApp() {
-            document.getElementById('app-window').style.display = 'flex';
-        }
-
-        // Xử lý Tìm Kiếm Google / URL
+        // Tìm kiếm thông minh
         function triggerSearch() {
             const query = document.getElementById('main-search-input').value.trim();
             if (query !== '') {
@@ -269,7 +298,7 @@
             if (e.key === 'Enter') triggerSearch();
         });
 
-        // Kéo thả cửa sổ ứng dụng
+        // Kéo thả di chuyển Cửa sổ
         const win = document.getElementById('app-window');
         const header = win.querySelector('.window-header');
         let isDragging = false, offsetX = 0, offsetY = 0;
