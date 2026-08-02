@@ -343,3 +343,98 @@ function nextStage(){
 
 
 }
+let currentSkin = "normal";
+
+
+let skins = {
+
+rick:{
+normal:{
+name:"Rick thường",
+price:0,
+img:"assets/rick/normal.png"
+},
+
+battle:{
+name:"Battle Rick",
+price:500,
+img:"assets/rick/battle.png"
+},
+
+prime:{
+name:"Rick Prime",
+price:2000,
+img:"assets/rick/prime.png"
+}
+
+},
+
+
+morty:{
+normal:{
+name:"Morty thường",
+price:0,
+img:"assets/morty/normal.png"
+},
+
+dark:{
+name:"Dark Morty",
+price:700,
+img:"assets/morty/dark.png"
+},
+
+evil:{
+name:"Evil Morty",
+price:2000,
+img:"assets/morty/evil.png"
+}
+
+}
+
+};
+function changeSkin(skin){
+
+let data =
+skins[player][skin];
+
+
+if(!data){
+
+alert("Skin không tồn tại!");
+
+return;
+
+}
+
+
+if(gold < data.price){
+
+alert(
+"Cần "+data.price+" vàng!"
+);
+
+return;
+
+}
+
+
+gold -= data.price;
+
+
+currentSkin = skin;
+
+
+document.getElementById("playerImg")
+.src=data.img;
+
+
+document.getElementById("gold")
+.innerHTML=gold;
+
+
+alert(
+"Đã trang bị "+data.name
+);
+
+
+}
