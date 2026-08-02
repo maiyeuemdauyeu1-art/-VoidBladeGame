@@ -1,1340 +1,477 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.virtualandroid2026">
-
-    <!-- Cấp quyền cho Điện thoại Android Ảo -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
-                     android:maxSdkVersion="28" />
-
-    <application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="Neo Android OS"
-        android:usesCleartextTraffic="true"
-        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-
-</manifest>
-package com.example.virtualandroid2026
-
-import android.app.DownloadManager
-import android.content.Context
-import android.content.pm.PackageManager
-import android.graphics.Color
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
-import android.net.Uri
-import android.os.Bundle
-import android.os.Environment
-import android.view.Gravity
-import android.view.View
-import android.webkit.CookieManager
-import android.webkit.URLUtil
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
-import dalvik.system.DexClassLoader
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
-
-class MainActivity : AppCompatActivity() {
-
-    // Khai báo khung chứa và linh kiện của Điện thoại Android Ảo
-    private lateinit var rootContainer: FrameLayout
-    private lateinit var homeScreenLayout: LinearLayout
-    private lateinit var webViewContainer: LinearLayout
-    private lateinit var webView: WebView
-    private lateinit var edtUrl: EditText
-    private lateinit var appsGrid: GridLayout
-    private lateinit var tvClock: TextView
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // 1. Tạo Khung viền và Nền Điện thoại Futurist 2026
-        rootContainer = FrameLayout(this).apply {
-            background = createGradientDrawable("#0D0B14", "#16052B", GradientDrawable.Orientation.TOP_BOTTOM, 0f)
-        }
-
-        // 2. Lắp ráp Thanh trạng thái (Status Bar - Đồng hồ & Pin)
-        val statusBar = createStatusBar()
-
-        // 3. Lắp ráp Màn hình chính (Home Screen) & Trình duyệt Web
-        setupHomeScreen2026()
-        setupWebViewApp2026()
-
-        // 4. Lắp ráp Thanh điều hướng chứa NÚT HOME (◯)
-        val navBar = createNavigationBar2026()
-
-        // Đưa tất cả linh kiện vào khung máy Điện thoại
-        rootContainer.addView(homeScreenLayout)
-        rootContainer.addView(webViewContainer)
-        rootContainer.addView(statusBar)
-        rootContainer.addView(navBar)
-
-        setContentView(rootContainer)
-
-        // Mặc định hiển thị Màn hình chính
-        showHomeScreen()
-    }
-
-    // --- 1. THANH TRẠNG THÁI ĐIỆN THOẠI (STATUS BAR) ---
-    private fun createStatusBar(): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(40, 20, 40, 0)
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, 80).apply { gravity = Gravity.TOP }
-
-            tvClock = TextView(this@MainActivity).apply {
-                text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-                setTextColor(Color.WHITE)
-                textSize = 14f
-                typeface = Typeface.DEFAULT_BOLD
-            }
-
-            val tvBattery = TextView(this@MainActivity).apply {
-                text = "⚡ 100%"
-                setTextColor(Color.parseColor("#00FFC6"))
-                textSize = 12f
-                typeface = Typeface.DEFAULT_BOLD
-            }
-
-            addView(tvClock, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
-            addView(tvBattery)
-        }
-    }
-
-    // --- 2. MÀN HÌNH CHÍNH ANDROID (HOME SCREEN) ---
-    private fun setupHomeScreen2026() {
-        homeScreenLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT).apply {
-                topMargin = 90
-                bottomMargin = 160
-            }
-            setPadding(40, 40, 40, 40)
-        }
-
-        // Widget Tiêu đề Android OS 2026
-        val widgetTitle = TextView(this).apply {
-            text = "NEO ANDROID OS"
-            textSize = 26f
-            setTextColor(Color.parseColor("#00FFC6"))
-            typeface = Typeface.DEFAULT_BOLD
-            gravity = Gravity.CENTER
-            setPadding(0, 20, 0, 40)
-        }
-        homeScreenLayout.addView(widgetTitle)
-
-        // Lưới ứng dụng (App Grid Icons)
-        appsGrid = GridLayout(this).apply {
-            columnCount = 3
-            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
-        }
-
-        // Icon Trình duyệt mặc định
-        val browserApp = createGlassIcon("Google Web", "#7F00FF", "#FF007F") {
-            homeScreenLayout.visibility = View.GONE
-            webViewContainer.visibility = View.VISIBLE
-        }
-        appsGrid.addView(browserApp)
-
-        homeScreenLayout.addView(appsGrid)
-    }
-
-    // --- 3. TRÌNH DUYỆT GOOGLE & BỘ TẢI APK ẢO ---
-    private fun setupWebViewApp2026() {
-        webViewContainer = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT).apply {
-                topMargin = 90
-                bottomMargin = 160
-            }
-            visibility = View.GONE
-            setPadding(20, 10, 20, 10)
-        }
-
-        val topBar = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(10, 10, 10, 10)
-        }
-
-        edtUrl = EditText(this).apply {
-            hint = "Tìm Google hoặc nhập URL APK..."
-            setHintTextColor(Color.GRAY)
-            setTextColor(Color.WHITE)
-            textSize = 14f
-            background = createGradientDrawable("#1A1A2E", "#16213E", GradientDrawable.Orientation.LEFT_RIGHT, 30f)
-            setPadding(30, 20, 30, 20)
-            layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
-        }
-
-        val btnGo = Button(this).apply {
-            text = "MỞ"
-            setTextColor(Color.BLACK)
-            typeface = Typeface.DEFAULT_BOLD
-            background = createGradientDrawable("#00FFC6", "#00B894", GradientDrawable.Orientation.LEFT_RIGHT, 30f)
-            setOnClickListener { loadUrlOrSearch(edtUrl.text.toString()) }
-        }
-
-        topBar.addView(edtUrl)
-        topBar.addView(btnGo)
-
-        webView = WebView(this).apply {
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-            webViewClient = WebViewClient()
-        }
-
-        // Mở sẵn Google
-        val homeUrl = "https://www.google.com"
-        webView.loadUrl(homeUrl)
-        edtUrl.setText(homeUrl)
-
-        // BẮT LIÊN KẾT VÀ TỰ ĐỘNG TẢI FILE APK
-        webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, _ ->
-            try {
-                val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
-                val request = DownloadManager.Request(Uri.parse(url)).apply {
-                    setMimeType(mimetype)
-                    addRequestHeader("cookie", CookieManager.getInstance().getCookie(url))
-                    addRequestHeader("User-Agent", userAgent)
-                    setTitle(fileName)
-                    setDescription("Đang tải file APK ảo...")
-                    setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-                }
-
-                val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-                dm.enqueue(request)
-
-                val downloadedFile = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName)
-                Toast.makeText(this, "Bắt đầu tải: $fileName", Toast.LENGTH_SHORT).show()
-                
-                // Tự động tạo Icon ứng dụng mới ra Màn hình chính
-                addApkToHomeScreen(downloadedFile)
-            } catch (e: Exception) {
-                Toast.makeText(this, "Lỗi tải: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        webViewContainer.addView(topBar)
-        webViewContainer.addView(webView, LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
-    }
-
-    // --- 4. THANH NÚT HOME ĐIỆN THOẠI (◯) ---
-    private fun createNavigationBar2026(): FrameLayout {
-        val navContainer = FrameLayout(this).apply {
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, 150).apply {
-                gravity = Gravity.BOTTOM
-            }
-            background = createGradientDrawable("#150A21", "#0B0512", GradientDrawable.Orientation.BOTTOM_TOP, 0f)
-        }
-
-        // Nút Home tròn chuẩn Android
-        val btnHome = TextView(this).apply {
-            text = "◯"
-            textSize = 28f
-            setTextColor(Color.parseColor("#00FFC6"))
-            gravity = Gravity.CENTER
-            layoutParams = FrameLayout.LayoutParams(120, 120).apply {
-                gravity = Gravity.CENTER
-            }
-            background = createGradientDrawable("#240F3E", "#0D0B14", GradientDrawable.Orientation.TOP_BOTTOM, 60f)
-            setOnClickListener { showHomeScreen() }
-        }
-
-        navContainer.addView(btnHome)
-        return navContainer
-    }
-
-    // --- CÁC HÀM XỬ LÝ HỆ THỐNG ĐIỆN THOẠI ---
-    private fun showHomeScreen() {
-        webViewContainer.visibility = View.GONE
-        homeScreenLayout.visibility = View.VISIBLE
-    }
-
-    private fun loadUrlOrSearch(input: String) {
-        val targetUrl = if (input.startsWith("http://") || input.startsWith("https://")) input
-        else "https://www.google.com/search?q=$input"
-        webView.loadUrl(targetUrl)
-    }
-
-    // Tạo Icon ứng dụng dạng Kính mờ (Glassmorphism UI)
-    private fun createGlassIcon(name: String, colorStart: String, colorEnd: String, onClick: () -> Unit): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(30, 30, 30, 30)
-
-            val iconBox = View(this@MainActivity).apply {
-                layoutParams = LinearLayout.LayoutParams(130, 130)
-                background = createGradientDrawable(colorStart, colorEnd, GradientDrawable.Orientation.TL_BR, 35f)
-            }
-
-            val label = TextView(this@MainActivity).apply {
-                text = name
-                setTextColor(Color.WHITE)
-                textSize = 11f
-                typeface = Typeface.DEFAULT_BOLD
-                gravity = Gravity.CENTER
-                setPadding(0, 15, 0, 0)
-            }
-
-            addView(iconBox)
-            addView(label)
-            setOnClickListener { onClick() }
-        }
-    }
-
-    // Cài đặt và đưa Icon APK mới ra Màn hình chính
-    private fun addApkToHomeScreen(apkFile: File) {
-        val appName = apkFile.name.replace(".apk", "")
-        val apkIcon = createGlassIcon(appName, "#00C9FF", "#92FE9D") {
-            launchVirtualApk(apkFile.absolutePath)
-        }
-        appsGrid.addView(apkIcon)
-    }
-
-    // Thực thi và chơi APK trong môi trường ảo
-    private fun launchVirtualApk(apkPath: String) {
-        try {
-            val pkgInfo = packageManager.getPackageArchiveInfo(apkPath, PackageManager.GET_ACTIVITIES)
-            val mainActivityName = pkgInfo?.activities?.firstOrNull()?.name
-
-            if (mainActivityName != null) {
-                val dexOptDir = getDir("virtual_dex_2026", Context.MODE_PRIVATE)
-                val classLoader = DexClassLoader(apkPath, dexOptDir.absolutePath, null, classLoader)
-                classLoader.loadClass(mainActivityName)
-                Toast.makeText(this, "Đang khởi chạy Game/APK ảo...", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Không tìm thấy file khởi chạy trong APK!", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: Exception) {
-            Toast.makeText(this, "Lỗi thực thi APK: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // Hỗ trợ tạo màu Gradient
-    private fun createGradientDrawable(startColor: String, endColor: String, orientation: GradientDrawable.Orientation, cornerRadius: Float): GradientDrawable {
-        return GradientDrawable(orientation, intArrayOf(Color.parseColor(startColor), Color.parseColor(endColor))).apply {
-            this.cornerRadius = cornerRadius
-        }
-    }
-
-    // Bấm phím Back trên máy thật để thoát trang web hoặc về Home
-    override fun onBackPressed() {
-        if (webViewContainer.visibility == View.VISIBLE && webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            showHomeScreen()
-        }
-    }
-
-    companion object {
-        const val MATCH_PARENT = LinearLayout.LayoutParams.MATCH_PARENT
-        const val WRAP_CONTENT = LinearLayout.LayoutParams.WRAP_CONTENT
-    }
-}
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.virtualandroid2026">
-
-    <!-- Cấp quyền truy cập Internet và Lưu trữ -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
-
-    <application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="Neo Android OS"
-        android:usesCleartextTraffic="true"
-        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-
-</manifest>
-package com.example.virtualandroid2026
-
-import android.app.DownloadManager
-import android.content.Context
-import android.content.pm.PackageManager
-import android.graphics.Color
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
-import android.net.Uri
-import android.os.Bundle
-import android.os.Environment
-import android.view.Gravity
-import android.view.View
-import android.webkit.CookieManager
-import android.webkit.URLUtil
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
-import dalvik.system.DexClassLoader
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
-
-class MainActivity : AppCompatActivity() {
-
-    private lateinit var rootContainer: FrameLayout
-    private lateinit var homeScreenLayout: LinearLayout
-    private lateinit var webViewContainer: LinearLayout
-    private lateinit var webView: WebView
-    private lateinit var edtUrl: EditText
-    private lateinit var appsGrid: GridLayout
-    private lateinit var tvClock: TextView
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // Tạo khung nền hệ thống
-        rootContainer = FrameLayout(this).apply {
-            background = createGradientDrawable("#0D0B14", "#16052B", GradientDrawable.Orientation.TOP_BOTTOM, 0f)
-        }
-
-        val statusBar = createStatusBar()
-        setupHomeScreen2026()
-        setupWebViewApp2026()
-        val navBar = createNavigationBar2026()
-
-        rootContainer.addView(homeScreenLayout)
-        rootContainer.addView(webViewContainer)
-        rootContainer.addView(statusBar)
-        rootContainer.addView(navBar)
-
-        setContentView(rootContainer)
-        showHomeScreen()
-    }
-
-    // 1. Status Bar (Đồng hồ & Pin)
-    private fun createStatusBar(): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(40, 20, 40, 0)
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, 80).apply { gravity = Gravity.TOP }
-
-            tvClock = TextView(this@MainActivity).apply {
-                text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-                setTextColor(Color.WHITE)
-                textSize = 14f
-                typeface = Typeface.DEFAULT_BOLD
-            }
-
-            val tvBattery = TextView(this@MainActivity).apply {
-                text = "⚡ 100%"
-                setTextColor(Color.parseColor("#00FFC6"))
-                textSize = 12f
-                typeface = Typeface.DEFAULT_BOLD
-            }
-
-            addView(tvClock, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
-            addView(tvBattery)
-        }
-    }
-
-    // 2. Màn hình chính (Home Screen)
-    private fun setupHomeScreen2026() {
-        homeScreenLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT).apply {
-                topMargin = 90
-                bottomMargin = 160
-            }
-            setPadding(40, 40, 40, 40)
-        }
-
-        val widgetTitle = TextView(this).apply {
-            text = "NEO ANDROID OS"
-            textSize = 26f
-            setTextColor(Color.parseColor("#00FFC6"))
-            typeface = Typeface.DEFAULT_BOLD
-            gravity = Gravity.CENTER
-            setPadding(0, 20, 0, 40)
-        }
-        homeScreenLayout.addView(widgetTitle)
-
-        appsGrid = GridLayout(this).apply {
-            columnCount = 3
-            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
-        }
-
-        val browserApp = createGlassIcon("Google Web", "#7F00FF", "#FF007F") {
-            homeScreenLayout.visibility = View.GONE
-            webViewContainer.visibility = View.VISIBLE
-        }
-        appsGrid.addView(browserApp)
-
-        homeScreenLayout.addView(appsGrid)
-    }
-
-    // 3. Trình duyệt & Bộ tải APK
-    private fun setupWebViewApp2026() {
-        webViewContainer = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT).apply {
-                topMargin = 90
-                bottomMargin = 160
-            }
-            visibility = View.GONE
-            setPadding(20, 10, 20, 10)
-        }
-
-        val topBar = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(10, 10, 10, 10)
-        }
-
-        edtUrl = EditText(this).apply {
-            hint = "Tìm Google hoặc nhập URL APK..."
-            setHintTextColor(Color.GRAY)
-            setTextColor(Color.WHITE)
-            textSize = 14f
-            background = createGradientDrawable("#1A1A2E", "#16213E", GradientDrawable.Orientation.LEFT_RIGHT, 30f)
-            setPadding(30, 20, 30, 20)
-            layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
-        }
-
-        val btnGo = Button(this).apply {
-            text = "MỞ"
-            setTextColor(Color.BLACK)
-            typeface = Typeface.DEFAULT_BOLD
-            background = createGradientDrawable("#00FFC6", "#00B894", GradientDrawable.Orientation.LEFT_RIGHT, 30f)
-            setOnClickListener { loadUrlOrSearch(edtUrl.text.toString()) }
-        }
-
-        topBar.addView(edtUrl)
-        topBar.addView(btnGo)
-
-        webView = WebView(this).apply {
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-            webViewClient = WebViewClient()
-        }
-
-        val homeUrl = "https://www.google.com"
-        webView.loadUrl(homeUrl)
-        edtUrl.setText(homeUrl)
-
-        webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, _ ->
-            try {
-                val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
-                val request = DownloadManager.Request(Uri.parse(url)).apply {
-                    setMimeType(mimetype)
-                    addRequestHeader("cookie", CookieManager.getInstance().getCookie(url))
-                    addRequestHeader("User-Agent", userAgent)
-                    setTitle(fileName)
-                    setDescription("Đang tải file APK ảo...")
-                    setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-                }
-
-                val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-                dm.enqueue(request)
-
-                val downloadedFile = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName)
-                Toast.makeText(this, "Bắt đầu tải: $fileName", Toast.LENGTH_SHORT).show()
-                addApkToHomeScreen(downloadedFile)
-            } catch (e: Exception) {
-                Toast.makeText(this, "Lỗi tải: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        webViewContainer.addView(topBar)
-        webViewContainer.addView(webView, LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
-    }
-
-    // 4. Thanh Nút Home (◯)
-    private fun createNavigationBar2026(): FrameLayout {
-        val navContainer = FrameLayout(this).apply {
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, 150).apply {
-                gravity = Gravity.BOTTOM
-            }
-            background = createGradientDrawable("#150A21", "#0B0512", GradientDrawable.Orientation.BOTTOM_TOP, 0f)
-        }
-
-        val btnHome = TextView(this).apply {
-            text = "◯"
-            textSize = 28f
-            setTextColor(Color.parseColor("#00FFC6"))
-            gravity = Gravity.CENTER
-            layoutParams = FrameLayout.LayoutParams(120, 120).apply {
-                gravity = Gravity.CENTER
-            }
-            background = createGradientDrawable("#240F3E", "#0D0B14", GradientDrawable.Orientation.TOP_BOTTOM, 60f)
-            setOnClickListener { showHomeScreen() }
-        }
-
-        navContainer.addView(btnHome)
-        return navContainer
-    }
-
-    private fun showHomeScreen() {
-        webViewContainer.visibility = View.GONE
-        homeScreenLayout.visibility = View.VISIBLE
-    }
-
-    private fun loadUrlOrSearch(input: String) {
-        val targetUrl = if (input.startsWith("http://") || input.startsWith("https://")) input
-        else "https://www.google.com/search?q=$input"
-        webView.loadUrl(targetUrl)
-    }
-
-    private fun createGlassIcon(name: String, colorStart: String, colorEnd: String, onClick: () -> Unit): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(30, 30, 30, 30)
-
-            val iconBox = View(this@MainActivity).apply {
-                layoutParams = LinearLayout.LayoutParams(130, 130)
-                background = createGradientDrawable(colorStart, colorEnd, GradientDrawable.Orientation.TL_BR, 35f)
-            }
-
-            val label = TextView(this@MainActivity).apply {
-                text = name
-                setTextColor(Color.WHITE)
-                textSize = 11f
-                typeface = Typeface.DEFAULT_BOLD
-                gravity = Gravity.CENTER
-                setPadding(0, 15, 0, 0)
-            }
-
-            addView(iconBox)
-            addView(label)
-            setOnClickListener { onClick() }
-        }
-    }
-
-    private fun addApkToHomeScreen(apkFile: File) {
-        val appName = apkFile.name.replace(".apk", "")
-        val apkIcon = createGlassIcon(appName, "#00C9FF", "#92FE9D") {
-            launchVirtualApk(apkFile.absolutePath)
-        }
-        appsGrid.addView(apkIcon)
-    }
-
-    private fun launchVirtualApk(apkPath: String) {
-        try {
-            val pkgInfo = packageManager.getPackageArchiveInfo(apkPath, PackageManager.GET_ACTIVITIES)
-            val mainActivityName = pkgInfo?.activities?.firstOrNull()?.name
-
-            if (mainActivityName != null) {
-                val dexOptDir = getDir("virtual_dex_2026", Context.MODE_PRIVATE)
-                val classLoader = DexClassLoader(apkPath, dexOptDir.absolutePath, null, classLoader)
-                classLoader.loadClass(mainActivityName)
-                Toast.makeText(this, "Đang khởi chạy Game/APK ảo...", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Không tìm thấy file khởi chạy trong APK!", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: Exception) {
-            Toast.makeText(this, "Lỗi thực thi APK: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun createGradientDrawable(startColor: String, endColor: String, orientation: GradientDrawable.Orientation, cornerRadius: Float): GradientDrawable {
-        return GradientDrawable(orientation, intArrayOf(Color.parseColor(startColor), Color.parseColor(endColor))).apply {
-            this.cornerRadius = cornerRadius
-        }
-    }
-
-    override fun onBackPressed() {
-        if (webViewContainer.visibility == View.VISIBLE && webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            showHomeScreen()
-        }
-    }
-
-    companion object {
-        const val MATCH_PARENT = LinearLayout.LayoutParams.MATCH_PARENT
-        const val WRAP_CONTENT = LinearLayout.LayoutParams.WRAP_CONTENT
-    }
-}
-package com.example.virtualandroid2026
-
-import android.app.DownloadManager
-import android.content.Context
-import android.content.pm.PackageManager
-import android.graphics.Color
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
-import android.net.Uri
-import android.os.Bundle
-import android.os.Environment
-import android.view.Gravity
-import android.view.View
-import android.webkit.CookieManager
-import android.webkit.URLUtil
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
-import dalvik.system.DexClassLoader
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
-
-class MainActivity : AppCompatActivity() {
-
-    private lateinit var rootContainer: FrameLayout
-    private lateinit var homeScreenLayout: LinearLayout
-    private lateinit var webViewContainer: LinearLayout
-    private lateinit var notificationPanel: LinearLayout
-    private lateinit var webView: WebView
-    private lateinit var edtUrl: EditText
-    private lateinit var appsGrid: GridLayout
-    private lateinit var tvClock: TextView
-    private var isNotificationOpen = false
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // 1. Tạo Khung viền & Nền Cyberpunk 2026
-        rootContainer = FrameLayout(this).apply {
-            background = createGradientDrawable("#0D0B14", "#16052B", GradientDrawable.Orientation.TOP_BOTTOM, 0f)
-        }
-
-        val statusBar = createStatusBar()
-        setupHomeScreen2026()
-        setupWebViewApp2026()
-        setupNotificationPanel()
-        val navBar = createNavigationBar2026()
-
-        // Lắp ráp toàn bộ linh kiện vào máy
-        rootContainer.addView(homeScreenLayout)
-        rootContainer.addView(webViewContainer)
-        rootContainer.addView(notificationPanel)
-        rootContainer.addView(statusBar)
-        rootContainer.addView(navBar)
-
-        setContentView(rootContainer)
-        showHomeScreen()
-    }
-
-    // --- 1. THANH TRẠNG THÁI (STATUS BAR) ---
-    private fun createStatusBar(): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(40, 20, 40, 0)
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, 90).apply { gravity = Gravity.TOP }
-
-            tvClock = TextView(this@MainActivity).apply {
-                text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-                setTextColor(Color.WHITE)
-                textSize = 14f
-                typeface = Typeface.DEFAULT_BOLD
-            }
-
-            val tvBattery = TextView(this@MainActivity).apply {
-                text = "⚡ 100%"
-                setTextColor(Color.parseColor("#00FFC6"))
-                textSize = 12f
-                typeface = Typeface.DEFAULT_BOLD
-            }
-
-            addView(tvClock, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
-            addView(tvBattery)
-
-            // Bấm vào Status Bar để Xổ/Thu bảng Thông Báo
-            setOnClickListener { toggleNotificationPanel() }
-        }
-    }
-
-    // --- 2. TRUNG TÂM THÔNG BÁO & CÀI ĐẶT NHANH ---
-    private fun setupNotificationPanel() {
-        notificationPanel = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            background = createGradientDrawable("#1A102F", "#0B0512", GradientDrawable.Orientation.TOP_BOTTOM, 30f)
-            setPadding(40, 100, 40, 40)
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, 600).apply { gravity = Gravity.TOP }
-            translationY = -600f // Mặc định ẩn phía trên
-        }
-
-        val title = TextView(this).apply {
-            text = "CÀI ĐẶT NHANH & THÔNG BÁO"
-            setTextColor(Color.parseColor("#00FFC6"))
-            textSize = 14f
-            typeface = Typeface.DEFAULT_BOLD
-            gravity = Gravity.CENTER
-        }
-
-        val quickTiles = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            setPadding(0, 30, 0, 30)
-        }
-
-        val btnWifi = createQuickTile("Wi-Fi: BẬT")
-        val btnBt = createQuickTile("Bluetooth")
-        val btnFlash = createQuickTile("Đèn Pin")
-
-        quickTiles.addView(btnWifi)
-        quickTiles.addView(btnBt)
-        quickTiles.addView(btnFlash)
-
-        notificationPanel.addView(title)
-        notificationPanel.addView(quickTiles)
-    }
-
-    private fun toggleNotificationPanel() {
-        if (isNotificationOpen) {
-            notificationPanel.animate().translationY(-600f).setDuration(250).start()
-        } else {
-            notificationPanel.animate().translationY(0f).setDuration(250).start()
-        }
-        isNotificationOpen = !isNotificationOpen
-    }
-
-    private fun createQuickTile(label: String): Button {
-        return Button(this).apply {
-            text = label
-            textSize = 10f
-            setTextColor(Color.WHITE)
-            background = createGradientDrawable("#2A1B4E", "#140C28", GradientDrawable.Orientation.TL_BR, 20f)
-            layoutParams = LinearLayout.LayoutParams(200, 120).apply { setMargins(10, 0, 10, 0) }
-        }
-    }
-
-    // --- 3. MÀN HÌNH CHÍNH (HOME SCREEN) ---
-    private fun setupHomeScreen2026() {
-        homeScreenLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT).apply {
-                topMargin = 100
-                bottomMargin = 160
-            }
-            setPadding(40, 40, 40, 40)
-        }
-
-        val widgetTitle = TextView(this).apply {
-            text = "NEO ANDROID OS"
-            textSize = 26f
-            setTextColor(Color.parseColor("#00FFC6"))
-            typeface = Typeface.DEFAULT_BOLD
-            gravity = Gravity.CENTER
-            setPadding(0, 20, 0, 40)
-        }
-        homeScreenLayout.addView(widgetTitle)
-
-        appsGrid = GridLayout(this).apply {
-            columnCount = 3
-            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
-        }
-
-        val browserApp = createGlassIcon("Google Web", "#7F00FF", "#FF007F") {
-            homeScreenLayout.visibility = View.GONE
-            webViewContainer.visibility = View.VISIBLE
-        }
-        appsGrid.addView(browserApp)
-
-        homeScreenLayout.addView(appsGrid)
-    }
-
-    // --- 4. TRÌNH DUYỆT GOOGLE & BỘ TẢI APK ẢO ---
-    private fun setupWebViewApp2026() {
-        webViewContainer = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT).apply {
-                topMargin = 100
-                bottomMargin = 160
-            }
-            visibility = View.GONE
-            setPadding(20, 10, 20, 10)
-        }
-
-        val topBar = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-
-        edtUrl = EditText(this).apply {
-            hint = "Tìm Google hoặc nhập URL APK..."
-            setHintTextColor(Color.GRAY)
-            setTextColor(Color.WHITE)
-            textSize = 14f
-            background = createGradientDrawable("#1A1A2E", "#16213E", GradientDrawable.Orientation.LEFT_RIGHT, 30f)
-            setPadding(30, 20, 30, 20)
-            layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
-        }
-
-        val btnGo = Button(this).apply {
-            text = "MỞ"
-            setTextColor(Color.BLACK)
-            typeface = Typeface.DEFAULT_BOLD
-            background = createGradientDrawable("#00FFC6", "#00B894", GradientDrawable.Orientation.LEFT_RIGHT, 30f)
-            setOnClickListener { loadUrlOrSearch(edtUrl.text.toString()) }
-        }
-
-        topBar.addView(edtUrl)
-        topBar.addView(btnGo)
-
-        webView = WebView(this).apply {
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-            webViewClient = WebViewClient()
-        }
-
-        val homeUrl = "https://www.google.com"
-        webView.loadUrl(homeUrl)
-        edtUrl.setText(homeUrl)
-
-        // BẮT LINK TẢI VÀ TỰ ĐỘNG THÊM ICON RA MÀN HÌNH CHÍNH
-        webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, _ ->
-            try {
-                val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
-                val request = DownloadManager.Request(Uri.parse(url)).apply {
-                    setMimeType(mimetype)
-                    addRequestHeader("cookie", CookieManager.getInstance().getCookie(url))
-                    addRequestHeader("User-Agent", userAgent)
-                    setTitle(fileName)
-                    setDescription("Đang tải APK ảo...")
-                    setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-                }
-
-                (getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
-                val downloadedFile = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName)
-                Toast.makeText(this, "Bắt đầu tải xuống: $fileName", Toast.LENGTH_SHORT).show()
-                addApkToHomeScreen(downloadedFile)
-            } catch (e: Exception) {
-                Toast.makeText(this, "Lỗi tải file: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        webViewContainer.addView(topBar)
-        webViewContainer.addView(webView, LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
-    }
-
-    // --- 5. THANH 3 PHÍM ĐIỀU HƯỚNG ANDROID (◁  ◯  □) ---
-    private fun createNavigationBar2026(): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, 150).apply { gravity = Gravity.BOTTOM }
-            background = createGradientDrawable("#150A21", "#0B0512", GradientDrawable.Orientation.BOTTOM_TOP, 0f)
-
-            // Nút Back (◁)
-            val btnBack = TextView(this@MainActivity).apply {
-                text = "◁"
-                textSize = 22f
-                setTextColor(Color.WHITE)
-                gravity = Gravity.CENTER
-                layoutParams = LinearLayout.LayoutParams(0, MATCH_PARENT, 1f)
-                setOnClickListener { onBackPressed() }
-            }
-
-            // Nút Home (◯)
-            val btnHome = TextView(this@MainActivity).apply {
-                text = "◯"
-                textSize = 26f
-                setTextColor(Color.parseColor("#00FFC6"))
-                gravity = Gravity.CENTER
-                layoutParams = LinearLayout.LayoutParams(0, MATCH_PARENT, 1f)
-                setOnClickListener {
-                    if (isNotificationOpen) toggleNotificationPanel()
-                    showHomeScreen()
-                }
-            }
-
-            // Nút Đa nhiệm Recents (□)
-            val btnRecents = TextView(this@MainActivity).apply {
-                text = "□"
-                textSize = 22f
-                setTextColor(Color.WHITE)
-                gravity = Gravity.CENTER
-                layoutParams = LinearLayout.LayoutParams(0, MATCH_PARENT, 1f)
-                setOnClickListener {
-                    Toast.makeText(this@MainActivity, "Ứng dụng chạy ngầm: Rỗng", Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            addView(btnBack)
-            addView(btnHome)
-            addView(btnRecents)
-        }
-    }
-
-    // --- 6. CÁC HÀM XỬ LÝ HỆ THỐNG ---
-    private fun showHomeScreen() {
-        webViewContainer.visibility = View.GONE
-        homeScreenLayout.visibility = View.VISIBLE
-    }
-
-    private fun loadUrlOrSearch(input: String) {
-        val targetUrl = if (input.startsWith("http://") || input.startsWith("https://")) input
-        else "https://www.google.com/search?q=$input"
-        webView.loadUrl(targetUrl)
-    }
-
-    private fun createGlassIcon(name: String, colorStart: String, colorEnd: String, onClick: () -> Unit): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(30, 30, 30, 30)
-
-            val iconBox = View(this@MainActivity).apply {
-                layoutParams = LinearLayout.LayoutParams(130, 130)
-                background = createGradientDrawable(colorStart, colorEnd, GradientDrawable.Orientation.TL_BR, 35f)
-            }
-
-            val label = TextView(this@MainActivity).apply {
-                text = name
-                setTextColor(Color.WHITE)
-                textSize = 11f
-                typeface = Typeface.DEFAULT_BOLD
-                gravity = Gravity.CENTER
-                setPadding(0, 15, 0, 0)
-            }
-
-            addView(iconBox)
-            addView(label)
-            setOnClickListener { onClick() }
-        }
-    }
-
-    private fun addApkToHomeScreen(apkFile: File) {
-        val appName = apkFile.name.replace(".apk", "")
-        val apkIcon = createGlassIcon(appName, "#00C9FF", "#92FE9D") {
-            launchVirtualApk(apkFile.absolutePath)
-        }
-        appsGrid.addView(apkIcon)
-    }
-
-    private fun launchVirtualApk(apkPath: String) {
-        try {
-            val pkgInfo = packageManager.getPackageArchiveInfo(apkPath, PackageManager.GET_ACTIVITIES)
-            val mainActivityName = pkgInfo?.activities?.firstOrNull()?.name
-
-            if (mainActivityName != null) {
-                val dexOptDir = getDir("virtual_dex_2026", Context.MODE_PRIVATE)
-                val classLoader = DexClassLoader(apkPath, dexOptDir.absolutePath, null, classLoader)
-                classLoader.loadClass(mainActivityName)
-                Toast.makeText(this, "Đang chạy APK ảo...", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Không tìm thấy file khởi chạy!", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: Exception) {
-            Toast.makeText(this, "Lỗi thực thi APK: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun createGradientDrawable(startColor: String, endColor: String, orientation: GradientDrawable.Orientation, cornerRadius: Float): GradientDrawable {
-        return GradientDrawable(orientation, intArrayOf(Color.parseColor(startColor), Color.parseColor(endColor))).apply {
-            this.cornerRadius = cornerRadius
-        }
-    }
-
-    override fun onBackPressed() {
-        if (isNotificationOpen) {
-            toggleNotificationPanel()
-        } else if (webViewContainer.visibility == View.VISIBLE && webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            showHomeScreen()
-        }
-    }
-
-    companion object {
-        const val MATCH_PARENT = LinearLayout.LayoutParams.MATCH_PARENT
-        const val WRAP_CONTENT = LinearLayout.LayoutParams.WRAP_CONTENT
-    }
-}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mô phỏng Android Web</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Web Ultra Simulation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background: #0d0f12;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Khung ngoài thiết bị Điện thoại */
+        .phone-bezel {
+            width: 920px;
+            height: 520px;
+            background: linear-gradient(135deg, #2c3240 0%, #151821 100%);
+            border-radius: 42px;
+            padding: 12px;
+            box-shadow: 
+                0 25px 60px rgba(0, 0, 0, 0.8),
+                inset 0 0 4px rgba(255, 255, 255, 0.3),
+                0 0 0 2px #090a0d;
+            position: relative;
+            display: flex;
+        }
+
+        /* Màn hình hiển thị chính */
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(125deg, #1d4ed8 0%, #3b82f6 30%, #ec4899 75%, #8b5cf6 100%);
+            border-radius: 32px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Tai thỏ / Cụm Camera & Cảm biến */
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 22px;
+            background: #000;
+            border-bottom-left-radius: 14px;
+            border-bottom-right-radius: 14px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .camera-lens {
+            width: 10px;
+            height: 10px;
+            background: #0a1128;
+            border-radius: 50%;
+            border: 1px solid #1e293b;
+            box-shadow: inset 0 0 2px #38bdf8;
+        }
+
+        .sensor {
+            width: 6px;
+            height: 6px;
+            background: #1e1b4b;
+            border-radius: 50%;
+        }
+
+        /* Thanh trạng thái (Status Bar) */
+        .status-bar {
+            height: 28px;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 500;
+            z-index: 90;
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(8px);
+        }
+
+        .status-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pill-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+        }
+
+        /* Màn hình làm việc */
+        .desktop {
+            flex: 1;
+            position: relative;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        /* Cột Widget giữa */
+        .widget-column {
+            width: 280px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .search-bar {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .search-bar input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            font-size: 12px;
+            width: 100%;
+        }
+
+        .time-widget {
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 12px 18px;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-widget .clock {
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .weather-widget {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 10px 16px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 5px;
+        }
+
+        .app-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .app-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            margin-bottom: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .app-label {
+            color: white;
+            font-size: 10px;
+        }
+
+        /* Cửa sổ ứng dụng nổi (Multitasking Windows) */
+        .window {
+            position: absolute;
+            background: rgba(24, 28, 38, 0.88);
+            backdrop-filter: blur(25px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .window-header {
+            height: 32px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .window-title { color: #e2e8f0; font-size: 11px; }
+        .window-actions { display: flex; gap: 8px; color: #94a3b8; font-size: 10px; cursor: pointer; }
+
+        .window-body { flex: 1; padding: 10px; overflow-y: auto; color: #cbd5e1; font-size: 11px; }
+
+        #photos-window { width: 220px; height: 250px; top: 25px; left: 20px; }
+        #messages-window { width: 220px; height: 270px; top: 30px; right: 170px; }
+        #settings-window { width: 200px; height: 220px; top: 80px; right: 20px; }
+
+        .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .photo-grid img { width: 100%; height: 55px; object-fit: cover; border-radius: 6px; }
+
+        /* Bảng HUD thông số hệ thống */
+        .hud-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 12px;
+            padding: 10px;
+            width: 170px;
+            color: #e2e8f0;
+            font-size: 10px;
+            z-index: 5;
+        }
+
+        .hud-header { color: #38bdf8; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; }
+        .hud-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+
+        .progress-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #38bdf8; width: 78%; }
+
+        /* Thanh điều hướng bên dưới */
+        .nav-bar {
+            height: 32px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 60px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+            z-index: 90;
+        }
+
+        .dock {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 14px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            padding: 6px 14px;
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            z-index: 2;
+        }
+
+        .dock .app-icon { width: 38px; height: 38px; font-size: 16px; margin-bottom: 0; }
+    </style>
 </head>
 <body>
 
-  <!-- Khung Điện thoại -->
-  <div class="phone">
-    
-    <!-- Màn hình -->
-    <div class="screen">
-      
-      <!-- Thanh trạng thái (Status Bar) -->
-      <div class="status-bar">
-        <span id="clock">12:00</span>
-        <div class="status-icons">
-          <span>📶</span>
-          <span>📡</span>
-          <span>🔋 85%</span>
-        </div>
-      </div>
+    <div class="phone-bezel">
+        <div class="screen">
+            <!-- Camera Notch -->
+            <div class="notch">
+                <div class="camera-lens"></div>
+                <div class="sensor"></div>
+            </div>
 
-      <!-- Màn hình chính (Apps) -->
-      <div class="home-screen">
-        <div class="app-grid">
-          <div class="app" onclick="openApp('Google')">
-            <div class="app-icon google">G</div>
-            <span>Google</span>
-          </div>
-          <div class="app" onclick="openApp('Đồng hồ')">
-            <div class="app-icon clock-app">🕒</div>
-            <span>Đồng hồ</span>
-          </div>
-          <div class="app" onclick="openApp('Cài đặt')">
-            <div class="app-icon settings">⚙️</div>
-            <span>Cài đặt</span>
-          </div>
-          <div class="app" onclick="openApp('Cửa hàng')">
-            <div class="app-icon playstore">▶</div>
-            <span>CH Play</span>
-          </div>
-        </div>
-      </div>
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span>8:45 AM &nbsp; SUN, AUG 2</span>
+                <div class="status-bar-right">
+                    <span class="pill-badge">120Hz</span>
+                    <i class="fa-solid fa-wifi"></i>
+                    <i class="fa-solid fa-signal"></i>
+                    <span>5G+</span>
+                    <i class="fa-solid fa-battery-full"></i>
+                    <span>100%</span>
+                </div>
+            </div>
 
-      <!-- Giao diện ứng dụng đang mở -->
-      <div id="app-window" class="app-window hidden">
-        <div class="app-header">
-          <span id="app-title">Tên Ứng Dụng</span>
-          <button class="close-btn" onclick="closeApp()">✕</button>
-        </div>
-        <div class="app-content" id="app-content">
-          Nội dung ứng dụng sẽ ở đây...
-        </div>
-      </div>
+            <!-- Desktop View -->
+            <div class="desktop">
+                
+                <!-- System HUD Stats -->
+                <div class="hud-overlay">
+                    <div class="hud-header">
+                        <span>DEVELOPER OPTIONS</span>
+                        <span style="color:#4ade80;">ACTIVE</span>
+                    </div>
+                    <div class="hud-row"><span>GPU LOAD:</span> <span>78%</span></div>
+                    <div class="progress-bar"><div class="progress-fill"></div></div>
+                    <div class="hud-row" style="margin-top:4px;"><span>TEMP:</span> <span>39°C</span></div>
+                    <div class="hud-row"><span>FPS:</span> <span style="color:#4ade80;">120 (STABLE)</span></div>
+                    <div class="hud-row"><span>MEMORY:</span> <span>20GB / 24GB</span></div>
+                </div>
 
-      <!-- Thanh điều hướng Android (Navigation Bar) -->
-      <div class="nav-bar">
-        <button class="nav-btn" onclick="closeApp()">|||</button> <!-- Recent Apps -->
-        <button class="nav-btn" onclick="closeApp()">●</button>   <!-- Home -->
-        <button class="nav-btn" onclick="closeApp()">◄</button>   <!-- Back -->
-      </div>
+                <!-- Center Widgets Column -->
+                <div class="widget-column">
+                    <div class="search-bar">
+                        <i class="fa-brands fa-google" style="color: #4285f4;"></i>
+                        <input type="text" placeholder="Search or type URL">
+                        <i class="fa-solid fa-microphone"></i>
+                    </div>
 
+                    <div class="time-widget">
+                        <div>
+                            <div class="clock">8:45 <span style="font-size:12px">AM</span></div>
+                            <div class="date">SUN, AUG 2</div>
+                        </div>
+                        <i class="fa-solid fa-cloud-sun" style="font-size:24px; color:#fde047;"></i>
+                    </div>
+
+                    <div class="weather-widget">
+                        <div>
+                            <div style="font-size:13px; font-weight:bold;">26°C</div>
+                            <div style="font-size:9px; opacity:0.8;">Tho Tang, Vietnam</div>
+                        </div>
+                        <div style="font-size:10px; text-align:right;">
+                            <div>Health Score</div>
+                            <div style="font-weight:bold; color:#4ade80;">38.7 / 12%</div>
+                        </div>
+                    </div>
+
+                    <div class="app-grid">
+                        <div class="app-item" onclick="toggleWindow('photos-window')">
+                            <div class="app-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                                <i class="fa-solid fa-image"></i>
+                            </div>
+                            <span class="app-label">Photos</span>
+                        </div>
+                        <div class="app-item" onclick="toggleWindow('messages-window')">
+                            <div class="app-icon" style="background: linear-gradient(135deg, #10b981, #047857);">
+                                <i class="fa-solid fa-comment-dots"></i>
+                            </div>
+                            <span class="app-label">Messages</span>
+                        </div>
+                        <div class="app-item" onclick="toggleWindow('settings-window')">
+                            <div class="app-icon" style="background: linear-gradient(135deg, #64748b, #334155);">
+                                <i class="fa-solid fa-gear"></i>
+                            </div>
+                            <span class="app-label">Settings</span>
+                        </div>
+                        <div class="app-item">
+                            <div class="app-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                                <i class="fa-solid fa-gamepad"></i>
+                            </div>
+                            <span class="app-label">Game Hub</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Window 1: Photos -->
+                <div class="window" id="photos-window">
+                    <div class="window-header">
+                        <div class="window-title"><i class="fa-solid fa-image"></i> Photos</div>
+                        <div class="window-actions">
+                            <i class="fa-solid fa-xmark" onclick="toggleWindow('photos-window')"></i>
+                        </div>
+                    </div>
+                    <div class="window-body">
+                        <div class="photo-grid">
+                            <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=150" alt="Photos">
+                            <img src="https://images.unsplash.com/photo-1511884642898-4c92249e20b6?w=150" alt="Photos">
+                            <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=150" alt="Photos">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Window 2: Messages -->
+                <div class="window" id="messages-window">
+                    <div class="window-header">
+                        <div class="window-title"><i class="fa-solid fa-message"></i> Messages</div>
+                        <div class="window-actions">
+                            <i class="fa-solid fa-xmark" onclick="toggleWindow('messages-window')"></i>
+                        </div>
+                    </div>
+                    <div class="window-body">
+                        <div><b>Alex Rivera:</b> How is your Android prototype working?</div>
+                    </div>
+                </div>
+
+                <!-- Window 3: Settings -->
+                <div class="window" id="settings-window">
+                    <div class="window-header">
+                        <div class="window-title"><i class="fa-solid fa-sliders"></i> Device Care</div>
+                        <div class="window-actions">
+                            <i class="fa-solid fa-xmark" onclick="toggleWindow('settings-window')"></i>
+                        </div>
+                    </div>
+                    <div class="window-body">
+                        <div>CPU SPEED: OPTIMIZED</div>
+                        <div>RAM: 8.2 GB / 24 GB</div>
+                    </div>
+                </div>
+
+                <!-- Dock -->
+                <div class="dock">
+                    <div class="app-icon" style="background: #2563eb;"><i class="fa-solid fa-phone"></i></div>
+                    <div class="app-icon" style="background: #0284c7;"><i class="fa-solid fa-comment"></i></div>
+                    <div class="app-icon" style="background: #ea580c;"><i class="fa-brands fa-chrome"></i></div>
+                    <div class="app-icon" style="background: #16a34a;"><i class="fa-solid fa-camera"></i></div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Navigation Bar -->
+            <div class="nav-bar">
+                <i class="fa-solid fa-bars"></i>
+                <i class="fa-regular fa-square"></i>
+                <i class="fa-solid fa-chevron-left"></i>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script src="script.js"></script>
+    <script>
+        function toggleWindow(id) {
+            const win = document.getElementById(id);
+            if (win.style.display === 'none') {
+                win.style.display = 'flex';
+            } else {
+                win.style.display = 'none';
+            }
+        }
+    </script>
 </body>
 </html>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Roboto', sans-serif, Arial;
-}
-
-body {
-  background-color: #1e1e24;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-}
-
-/* Vỏ điện thoại */
-.phone {
-  width: 320px;
-  height: 640px;
-  background-color: #111;
-  border-radius: 40px;
-  padding: 12px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.2);
-  position: relative;
-  border: 4px solid #333;
-}
-
-/* Màn hình hiển thị */
-.screen {
-  width: 100%;
-  height: 100%;
-  background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000') center/cover;
-  border-radius: 28px;
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Thanh trạng thái */
-.status-bar {
-  height: 25px;
-  background: rgba(0, 0, 0, 0.3);
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 15px;
-  font-size: 12px;
-  backdrop-filter: blur(5px);
-}
-
-.status-icons {
-  display: flex;
-  gap: 5px;
-}
-
-/* Màn hình chính */
-.home-screen {
-  flex: 1;
-  padding: 20px 10px;
-}
-
-.app-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 15px 10px;
-}
-
-.app {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  color: white;
-  font-size: 11px;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-}
-
-.app-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 22px;
-  font-weight: bold;
-  margin-bottom: 5px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-}
-
-/* Màu biểu tượng ứng dụng */
-.google { background: #ffffff; color: #4285F4; }
-.clock-app { background: #263238; color: #fff; }
-.settings { background: #78909C; color: #fff; }
-.playstore { background: #00E676; color: #fff; }
-
-/* Cửa sổ Ứng dụng */
-.app-window {
-  position: absolute;
-  top: 25px;
-  left: 0;
-  width: 100%;
-  height: calc(100% - 65px);
-  background: #ffffff;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.3s ease-in-out;
-}
-
-.app-window.hidden {
-  transform: translateY(100%);
-}
-
-.app-header {
-  height: 40px;
-  background: #f1f1f1;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 15px;
-  font-weight: bold;
-  border-bottom: 1px solid #ccc;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.app-content {
-  padding: 15px;
-  flex: 1;
-  color: #333;
-}
-
-/* Thanh điều hướng bên dưới */
-.nav-bar {
-  height: 40px;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-}
-
-.nav-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  opacity: 0.8;
-}
-
-.nav-btn:hover {
-  opacity: 1;
-}
-// Cập nhật đồng hồ thời gian thực
-function updateClock() {
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  document.getElementById('clock').innerText = `${hours}:${minutes}`;
-}
-
-setInterval(updateClock, 1000);
-updateClock();
-
-// Mở ứng dụng
-function openApp(appName) {
-  const appWindow = document.getElementById('app-window');
-  const appTitle = document.getElementById('app-title');
-  const appContent = document.getElementById('app-content');
-
-  appTitle.innerText = appName;
-  
-  // Nội dung tùy chỉnh theo ứng dụng
-  if (appName === 'Google') {
-    appContent.innerHTML = '<h3>Tìm kiếm Google</h3><input type="text" placeholder="Nhập từ khóa..." style="width:100%; padding: 8px; margin-top:10px;">';
-  } else if (appName === 'Đồng hồ') {
-    appContent.innerHTML = '<h3>Báo thức & Giờ thế giới</h3><p style="margin-top:10px;">Chưa có báo thức nào được đặt.</p>';
-  } else if (appName === 'Cài đặt') {
-    appContent.innerHTML = '<h3>Cài đặt hệ thống</h3><ul><li>Mạng & Internet</li><li>Thiết bị đã kết nối</li><li>Pin</li></ul>';
-  } else {
-    appContent.innerHTML = `<p>Bạn vừa mở <b>${appName}</b></p>`;
-  }
-
-  appWindow.classList.remove('hidden');
-}
-
-// Đóng ứng dụng (Quay về Home)
-function closeApp() {
-  const appWindow = document.getElementById('app-window');
-  appWindow.classList.add('hidden');
-}
