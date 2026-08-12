@@ -3,337 +3,299 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Anime Fighter</title>
+    <title>Rick & Morty Fighter</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0a0a0a; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: Arial; touch-action: manipulation; user-select: none; }
-        
-        #app { width: 100%; max-width: 420px; height: 100dvh; position: relative; overflow: hidden; background: #000; }
-
-        /* === SELECT SCREEN === */
-        #selectScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, #1a0a2e, #0d1b3e); display: flex; flex-direction: column; overflow-y: auto; padding: 10px; }
-        #selectScreen.hidden { display: none; }
-        
-        .header { text-align: center; padding: 10px 0; }
-        .header h1 { color: #ff2d55; font-size: 1.8em; }
-        .header p { color: #888; font-size: 0.8em; }
-
-        .label { color: #00ff88; text-align: center; font-weight: bold; font-size: 0.9em; margin: 10px 0 5px; }
-
-        .chars { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .char-btn { background: #1a1a35; border: 2px solid #2a2a55; border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .char-btn:active { transform: scale(0.95); }
-        .char-btn.picked { border-color: #00ff88; background: #0a2a1a; box-shadow: 0 0 15px #00ff8844; }
-        .char-btn .moji { font-size: 2.5em; }
-        .char-btn .cname { color: #fff; font-weight: bold; font-size: 0.85em; }
-        .char-btn .cfrom { color: #888; font-size: 0.7em; }
-        .skins { display: flex; gap: 4px; justify-content: center; margin-top: 5px; }
-        .skin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #555; cursor: pointer; }
-        .skin-dot.on { border-color: #fff; transform: scale(1.3); }
-
-        .info { background: #0006; border: 1px solid #333; border-radius: 10px; padding: 10px; margin: 10px 0; color: #fff; font-size: 0.8em; }
-        .info div { display: flex; justify-content: space-between; padding: 2px 0; }
-        .g { color: #0f0; } .r { color: #f44; }
-
-        .btn { display: block; width: 100%; padding: 12px; border: none; border-radius: 25px; font-weight: bold; cursor: pointer; text-align: center; margin: 5px 0; font-size: 1em; }
-        .btn-fight { background: #ff2d55; color: #fff; }
-        .btn-fight:disabled { background: #444; color: #888; }
-        .btn-rand { background: transparent; border: 1px dashed #ff2d55; color: #ff2d55; font-size: 0.8em; }
-
-        /* === GAME SCREEN === */
-        #gameScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; }
-        #gameScreen.hidden { display: none; }
-
-        #hud { display: flex; justify-content: space-between; padding: 5px 8px; background: #000c; color: #fff; font-size: 0.7em; }
-        #hud .side { width: 45%; }
-        #hud .side.r { text-align: right; }
-        .hp-outer { height: 12px; background: #333; border-radius: 6px; overflow: hidden; margin-bottom: 2px; }
-        .hp-inner { height: 100%; transition: width 0.3s; }
-        .hp-p1 { background: #0f0; } .hp-p2 { background: #f44; }
-        #hud .mid { text-align: center; }
-        #hud .timer { font-size: 1.2em; font-weight: bold; color: #ff0; }
-
-        canvas { flex: 1; width: 100%; display: block; background: #1a1a2e; }
-
-        #ctrl { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 4px; padding: 5px; background: #111; }
-        #ctrl .dp { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
-        #ctrl button { padding: 10px 3px; border: 2px solid #333; border-radius: 8px; background: #1a1a1a; color: #fff; font-size: 0.7em; font-weight: bold; cursor: pointer; }
-        #ctrl button:active { background: #333; border-color: #fff; }
-        .atk-btn { border-color: #f44 !important; background: #300 !important; }
-        .sp-btn { border-color: #fa0 !important; background: #320 !important; }
-
-        /* === WIN === */
-        #winOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000e; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #winOverlay.hidden { display: none; }
-        #winOverlay .big { font-size: 2.5em; font-weight: bold; margin-bottom: 8px; }
-        #winOverlay .msg { color: #ccc; font-size: 0.9em; margin-bottom: 15px; }
-        #winOverlay button { background: #5568d3; color: #fff; border: none; padding: 10px 25px; border-radius: 20px; cursor: pointer; margin: 4px; font-size: 0.9em; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#000; display:flex; justify-content:center; align-items:center; height:100vh; touch-action:manipulation; }
+        #game { width:400px; height:600px; position:relative; overflow:hidden; }
+        canvas { display:block; background:#1a1a3a; }
+        #ui { position:absolute; top:0; left:0; width:100%; padding:10px; color:#fff; display:flex; justify-content:space-between; font-size:12px; pointer-events:none; }
+        #ui .hp-bar { width:150px; height:15px; background:#333; border-radius:7px; overflow:hidden; }
+        #ui .hp-fill { height:100%; transition:0.3s; }
+        #ui .p1-hp { background:#0f0; } #ui .p2-hp { background:#f44; }
+        #controls { position:absolute; bottom:10px; left:0; width:100%; display:flex; justify-content:space-between; padding:0 10px; }
+        #controls button { width:70px; height:70px; border-radius:50%; border:3px solid #fff; background:rgba(255,255,255,0.2); color:#fff; font-weight:bold; font-size:14px; cursor:pointer; }
+        #controls button:active { background:rgba(255,255,255,0.5); }
+        #dpad { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+        #dpad button { width:50px; height:50px; font-size:20px; }
     </style>
 </head>
 <body>
 
-<div id="app">
-    <!-- SELECT -->
-    <div id="selectScreen">
-        <div class="header"><h1>ANIME FIGHTER</h1><p>Rick & Morty x Anime</p></div>
-        <div class="label">👤 NHÂN VẬT CỦA BẠN</div>
-        <div class="chars" id="playerChars"></div>
-        <div class="label">🤖 ĐỐI THỦ</div>
-        <div class="chars" id="enemyChars"></div>
-        <button class="btn btn-rand" onclick="randomEnemy()">🎲 Ngẫu nhiên</button>
-        <div class="info">
-            <div><span>Bạn:</span><span class="g" id="ip">-</span></div>
-            <div><span>Đối thủ:</span><span class="r" id="ie">-</span></div>
+<div id="game">
+    <canvas id="gc" width="400" height="600"></canvas>
+    
+    <div id="ui">
+        <div>
+            <div id="p1name">RICK</div>
+            <div class="hp-bar"><div class="hp-fill p1-hp" id="p1hp" style="width:100%"></div></div>
         </div>
-        <button class="btn btn-fight" id="fightBtn" disabled onclick="startGame()">⚡ CHIẾN ĐẤU</button>
-    </div>
-
-    <!-- GAME -->
-    <div id="gameScreen" class="hidden">
-        <div id="hud">
-            <div class="side"><div id="n1">P1</div><div class="hp-outer"><div class="hp-inner hp-p1" id="hp1" style="width:100%"></div></div></div>
-            <div class="mid"><div class="timer" id="timer">60</div><div id="rd">R1</div></div>
-            <div class="side r"><div id="n2">P2</div><div class="hp-outer"><div class="hp-inner hp-p2" id="hp2" style="width:100%"></div></div></div>
-        </div>
-        <canvas id="gc"></canvas>
-        <div id="ctrl">
-            <div class="dp"><div></div><button id="bu">▲</button><div></div><button id="bl">◄</button><div></div><button id="br">►</button></div>
-            <button class="atk-btn" id="bp">Đấm</button><button class="atk-btn" id="bk">Đá</button>
-            <button class="sp-btn" id="bs">Chiêu</button><button class="sp-btn" id="bx">Tuyệt</button>
+        <div style="text-align:right">
+            <div id="p2name">ENEMY</div>
+            <div class="hp-bar"><div class="hp-fill p2-hp" id="p2hp" style="width:100%"></div></div>
         </div>
     </div>
 
-    <!-- WIN -->
-    <div id="winOverlay" class="hidden">
-        <div class="big" id="wr"></div>
-        <div class="msg" id="wm"></div>
-        <button onclick="rematch()">Đấu lại</button>
-        <button onclick="goSelect()">Chọn lại</button>
+    <div id="controls">
+        <div id="dpad">
+            <div></div><button>▲</button><div></div>
+            <button>◄</button><div></div><button>►</button>
+            <div></div><button>▼</button><div></div>
+        </div>
+        <button style="background:rgba(255,0,0,0.3)">👊</button>
+        <button style="background:rgba(255,255,0,0.3)">💥</button>
     </div>
 </div>
 
 <script>
-// ===== DATA =====
-const DATA = [
-    { name:'Rick', from:'Rick & Morty', icon:'🧪', skins:[{b:'#87CEEB',h:'#B0C4DE'},{b:'#4CAF50',h:'#2E7D32'},{b:'#F44',h:'#800'}], hp:100, spd:3.5, atk:1.1 },
-    { name:'Morty', from:'Rick & Morty', icon:'😰', skins:[{b:'#FFD700',h:'#8B4513'},{b:'#F00',h:'#800'},{b:'#808080',h:'#CCC'}], hp:90, spd:3.8, atk:0.9 },
-    { name:'Naruto', from:'Naruto', icon:'🍥', skins:[{b:'#FF8C00',h:'#FFD700'},{b:'#FF4500',h:'#FFD700'},{b:'#FFF',h:'#FFD700'}], hp:110, spd:4, atk:1.05 },
-    { name:'Goku', from:'Dragon Ball', icon:'⚡', skins:[{b:'#FF6600',h:'#000'},{b:'#FF6600',h:'#FFD700'},{b:'#FF6600',h:'#CCC'}], hp:120, spd:4.5, atk:1.2 },
-    { name:'Tanjiro', from:'Demon Slayer', icon:'⚔️', skins:[{b:'#2F4F4F',h:'#8B0000'},{b:'#2F4F4F',h:'#FF4500'},{b:'#4A0000',h:'#F00'}], hp:100, spd:3.5, atk:1.0 },
-    { name:'Saitama', from:'One Punch', icon:'👊', skins:[{b:'#FFD700',h:'#FFD700'},{b:'#FFF',h:'#FFD700'},{b:'#F00',h:'#FFD700'}], hp:150, spd:5, atk:1.5 }
-];
+const canvas = document.getElementById('gc');
+const ctx = canvas.getContext('2d');
 
-let pIdx=null, pSk=0, eIdx=null, eSk=0;
-let p1, p2, running=false, timer=60, round=1, pw=0, ew=0;
-let particles=[], hitTexts=[], shake=0, timerID=null;
-let btns={};
-const canvas=document.getElementById('gc'), ctx=canvas.getContext('2d');
-const FLOOR=340, G=0.5;
+// Characters
+const rick = {
+    name: 'Rick Sanchez',
+    x: 100, y: 400, w: 40, h: 80,
+    hp: 100, maxHp: 100,
+    vx: 0, vy: 0,
+    color: '#87CEEB',
+    hairColor: '#B0C4DE',
+    facing: 1,
+    attacking: false,
+    attackCooldown: 0
+};
 
-// ===== BUILD SELECT =====
-function buildSelect() {
-    const pg=document.getElementById('playerChars'), eg=document.getElementById('enemyChars');
-    pg.innerHTML=''; eg.innerHTML='';
-    DATA.forEach((c,i)=>{
-        const card=(type)=>{
-            const d=document.createElement('div'); d.className='char-btn'; d.id=`${type}-${i}`;
-            d.innerHTML=`<div class="moji">${c.icon}</div><div class="cname">${c.name}</div><div class="cfrom">${c.from}</div>
-                <div class="skins">${c.skins.map((s,si)=>`<div class="skin-dot" style="background:${s.b}" id="sk-${type}-${i}-${si}"></div>`).join('')}</div>`;
-            d.addEventListener('click',(e)=>{
-                if(e.target.classList.contains('skin-dot')){
-                    const si=+e.target.id.split('-')[3];
-                    if(type==='p'&&pIdx===i)pSk=si;
-                    if(type==='e'&&eIdx===i)eSk=si;
-                    refresh(); return;
-                }
-                if(type==='p'){pIdx=i;pSk=0;}else{eIdx=i;eSk=0;}
-                refresh();
-            });
-            return d;
-        };
-        pg.appendChild(card('p')); eg.appendChild(card('e'));
-    });
+const enemy = {
+    name: 'Evil Morty',
+    x: 260, y: 400, w: 35, h: 70,
+    hp: 100, maxHp: 100,
+    vx: 0, vy: 0,
+    color: '#FFD700',
+    hairColor: '#8B4513',
+    facing: -1,
+    attacking: false,
+    attackCooldown: 0
+};
+
+const GROUND = 480;
+const GRAVITY = 0.8;
+
+// Input
+const keys = {};
+
+// Control buttons
+document.querySelectorAll('#dpad button').forEach((btn, i) => {
+    const dirs = ['up', 'left', 'down', 'right'];
+    if (i === 0) { // up
+        btn.addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowUp'] = true; });
+        btn.addEventListener('touchend', e => { keys['ArrowUp'] = false; });
+    } else if (i === 1) { // left
+        btn.addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowLeft'] = true; });
+        btn.addEventListener('touchend', e => { keys['ArrowLeft'] = false; });
+    } else if (i === 2) { // down
+        btn.addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowDown'] = true; });
+        btn.addEventListener('touchend', e => { keys['ArrowDown'] = false; });
+    } else if (i === 3) { // right
+        btn.addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowRight'] = true; });
+        btn.addEventListener('touchend', e => { keys['ArrowRight'] = false; });
+    }
+});
+
+// Punch button
+const punchBtn = document.querySelectorAll('#controls button')[4];
+punchBtn.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (!rick.attacking) {
+        rick.attacking = true;
+        rick.attackCooldown = 15;
+        // Check hit
+        const dist = Math.abs(rick.x - enemy.x);
+        if (dist < 60 && rick.facing === (enemy.x > rick.x ? 1 : -1)) {
+            enemy.hp -= 10;
+            enemy.vy = -8;
+            enemy.vx = enemy.facing * -5;
+            updateHP();
+        }
+    }
+});
+
+// Special button
+const specialBtn = document.querySelectorAll('#controls button')[5];
+specialBtn.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (!rick.attacking) {
+        rick.attacking = true;
+        rick.attackCooldown = 25;
+        const dist = Math.abs(rick.x - enemy.x);
+        if (dist < 100 && rick.facing === (enemy.x > rick.x ? 1 : -1)) {
+            enemy.hp -= 25;
+            enemy.vy = -12;
+            enemy.vx = enemy.facing * -8;
+            updateHP();
+        }
+    }
+});
+
+// Keyboard controls
+document.addEventListener('keydown', e => keys[e.key] = true);
+document.addEventListener('keyup', e => keys[e.key] = false);
+
+function updateHP() {
+    document.getElementById('p1hp').style.width = Math.max(0, rick.hp/rick.maxHp*100) + '%';
+    document.getElementById('p2hp').style.width = Math.max(0, enemy.hp/enemy.maxHp*100) + '%';
 }
 
-function refresh() {
-    document.querySelectorAll('.char-btn').forEach(c=>c.classList.remove('picked'));
-    if(pIdx!=null)document.getElementById(`p-${pIdx}`).classList.add('picked');
-    if(eIdx!=null)document.getElementById(`e-${eIdx}`).classList.add('picked');
-    document.querySelectorAll('.skin-dot').forEach(d=>d.classList.remove('on'));
-    if(pIdx!=null)document.getElementById(`sk-p-${pIdx}-${pSk}`).classList.add('on');
-    if(eIdx!=null)document.getElementById(`sk-e-${eIdx}-${eSk}`).classList.add('on');
-    document.getElementById('ip').textContent=pIdx!=null?DATA[pIdx].name+` (${DATA[pIdx].skins[pSk].b})`:'-';
-    document.getElementById('ie').textContent=eIdx!=null?DATA[eIdx].name+` (${DATA[eIdx].skins[eSk].b})`:'-';
-    document.getElementById('fightBtn').disabled=(pIdx==null||eIdx==null);
+function drawCharacter(char, isRick = true) {
+    // Body
+    ctx.fillStyle = char.color;
+    ctx.fillRect(char.x, char.y, char.w, char.h);
+    
+    // Head
+    ctx.fillStyle = char.hairColor;
+    ctx.beginPath();
+    ctx.arc(char.x + char.w/2, char.y - 20, 20, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(char.x + char.w/2 - 6, char.y - 25, 5, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(char.x + char.w/2 + 6, char.y - 25, 5, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Pupils
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(char.x + char.w/2 - 6 + char.facing*2, char.y - 25, 2.5, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(char.x + char.w/2 + 6 + char.facing*2, char.y - 25, 2.5, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Attack effect
+    if (char.attacking) {
+        ctx.fillStyle = isRick ? '#00ff88' : '#ff4444';
+        ctx.fillRect(char.x + char.facing*char.w, char.y + char.h/2 - 10, 30, 20);
+    }
+    
+    // Name tag
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(char.name, char.x + char.w/2, char.y - 40);
 }
 
-function randomEnemy() {
-    const a=DATA.map((_,i)=>i).filter(i=>i!==pIdx);
-    if(a.length){eIdx=a[Math.floor(Math.random()*a.length)];eSk=Math.floor(Math.random()*DATA[eIdx].skins.length);refresh();}
+function draw() {
+    ctx.clearRect(0, 0, 400, 600);
+    
+    // Background
+    ctx.fillStyle = '#1a1a3a';
+    ctx.fillRect(0, 0, 400, GROUND);
+    ctx.fillStyle = '#333';
+    ctx.fillRect(0, GROUND, 400, 120);
+    ctx.strokeStyle = '#555';
+    ctx.beginPath();
+    ctx.moveTo(0, GROUND);
+    ctx.lineTo(400, GROUND);
+    ctx.stroke();
+    
+    drawCharacter(enemy, false);
+    drawCharacter(rick, true);
 }
 
-// ===== GAME =====
-function resize() { const w=Math.min(420,window.innerWidth); canvas.width=w; canvas.height=w*0.7; }
-
-function startGame() {
-    if(pIdx==null||eIdx==null)return;
-    document.getElementById('selectScreen').classList.add('hidden');
-    document.getElementById('gameScreen').classList.remove('hidden');
-    document.getElementById('winOverlay').classList.add('hidden');
-    resize(); resetRound();
-    running=true; timer=60; round=1; pw=0; ew=0;
-    document.getElementById('n1').textContent=DATA[pIdx].name;
-    document.getElementById('n2').textContent=DATA[eIdx].name;
-    document.getElementById('rd').textContent='R1';
-    updateHUD();
-    if(timerID)clearInterval(timerID);
-    timerID=setInterval(()=>{if(running){timer--;document.getElementById('timer').textContent=timer;if(timer<=0)endRound('time');}},1000);
-    loop();
-}
-
-function resetRound() {
-    const pc=DATA[pIdx], ec=DATA[eIdx];
-    p1={x:80,y:FLOOR-55,w:35,h:50,vx:0,vy:0,hp:pc.hp,mhp:pc.hp,en:0,face:1,gnd:true,atk:false,atT:0,atType:'',inv:0};
-    p2={x:canvas.width-115,y:FLOOR-55,w:35,h:50,vx:0,vy:0,hp:ec.hp,mhp:ec.hp,en:0,face:-1,gnd:true,atk:false,atT:0,atType:'',inv:0,aiT:0,aiCD:0};
-    particles=[]; hitTexts=[]; shake=0;
-}
-
-function updateHUD() {
-    document.getElementById('hp1').style.width=Math.max(0,p1.hp/p1.mhp*100)+'%';
-    document.getElementById('hp2').style.width=Math.max(0,p2.hp/p2.mhp*100)+'%';
-}
-
-function endRound(winner) {
-    running=false;
-    if(winner==='p1')pw++; else if(winner==='p2')ew++;
-    if(pw>=2||ew>=2){
-        if(timerID)clearInterval(timerID);
-        document.getElementById('winOverlay').classList.remove('hidden');
-        const wr=document.getElementById('wr'), wm=document.getElementById('wm');
-        if(pw>=2){wr.textContent='🏆 THẮNG!';wr.style.color='#0f0';wm.textContent=DATA[pIdx].name+' đánh bại '+DATA[eIdx].name;}
-        else{wr.textContent='💀 THUA!';wr.style.color='#f44';wm.textContent=DATA[eIdx].name+' đã thắng!';}
-    }else{
-        document.getElementById('rd').textContent='R'+(round+1);
-        setTimeout(()=>{timer=60;resetRound();running=true;round++;updateHUD();document.getElementById('timer').textContent=timer;},1500);
+function update() {
+    // Rick movement
+    rick.vx = 0;
+    if (keys['ArrowLeft']) rick.vx = -5;
+    if (keys['ArrowRight']) rick.vx = 5;
+    if (keys['ArrowUp'] && rick.y >= GROUND - rick.h) {
+        rick.vy = -15;
+    }
+    
+    // Apply physics
+    rick.x += rick.vx;
+    rick.y += rick.vy;
+    rick.vy += GRAVITY;
+    
+    if (rick.y >= GROUND - rick.h) {
+        rick.y = GROUND - rick.h;
+        rick.vy = 0;
+    }
+    
+    // Attack cooldown
+    if (rick.attackCooldown > 0) {
+        rick.attackCooldown--;
+        if (rick.attackCooldown === 0) rick.attacking = false;
+    }
+    
+    // Simple AI for enemy
+    const dist = rick.x - enemy.x;
+    if (Math.abs(dist) > 150) {
+        enemy.vx = dist > 0 ? 2 : -2;
+    } else if (Math.abs(dist) < 50) {
+        enemy.vx = dist > 0 ? -3 : 3;
+        // Random attack
+        if (Math.random() < 0.02 && !enemy.attacking) {
+            enemy.attacking = true;
+            enemy.attackCooldown = 20;
+            if (Math.abs(dist) < 70) {
+                rick.hp -= 8;
+                rick.vy = -6;
+                rick.vx = rick.facing * -4;
+                updateHP();
+            }
+        }
+    } else {
+        enemy.vx *= 0.9;
+    }
+    
+    enemy.x += enemy.vx;
+    enemy.y += enemy.vy;
+    enemy.vy += GRAVITY;
+    
+    if (enemy.y >= GROUND - enemy.h) {
+        enemy.y = GROUND - enemy.h;
+        enemy.vy = 0;
+    }
+    
+    if (enemy.attackCooldown > 0) {
+        enemy.attackCooldown--;
+        if (enemy.attackCooldown === 0) enemy.attacking = false;
+    }
+    
+    // Boundaries
+    rick.x = Math.max(0, Math.min(400 - rick.w, rick.x));
+    enemy.x = Math.max(0, Math.min(400 - enemy.w, enemy.x));
+    
+    // Facing directions
+    rick.facing = rick.x < enemy.x ? 1 : -1;
+    enemy.facing = enemy.x < rick.x ? 1 : -1;
+    
+    // Check win/lose
+    if (enemy.hp <= 0) {
+        alert('Bạn thắng! Refresh để chơi lại.');
+        enemy.hp = 100;
+        rick.hp = 100;
+    }
+    if (rick.hp <= 0) {
+        alert('Bạn thua! Refresh để chơi lại.');
+        enemy.hp = 100;
+        rick.hp = 100;
     }
 }
 
-function rematch() {
-    document.getElementById('winOverlay').classList.add('hidden');
-    timer=60;round=1;pw=0;ew=0;resetRound();running=true;updateHUD();
-    document.getElementById('rd').textContent='R1';document.getElementById('timer').textContent=timer;
-    if(timerID)clearInterval(timerID);
-    timerID=setInterval(()=>{if(running){timer--;document.getElementById('timer').textContent=timer;if(timer<=0)endRound('time');}},1000);
-    loop();
+function gameLoop() {
+    update();
+    draw();
+    updateHP();
+    requestAnimationFrame(gameLoop);
 }
 
-function goSelect() {
-    document.getElementById('winOverlay').classList.add('hidden');
-    document.getElementById('gameScreen').classList.add('hidden');
-    document.getElementById('selectScreen').classList.remove('hidden');
-    if(timerID)clearInterval(timerID); running=false;
-}
-
-// ===== INPUT =====
-function setupBtn(id, key, action) {
-    const b=document.getElementById(id); if(!b)return; btns[key]=false;
-    const down=(e)=>{e.preventDefault();btns[key]=true;if(action)action();};
-    const up=(e)=>{e.preventDefault();btns[key]=false;};
-    b.addEventListener('touchstart',down,{passive:false}); b.addEventListener('touchend',up,{passive:false});
-    b.addEventListener('mousedown',down); b.addEventListener('mouseup',up); b.addEventListener('mouseleave',up);
-}
-setupBtn('bl','l'); setupBtn('br','r');
-setupBtn('bu','u',()=>{if(p1.gnd){p1.vy=-11;p1.gnd=false;}});
-setupBtn('bp','p',()=>playerAtk('punch'));
-setupBtn('bk','k',()=>playerAtk('kick'));
-setupBtn('bs','s',()=>playerAtk('special'));
-setupBtn('bx','x',()=>playerAtk('ultimate'));
-
-function playerAtk(type) {
-    if(!running||p1.atk)return;
-    const cost={punch:0,kick:0,special:25,ultimate:100};
-    if(p1.en<cost[type])return;
-    p1.en-=cost[type]; p1.atk=true; p1.atType=type;
-    p1.atT={punch:8,kick:12,special:18,ultimate:28}[type];
-    setTimeout(()=>{if(running&&p1.atk&&p1.atType===type)doHit(p1,p2,type,'p1');},type==='ultimate'?400:180);
-}
-
-function doHit(a,d,type,who) {
-    const dist=Math.abs(a.x-d.x), range=(type==='special'||type==='ultimate')?140:55;
-    if(dist<range && a.face===(d.x>a.x?1:-1) && d.inv<=0){
-        const base={punch:15,kick:22,special:38,ultimate:65};
-        const mult=who==='p1'?DATA[pIdx].atk:DATA[eIdx].atk;
-        const dmg=Math.floor(base[type]*mult);
-        d.hp-=dmg; d.inv=15; d.vy=-5; d.vx=d.face*-3;
-        shake=type==='ultimate'?14:6;
-        for(let i=0;i<(type==='ultimate'?20:8);i++)particles.push({x:d.x+d.w/2,y:d.y+d.h/2,vx:(Math.random()-.5)*7,vy:(Math.random()-.5)*7,life:20,color:type==='ultimate'?'#ff0':'#f60'});
-        hitTexts.push({x:d.x,y:d.y-20,text:'-'+dmg,life:30,color:'#fff'});
-        updateHUD();
-        if(d.hp<=0){d.hp=0;updateHUD();endRound(who);}
-    }
-}
-
-// ===== AI =====
-function updateAI() {
-    if(!running||p2.atk)return; p2.aiT++; if(p2.aiCD>0){p2.aiCD--;return;}
-    const d=p1.x-p2.x, ad=Math.abs(d);
-    if(ad>180)p2.vx=d>0?2.5:-2.5;
-    else if(ad<55){if(Math.random()<0.6){const t=['punch','kick'];if(p2.en>=25)t.push('special');if(p2.en>=100)t.push('ultimate');enemyAtk(t[Math.floor(Math.random()*t.length)]);}else p2.vx=d>0?-3:3;}
-    else{if(Math.random()<0.03&&p2.en>=20){const t=['punch','kick','special'];if(p2.en>=100)t.push('ultimate');enemyAtk(t[Math.floor(Math.random()*t.length)]);}p2.vx*=0.9;}
-    if(p1.y<p2.y-30&&p2.gnd&&Math.random()<0.02){p2.vy=-10;p2.gnd=false;}
-    p2.aiCD=15+Math.random()*30;
-}
-
-function enemyAtk(type) {
-    if(p2.atk)return; const cost={punch:0,kick:0,special:25,ultimate:100};
-    if(p2.en<cost[type])return; p2.en-=cost[type]; p2.atk=true; p2.atType=type;
-    p2.atT={punch:8,kick:12,special:18,ultimate:28}[type];
-    setTimeout(()=>{if(running&&p2.atk&&p2.atType===type)doHit(p2,p1,type,'p2');},type==='ultimate'?400:180);
-}
-
-// ===== GAME LOOP =====
-function loop() {
-    if(!running){requestAnimationFrame(loop);return;}
-    const spd=DATA[pIdx].spd;
-    if(btns['l'])p1.vx=-spd; else if(btns['r'])p1.vx=spd; else p1.vx*=0.8;
-    
-    [p1,p2].forEach(p=>{
-        p.x+=p.vx; p.y+=p.vy; p.vy+=G;
-        if(p.y>=FLOOR-p.h){p.y=FLOOR-p.h;p.vy=0;p.gnd=true;}
-        if(p.x<0)p.x=0;if(p.x>canvas.width-p.w)p.x=canvas.width-p.w;
-        if(p.atk){p.atT--;if(p.atT<=0){p.atk=false;p.atType='';}}
-        if(p.inv>0)p.inv--; p.en=Math.min(100,p.en+0.1);
-    });
-    p1.face=p1.x<p2.x?1:-1; p2.face=p2.x<p1.x?1:-1;
-    updateAI(); updateHUD();
-    particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;return p.life>0;});
-    hitTexts=hitTexts.filter(t=>{t.life--;return t.life>0;});
-    if(shake>0)shake--;
-    
-    const sx=shake?(Math.random()-.5)*shake:0, sy=shake?(Math.random()-.5)*shake:0;
-    ctx.save(); ctx.translate(sx,sy);
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle='#1a1a2e'; ctx.fillRect(0,0,canvas.width,FLOOR);
-    ctx.fillStyle='#222'; ctx.fillRect(0,FLOOR,canvas.width,canvas.height-FLOOR);
-    ctx.strokeStyle='#444'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,FLOOR); ctx.lineTo(canvas.width,FLOOR); ctx.stroke();
-    
-    [{p:p1,i:pIdx,s:pSk},{p:p2,i:eIdx,s:eSk}].forEach(({p,i,s})=>{
-        const sk=DATA[i].skins[s];
-        ctx.fillStyle=sk.b; ctx.fillRect(p.x,p.y,p.w,p.h);
-        ctx.fillStyle=sk.h; ctx.beginPath(); ctx.arc(p.x+p.w/2,p.y-12,14,0,Math.PI*2); ctx.fill();
-        ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(p.x+p.w/2-5,p.y-15,3,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(p.x+p.w/2+5,p.y-15,3,0,Math.PI*2); ctx.fill();
-        ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(p.x+p.w/2-5+p.face*2,p.y-15,2,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(p.x+p.w/2+5+p.face*2,p.y-15,2,0,Math.PI*2); ctx.fill();
-        if(p.atk){ctx.fillStyle=p.atType==='ultimate'?'#ff0':'#fff';ctx.fillRect(p.x+p.face*p.w,p.y+p.h/2-8,18,14);}
-    });
-    
-    particles.forEach(p=>{ctx.fillStyle=p.color;ctx.globalAlpha=p.life/20;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;
-    hitTexts.forEach(t=>{ctx.fillStyle=t.color;ctx.globalAlpha=t.life/30;ctx.font='bold 13px Arial';ctx.fillText(t.text,t.x,t.y);});ctx.globalAlpha=1;
-    ctx.restore();
-    requestAnimationFrame(loop);
-}
-
-// ===== INIT =====
-buildSelect(); resize(); loop();
+// Initialize
+document.getElementById('p1name').textContent = 'RICK';
+document.getElementById('p2name').textContent = 'EVIL MORTY';
+gameLoop();
 </script>
 </body>
 </html>
