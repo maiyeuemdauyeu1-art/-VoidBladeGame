@@ -3,207 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Chibi Fighter - Pixel Style</title>
+    <title>Chibi Fighter</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        body{background:#1a1a2e;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;touch-action:manipulation}
-        canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+        body{background:#111;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;touch-action:manipulation}
+        canvas{display:block;width:100vw;height:100vh}
     </style>
 </head>
 <body>
 <canvas id="gc"></canvas>
 <script>
 const cv=document.getElementById('gc'),cx=cv.getContext('2d');
-cv.width=400;cv.height=550;
-cx.imageSmoothingEnabled=false;
+let W,H,GY;
 
-const GY=400;
-let p1,p2,on=false,timer=99,pts=[],keys={};
+function rsz(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;GY=H*0.78}
+rsz();window.addEventListener('resize',rsz);
 
-function drawPixelChibi(x,y,skin,hair,eye,shirt,pants,face,isShadow){
-    const ctx=cx;
-    if(isShadow){
-        // Bóng mờ dưới chân
-        ctx.fillStyle='rgba(0,0,0,0.25)';
-        ctx.beginPath();ctx.ellipse(x+18,y+48,22,6,0,0,Math.PI*2);ctx.fill();
-        return;
-    }
-    
-    // === CHÂN ===
-    ctx.fillStyle=pants;ctx.fillRect(x+6,y+32,8,12);ctx.fillRect(x+20,y+32,8,12);
-    // Giày đen
-    ctx.fillStyle='#1a1a1a';ctx.fillRect(x+4,y+42,12,7);ctx.fillRect(x+18,y+42,12,7);
-    
-    // === THÂN ===
-    ctx.fillStyle=shirt;ctx.fillRect(x+6,y+8,22,26);
-    // Viền áo
-    ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1;ctx.strokeRect(x+6,y+8,22,26);
-    
-    // === TAY ===
-    ctx.fillStyle=skin;ctx.fillRect(x-2,y+12,8,12);ctx.fillRect(x+28,y+12,8,12);
-    ctx.fillStyle=shirt;ctx.fillRect(x-2,y+12,8,8);ctx.fillRect(x+28,y+12,8,8);
-    
-    // === CỔ ===
-    ctx.fillStyle=skin;ctx.fillRect(x+13,y+2,8,8);
-    
-    // === ĐẦU ===
-    ctx.fillStyle=skin;ctx.beginPath();ctx.arc(x+17,y-16,18,0,Math.PI*2);ctx.fill();
-    
-    // === TÓC ===
-    ctx.fillStyle=hair;
-    ctx.beginPath();ctx.arc(x+17,y-18,19,Math.PI,Math.PI*2);ctx.fill();
-    ctx.fillRect(x-2,y-35,38,20);
-    // Tóc mái
-    ctx.beginPath();ctx.moveTo(x-2,y-28);ctx.lineTo(x+5,y-14);ctx.lineTo(x+17,y-26);ctx.lineTo(x+29,y-14);ctx.lineTo(x+36,y-28);ctx.fill();
-    // Tóc hai bên
-    ctx.fillRect(x-3,y-24,7,16);ctx.fillRect(x+30,y-24,7,16);
-    
-    // === MẮT ===
-    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x+10,y-18,7,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+24,y-18,7,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle=eye;ctx.beginPath();ctx.arc(x+10+face,y-18,4.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+24+face,y-18,4.5,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#000';ctx.beginPath();ctx.arc(x+10+face,y-18,2.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+24+face,y-18,2.5,0,Math.PI*2);ctx.fill();
-    // Highlight mắt
-    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x+9+face,y-19,1.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+23+face,y-19,1.5,0,Math.PI*2);ctx.fill();
-    
-    // === LÔNG MÀY ===
-    ctx.strokeStyle='rgba(0,0,0,0.5)';ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.moveTo(x+4,y-23);ctx.lineTo(x+14,y-24);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(x+20,y-24);ctx.lineTo(x+30,y-23);ctx.stroke();
-    
-    // === MÁ HỒNG ===
-    ctx.fillStyle='rgba(255,130,130,0.35)';ctx.beginPath();ctx.arc(x+5,y-13,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+29,y-13,4,0,Math.PI*2);ctx.fill();
-    
-    // === MIỆNG ===
-    ctx.fillStyle='#000';ctx.beginPath();ctx.arc(x+17,y-10,3,0,Math.PI);ctx.fill();
+function drawChibi(x,y,skin,hair,eye,shirt,pants,face){
+    const s=W/400;
+    // Bóng
+    cx.fillStyle='rgba(0,0,0,0.3)';cx.beginPath();cx.ellipse(x+15,y+48,18,5,0,0,Math.PI*2);cx.fill();
+    // Giày
+    cx.fillStyle='#1a1a1a';cx.fillRect(x+2,y+40,13,8);cx.fillRect(x+17,y+40,13,8);
+    // Chân
+    cx.fillStyle=pants;cx.fillRect(x+4,y+28,9,14);cx.fillRect(x+18,y+28,9,14);
+    // Thân
+    cx.fillStyle=shirt;cx.fillRect(x+4,y+6,24,24);
+    // Tay
+    cx.fillStyle=skin;cx.fillRect(x-2,y+10,7,14);cx.fillRect(x+27,y+10,7,14);
+    cx.fillStyle=shirt;cx.fillRect(x-2,y+10,7,8);cx.fillRect(x+27,y+10,7,8);
+    // Cổ
+    cx.fillStyle=skin;cx.fillRect(x+11,y+0,10,8);
+    // Đầu
+    cx.fillStyle=skin;cx.beginPath();cx.arc(x+16,y-16,18,0,Math.PI*2);cx.fill();
+    // Tóc
+    cx.fillStyle=hair;cx.beginPath();cx.arc(x+16,y-18,19,Math.PI,Math.PI*2);cx.fill();cx.fillRect(x-2,y-35,36,20);
+    cx.beginPath();cx.moveTo(x-2,y-28);cx.lineTo(x+4,y-14);cx.lineTo(x+16,y-26);cx.lineTo(x+28,y-14);cx.lineTo(x+34,y-28);cx.fill();
+    cx.fillRect(x-3,y-24,7,16);cx.fillRect(x+28,y-24,7,16);
+    // Mắt
+    cx.fillStyle='#fff';cx.beginPath();cx.arc(x+10,y-18,7,0,Math.PI*2);cx.fill();cx.beginPath();cx.arc(x+23,y-18,7,0,Math.PI*2);cx.fill();
+    cx.fillStyle=eye;cx.beginPath();cx.arc(x+10+face,y-18,4,0,Math.PI*2);cx.fill();cx.beginPath();cx.arc(x+23+face,y-18,4,0,Math.PI*2);cx.fill();
+    cx.fillStyle='#000';cx.beginPath();cx.arc(x+10+face,y-18,2,0,Math.PI*2);cx.fill();cx.beginPath();cx.arc(x+23+face,y-18,2,0,Math.PI*2);cx.fill();
+    cx.fillStyle='#fff';cx.beginPath();cx.arc(x+9+face,y-19,1.2,0,Math.PI*2);cx.fill();cx.beginPath();cx.arc(x+22+face,y-19,1.2,0,Math.PI*2);cx.fill();
+    // Má hồng
+    cx.fillStyle='rgba(255,140,140,0.4)';cx.beginPath();cx.arc(x+5,y-12,4,0,Math.PI*2);cx.fill();cx.beginPath();cx.arc(x+27,y-12,4,0,Math.PI*2);cx.fill();
+    // Miệng
+    cx.strokeStyle='#000';cx.lineWidth=1;cx.beginPath();cx.arc(x+16,y-8,3,0,Math.PI);cx.stroke();
 }
 
+let p1,p2,on=false,timer=99,pts=[],keys={};
+
 function newGame(){
-    // Rick - Blue shirt white coat
-    p1={x:70,y:GY-52,hp:100,mhp:100,face:1,atk:false,cd:0,
-        skin:'#FFE4C4',hair:'#B0C4DE',eye:'#4488cc',shirt:'#87CEEB',pants:'#444'};
-    // Evil Morty
-    p2={x:270,y:GY-52,hp:100,mhp:100,face:-1,atk:false,cd:0,
-        skin:'#FFE4C4',hair:'#8B4513',eye:'#44aa44',shirt:'#FFD700',pants:'#333'};
+    p1={x:W*0.15,y:GY-48,hp:100,mhp:100,face:1,atk:false,cd:0,skin:'#FFE4C4',hair:'#B0C4DE',eye:'#4488cc',shirt:'#87CEEB',pants:'#444',sp:4};
+    p2={x:W*0.7,y:GY-48,hp:100,mhp:100,face:-1,atk:false,cd:0,skin:'#FFE4C4',hair:'#8B4513',eye:'#44aa44',shirt:'#FFD700',pants:'#333',sp:3};
     on=true;timer=99;pts=[];
 }
 
-function drawBackground(){
-    // Sky gradient
+function draw(){
+    cx.clearRect(0,0,W,H);
+    // Sky
     const bg=cx.createLinearGradient(0,0,0,GY);
-    bg.addColorStop(0,'#4a90d9');bg.addColorStop(0.5,'#7ab8f5');bg.addColorStop(1,'#c5e0ff');
-    cx.fillStyle=bg;cx.fillRect(0,0,400,GY);
-    
-    // Clouds (mờ)
-    cx.fillStyle='rgba(255,255,255,0.4)';
-    cx.beginPath();cx.arc(50,50,30,0,Math.PI*2);cx.arc(80,45,25,0,Math.PI*2);cx.arc(75,60,20,0,Math.PI*2);cx.fill();
-    cx.beginPath();cx.arc(300,70,25,0,Math.PI*2);cx.arc(325,65,20,0,Math.PI*2);cx.fill();
-    cx.beginPath();cx.arc(150,100,20,0,Math.PI*2);cx.arc(170,95,18,0,Math.PI*2);cx.fill();
-    
-    // Sun
-    cx.fillStyle='rgba(255,255,200,0.6)';cx.beginPath();cx.arc(350,50,30,0,Math.PI*2);cx.fill();
-    
+    bg.addColorStop(0,'#4a90d9');bg.addColorStop(1,'#b8d8f8');
+    cx.fillStyle=bg;cx.fillRect(0,0,W,GY);
+    // Clouds
+    cx.fillStyle='rgba(255,255,255,0.5)';cx.beginPath();cx.arc(W*0.15,GY*0.12,25,0,Math.PI*2);cx.arc(W*0.2,GY*0.1,20,0,Math.PI*2);cx.fill();
+    cx.beginPath();cx.arc(W*0.75,GY*0.15,22,0,Math.PI*2);cx.arc(W*0.8,GY*0.13,18,0,Math.PI*2);cx.fill();
     // Ground
-    cx.fillStyle='#8B6B3D';cx.fillRect(0,GY,400,150);
-    cx.fillStyle='#6B8B3D';cx.fillRect(0,GY,400,6);
-    // Ground shadow
-    cx.fillStyle='rgba(0,0,0,0.15)';cx.fillRect(0,GY+6,400,20);
+    cx.fillStyle='#8B6B3D';cx.fillRect(0,GY,W,H-GY);
+    cx.fillStyle='#6B9B3D';cx.fillRect(0,GY,W,5);
+    
+    // Shadows first
+    drawChibi(p1.x,p1.y,null,null,null,null,null,0);
+    drawChibi(p2.x,p2.y,null,null,null,null,null,0);
+    // Characters
+    drawChibi(p1.x,p1.y,p1.skin,p1.hair,p1.eye,p1.shirt,p1.pants,p1.face);
+    drawChibi(p2.x,p2.y,p2.skin,p2.hair,p2.eye,p2.shirt,p2.pants,p2.face);
+    
+    // Effects
+    if(p1.atk){cx.fillStyle='rgba(255,255,0,0.6)';cx.fillRect(p1.x+p1.face*28,p1.y+14,18,8)}
+    if(p2.atk){cx.fillStyle='rgba(255,255,0,0.6)';cx.fillRect(p2.x+p2.face*28,p2.y+14,18,8)}
+    pts.forEach(p=>{cx.fillStyle=p.c;cx.globalAlpha=p.l/15;cx.beginPath();cx.arc(p.x,p.y,3,0,Math.PI*2);cx.fill()});cx.globalAlpha=1;
+    
+    // HUD
+    cx.fillStyle='rgba(0,0,0,0.6)';cx.fillRect(5,5,W-10,40);
+    cx.fillStyle='#fff';cx.font='bold 12px Arial';cx.fillText('Rick',12,22);cx.textAlign='right';cx.fillText('Evil Morty',W-12,22);cx.textAlign='start';
+    cx.fillStyle='#333';cx.fillRect(12,28,W*0.4,12);cx.fillRect(W*0.55,28,W*0.4,12);
+    cx.fillStyle='#4f4';cx.fillRect(12,28,W*0.4*(p1.hp/p1.mhp),12);
+    cx.fillStyle='#f44';cx.fillRect(W*0.55,28,W*0.4*(p2.hp/p2.mhp),12);
+    cx.fillStyle='#ff0';cx.font='bold 14px Arial';cx.textAlign='center';cx.fillText(Math.ceil(timer),W/2,37);cx.textAlign='start';
 }
 
-function drawHUD(){
-    // HUD background
-    cx.fillStyle='rgba(0,0,0,0.6)';cx.fillRect(5,5,390,45);
-    cx.strokeStyle='rgba(255,255,255,0.3)';cx.lineWidth=1;cx.strokeRect(5,5,390,45);
-    
-    // Names
-    cx.fillStyle='#fff';cx.font='bold 11px Arial';
-    cx.fillText('Rick (Blue White)',12,22);
-    cx.textAlign='right';cx.fillText('Evil Morty',388,22);cx.textAlign='start';
-    
-    // HP bars
-    cx.fillStyle='#222';cx.fillRect(12,28,160,14);cx.fillRect(228,28,160,14);
-    const hp1w=160*(p1.hp/p1.mhp),hp2w=160*(p2.hp/p2.mhp);
-    cx.fillStyle='#4eff4e';cx.fillRect(12,28,hp1w,14);
-    cx.fillStyle='#ff4e4e';cx.fillRect(388-hp2w,28,hp2w,14);
-    cx.strokeStyle='#fff';cx.lineWidth=1;cx.strokeRect(12,28,160,14);cx.strokeRect(228,28,160,14);
-    
-    // Timer
-    cx.fillStyle='#ffcc00';cx.font='bold 18px Arial';cx.textAlign='center';
-    cx.fillText(Math.ceil(timer),200,40);cx.textAlign='start';
-}
-
-function attack(a,d,pl){
-    if(a.atk||a.cd>0)return;
-    const dist=Math.abs(a.x-d.x);
-    if(dist>80||a.face!==(d.x>a.x?1:-1))return;
-    d.hp-=12;
-    d.x+=d.face*-8;
-    a.atk=true;a.cd=18;
-    for(let i=0;i<8;i++)pts.push({x:d.x+17,y:d.y+25,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,l:12,c:'#ffdd00'});
+function atk(a,d,pl){
+    if(a.atk||a.cd>0)return;const dist=Math.abs(a.x-d.x);
+    if(dist>90||a.face!==(d.x>a.x?1:-1))return;
+    d.hp-=10;d.x+=d.face*-10;a.atk=true;a.cd=18;
+    for(let i=0;i<8;i++)pts.push({x:d.x+16,y:d.y+24,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,l:10,c:'#ff0'});
     if(d.hp<=0){d.hp=0;on=false;setTimeout(newGame,2000)}
 }
 
 function update(){
     if(!on)return;
+    if(keys['a']||keys['ArrowLeft'])p1.x-=p1.sp;
+    if(keys['d']||keys['ArrowRight'])p1.x+=p1.sp;
+    p1.x=Math.max(5,Math.min(W-45,p1.x));p2.x=Math.max(5,Math.min(W-45,p2.x));
+    p1.face=p1.x<p2.x?1:-1;p2.face=p2.x<p1.x?1:-1;
     
-    // Player input
-    if(keys['ArrowLeft']||keys['a'])p1.x-=4;
-    if(keys['ArrowRight']||keys['d'])p1.x+=4;
-    
-    p1.x=Math.max(5,Math.min(350,p1.x));
-    p2.x=Math.max(5,Math.min(350,p2.x));
-    
-    p1.face=p1.x<p2.x?1:-1;
-    p2.face=p2.x<p1.x?1:-1;
-    
-    // AI
     const d=p1.x-p2.x,ad=Math.abs(d);
-    if(ad>100)p2.x+=d>0?2:-2;
-    else if(ad<45){if(Math.random()<0.025)attack(p2,p1,false)}
+    if(ad>120)p2.x+=d>0?2:-2;
+    else if(ad<50&&Math.random()<0.025)atk(p2,p1,false);
     
     if(p1.cd>0)p1.cd--;if(p1.cd===0)p1.atk=false;
     if(p2.cd>0)p2.cd--;if(p2.cd===0)p2.atk=false;
-    
     timer-=0.016;if(timer<=0){on=false;setTimeout(newGame,2000)}
     pts=pts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.l--;return p.l>0});
 }
 
-function draw(){
-    cx.clearRect(0,0,400,550);
-    drawBackground();
-    
-    // Vẽ bóng trước
-    drawPixelChibi(p1.x,p1.y,null,null,null,null,null,0,true);
-    drawPixelChibi(p2.x,p2.y,null,null,null,null,null,0,true);
-    
-    // Vẽ nhân vật
-    drawPixelChibi(p1.x,p1.y,p1.skin,p1.hair,p1.eye,p1.shirt,p1.pants,p1.face,false);
-    drawPixelChibi(p2.x,p2.y,p2.skin,p2.hair,p2.eye,p2.shirt,p2.pants,p2.face,false);
-    
-    // Attack effect
-    if(p1.atk){cx.fillStyle='rgba(255,255,0,0.5)';cx.fillRect(p1.x+p1.face*32,p1.y+15,18,8)}
-    if(p2.atk){cx.fillStyle='rgba(255,255,0,0.5)';cx.fillRect(p2.x+p2.face*32,p2.y+15,18,8)}
-    
-    // Particles
-    pts.forEach(p=>{cx.fillStyle=p.c;cx.globalAlpha=p.l/12;cx.beginPath();cx.arc(p.x,p.y,2.5,0,Math.PI*2);cx.fill()});cx.globalAlpha=1;
-    
-    drawHUD();
-    
-    // Bottom controls info
-    cx.fillStyle='rgba(0,0,0,0.5)';cx.fillRect(0,520,400,30);
-    cx.fillStyle='#fff';cx.font='9px Arial';cx.textAlign='center';
-    cx.fillText('A/D Move | J Attack | Touch screen',200,540);cx.textAlign='start';
-}
-
-// Input
-document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key==='j')attack(p1,p2,true)});
+document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key==='j')atk(p1,p2,true)});
 document.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 
 cv.addEventListener('touchstart',e=>{
     e.preventDefault();
     const tx=e.touches[0].clientX;
-    if(tx<cv.width/3)p1.x-=20;
-    else if(tx>cv.width*2/3)p1.x+=20;
-    else attack(p1,p2,true);
+    if(tx<W/3)p1.x-=20;else if(tx>W*2/3)p1.x+=20;else atk(p1,p2,true);
 });
 
 function loop(){update();draw();requestAnimationFrame(loop)}
