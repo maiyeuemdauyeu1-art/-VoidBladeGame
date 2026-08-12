@@ -1,144 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MUGEN STYLE FIGHTER</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>MUGEN FIGHTER</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        body{background:#000;overflow:hidden;font-family:Arial;touch-action:manipulation}
+        body{background:#000;font-family:Arial;overflow:hidden;touch-action:manipulation;user-select:none}
         
-        #selectScreen{
-            width:100vw;height:100vh;
-            background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect fill="%23001a33" width="400" height="300"/><circle fill="%23003366" cx="50" cy="50" r="100"/><circle fill="%23002244" cx="350" cy="250" r="150"/></svg>') center/cover;
-            display:flex;flex-direction:column;align-items:center;
-        }
-        .select-title{
-            color:#ffcc00;font-size:2.5em;font-weight:bold;margin:20px 0;
-            text-shadow:0 0 30px #ffcc00,0 0 60px #ff6600;
-        }
+        #selectScreen{width:100vw;height:100vh;background:linear-gradient(180deg,#0a0a1a,#1a0a2e,#0a0a1a);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px}
+        #selectScreen.hidden{display:none}
         
-        .select-container{
-            display:flex;width:100%;height:60%;gap:20px;padding:0 20px;
-        }
+        .title{font-size:2.5em;color:#ffcc00;font-weight:bold;text-shadow:0 0 30px #ffcc00}
         
-        .player-side,.enemy-side{
-            flex:1;background:rgba(0,0,0,0.8);border:3px solid #444;
-            border-radius:20px;padding:15px;overflow-y:auto;
-        }
-        .player-side{border-color:#00ff88}
-        .enemy-side{border-color:#ff4444}
+        .section{width:90%;max-width:500px}
+        .section-label{color:#00ff88;font-weight:bold;font-size:1.1em;margin-bottom:8px;text-align:center}
+        .section-label.enemy{color:#ff4444}
         
-        .side-title{text-align:center;color:#fff;font-weight:bold;font-size:1.2em;margin-bottom:10px}
-        .player-side .side-title{color:#00ff88}
-        .enemy-side .side-title{color:#ff4444}
-        
-        .char-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-        
-        .char-box{
-            background:#1a1a3a;border:2px solid #333;border-radius:10px;
-            padding:10px;text-align:center;cursor:pointer;transition:0.3s;
-        }
-        .char-box:hover{border-color:#fff}
+        .char-row{display:flex;gap:8px;overflow-x:auto;padding:5px}
+        .char-box{min-width:90px;background:#1a1a35;border:3px solid #333;border-radius:12px;padding:10px;text-align:center;cursor:pointer;transition:0.3s;flex-shrink:0}
         .char-box.selected-player{border-color:#00ff88!important;background:#003322!important;box-shadow:0 0 20px #00ff88}
         .char-box.selected-enemy{border-color:#ff4444!important;background:#330000!important;box-shadow:0 0 20px #ff4444}
         
-        .char-icon{font-size:3em}
-        .char-name{color:#fff;font-weight:bold;font-size:0.9em;margin:5px 0}
-        .char-universe{color:#888;font-size:0.7em}
+        .char-portrait{width:70px;height:70px;border-radius:10px;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:2.5em;background:#0003;border:2px solid #444}
+        .char-name{color:#fff;font-weight:bold;font-size:0.75em}
+        .char-universe{color:#888;font-size:0.6em}
         
-        .skin-selector{display:flex;gap:5px;justify-content:center;margin-top:8px}
-        .skin-box{
-            width:25px;height:25px;border-radius:5px;border:2px solid #555;
-            cursor:pointer;transition:0.3s;position:relative;
-        }
-        .skin-box.active{border-color:#fff;box-shadow:0 0 10px #fff}
-        .skin-box::after{
-            content:attr(data-name);position:absolute;bottom:-15px;left:50%;
-            transform:translateX(-50%);font-size:8px;color:#aaa;white-space:nowrap;
-        }
+        .skin-dots{display:flex;gap:4px;justify-content:center;margin-top:5px}
+        .skin-dot{width:15px;height:15px;border-radius:50%;border:2px solid #555;cursor:pointer}
+        .skin-dot.active{border-color:#fff;box-shadow:0 0 8px #fff}
         
-        .selected-info{
-            display:flex;justify-content:space-around;width:100%;
-            padding:15px;color:#fff;font-size:1em;
-        }
-        .selected-info .p-info{color:#00ff88}
-        .selected-info .e-info{color:#ff4444}
-        .vs{color:#ffcc00;font-size:2em;font-weight:bold}
+        .vs-display{display:flex;align-items:center;gap:15px;color:#fff;font-size:1.2em}
+        .vs-display .p{color:#00ff88;font-weight:bold}
+        .vs-display .e{color:#ff4444;font-weight:bold}
+        .vs-display .vs{font-size:2em;color:#ffcc00;font-weight:bold}
         
-        .fight-btn{
-            padding:15px 60px;background:linear-gradient(135deg,#ff4400,#ffaa00);
-            color:#fff;border:none;border-radius:30px;font-size:1.5em;
-            font-weight:bold;cursor:pointer;margin:10px 0;letter-spacing:3px;
-        }
+        .fight-btn{padding:15px 50px;background:linear-gradient(135deg,#ff4400,#ffaa00);color:#fff;border:none;border-radius:30px;font-size:1.4em;font-weight:bold;cursor:pointer;letter-spacing:3px}
         .fight-btn:disabled{background:#444;color:#888}
+        .fight-btn:active:not(:disabled){transform:scale(0.95)}
         
-        /* GAME */
-        #gameScreen{width:100vw;height:100vh;background:#000;display:none}
-        #gameHUD{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;z-index:5;pointer-events:none}
-        .hud-panel{width:35%;color:#fff}
-        .hud-panel.right{text-align:right}
-        .hud-name{font-weight:bold;font-size:0.9em}
-        .hp-outer{height:20px;background:#333;border-radius:10px;overflow:hidden;margin:3px 0;border:1px solid #555}
-        .hp-inner{height:100%;transition:0.3s}
+        #gameScreen{width:100vw;height:100vh;position:relative;display:none}
+        #gameScreen.active{display:block}
+        
+        #hud{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;z-index:10;pointer-events:none}
+        .hud-side{width:35%}
+        .hud-right{text-align:right}
+        .hud-name{color:#fff;font-size:0.8em;font-weight:bold}
+        .hp-bar{height:18px;background:#333;border-radius:9px;overflow:hidden;margin:3px 0;border:1px solid #555}
+        .hp-fill{height:100%;transition:0.3s}
         .hp-p1{background:linear-gradient(90deg,#00ff88,#008844)}
         .hp-p2{background:linear-gradient(90deg,#ff4444,#880000)}
-        .en-outer{height:10px;background:#222;border-radius:5px;overflow:hidden}
-        .en-inner{height:100%;background:linear-gradient(90deg,#ffcc00,#ff8800);transition:0.3s}
+        .en-bar{height:8px;background:#222;border-radius:4px;overflow:hidden}
+        .en-fill{height:100%;background:linear-gradient(90deg,#ffcc00,#ff8800);transition:0.3s}
         .hud-center{text-align:center;color:#fff}
-        .hud-timer{font-size:1.8em;font-weight:bold;color:#ffcc00}
+        .hud-timer{font-size:2em;font-weight:bold;color:#ffcc00}
         
-        canvas{width:100%;height:100%;display:block}
+        canvas{display:block;width:100%;height:100%}
         
-        #controls{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:5}
-        #controls button{width:55px;height:55px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,0.6);color:#fff;font-size:1.2em;font-weight:bold;cursor:pointer}
-        #controls button:active{background:rgba(255,255,255,0.4)}
+        #controls{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:10}
+        #controls button{width:50px;height:50px;border-radius:50%;border:2px solid rgba(255,255,255,0.5);background:rgba(0,0,0,0.7);color:#fff;font-size:1.2em;cursor:pointer;display:flex;align-items:center;justify-content:center}
+        #controls button:active{background:rgba(255,255,255,0.3)}
         #controls .atk-btn{border-color:#ff4444;background:rgba(255,0,0,0.3)}
-        #controls .sp-btn{border-color:#ffcc00;background:rgba(255,200,0,0.3)}
+        #controls .sp-btn{border-color:#ffcc00;background:rgba(255,170,0,0.3)}
     </style>
 </head>
 <body>
 
-<!-- SELECT SCREEN -->
 <div id="selectScreen">
-    <div class="select-title">⚔️ ANIME MUGEN ⚔️</div>
+    <div class="title">⚔️ ANIME MUGEN ⚔️</div>
     
-    <div class="select-container">
-        <div class="player-side">
-            <div class="side-title">👤 CHỌN NHÂN VẬT</div>
-            <div class="char-grid" id="playerGrid"></div>
-        </div>
-        <div class="enemy-side">
-            <div class="side-title">🤖 ĐỐI THỦ</div>
-            <div class="char-grid" id="enemyGrid"></div>
-        </div>
+    <div class="section">
+        <div class="section-label">👤 CHỌN NHÂN VẬT CỦA BẠN</div>
+        <div class="char-row" id="playerRow"></div>
     </div>
     
-    <div class="selected-info">
-        <div class="p-info">BẠN: <span id="pName">-</span></div>
-        <div class="vs">VS</div>
-        <div class="e-info">ĐỐI THỦ: <span id="eName">-</span></div>
+    <div class="section">
+        <div class="section-label enemy">🤖 CHỌN ĐỐI THỦ</div>
+        <div class="char-row" id="enemyRow"></div>
+    </div>
+    
+    <div class="vs-display">
+        <span class="p" id="pName">-</span>
+        <span class="vs">VS</span>
+        <span class="e" id="eName">-</span>
     </div>
     
     <button class="fight-btn" id="fightBtn" disabled onclick="startGame()">⚡ CHIẾN ĐẤU ⚡</button>
 </div>
 
-<!-- GAME SCREEN -->
 <div id="gameScreen">
-    <div id="gameHUD">
-        <div class="hud-panel">
+    <div id="hud">
+        <div class="hud-side">
             <div class="hud-name" id="hudP1">P1</div>
-            <div class="hp-outer"><div class="hp-inner hp-p1" id="hp1" style="width:100%"></div></div>
-            <div class="en-outer"><div class="en-inner" id="en1" style="width:0%"></div></div>
+            <div class="hp-bar"><div class="hp-fill hp-p1" id="hp1" style="width:100%"></div></div>
+            <div class="en-bar"><div class="en-fill" id="en1" style="width:0%"></div></div>
         </div>
         <div class="hud-center">
             <div class="hud-timer" id="timer">99</div>
-            <div id="round" style="color:#aaa;font-size:0.7em">Round 1</div>
+            <div id="round" style="font-size:0.7em;color:#aaa">Round 1</div>
         </div>
-        <div class="hud-panel right">
+        <div class="hud-side hud-right">
             <div class="hud-name" id="hudP2">P2</div>
-            <div class="hp-outer"><div class="hp-inner hp-p2" id="hp2" style="width:100%"></div></div>
-            <div class="en-outer"><div class="en-inner" id="en2" style="width:0%"></div></div>
+            <div class="hp-bar"><div class="hp-fill hp-p2" id="hp2" style="width:100%"></div></div>
+            <div class="en-bar"><div class="en-fill" id="en2" style="width:0%"></div></div>
         </div>
     </div>
     <canvas id="gc"></canvas>
@@ -155,135 +119,68 @@
 </div>
 
 <script>
-// COMPLETE ROSTER WITH SKINS
-const ROSTER = [
-    {
-        name:'Rick Sanchez',universe:'Rick & Morty',icon:'🧪',
-        skins:[
-            {name:'Blue Trắng',body:'#87CEEB',hair:'#B0C4DE',effect:'#4488ff'},
-            {name:'Pickle Rick',body:'#4CAF50',hair:'#2E7D32',effect:'#44ff44'},
-            {name:'Evil Rick',body:'#FF4444',hair:'#880000',effect:'#ff4444'}
-        ],
-        stats:{hp:1000,speed:6,jump:13},
-        moves:{p:{n:'Portal Punch',d:80,c:0},k:{n:'Gravity Kick',d:120,c:0},s1:{n:'PORTAL GUN',d:200,c:30},s2:{n:'LASER CANNON',d:280,c:50},ul:{n:'MULTIVERSE COLLAPSE',d:500,c:100}}
-    },
-    {
-        name:'Morty Smith',universe:'Rick & Morty',icon:'😰',
-        skins:[
-            {name:'Classic',body:'#FFD700',hair:'#8B4513',effect:'#ffaa00'},
-            {name:'Evil Morty',body:'#FF0000',hair:'#8B0000',effect:'#ff0000'},
-            {name:'Robot Morty',body:'#808080',hair:'#C0C0C0',effect:'#cccccc'}
-        ],
-        stats:{hp:900,speed:6.5,jump:14},
-        moves:{p:{n:'Nervous Punch',d:60,c:0},k:{n:'Panic Kick',d:100,c:0},s1:{n:'LASER PISTOL',d:180,c:25},s2:{n:'ARMOTHY STRIKE',d:250,c:45},ul:{n:'PURGE SUIT',d:450,c:100}}
-    },
-    {
-        name:'Naruto Uzumaki',universe:'Naruto',icon:'🍥',
-        skins:[
-            {name:'Classic',body:'#FF8C00',hair:'#FFD700',effect:'#ff8800'},
-            {name:'Sage Mode',body:'#FF4500',hair:'#FFD700',effect:'#ff4400'},
-            {name:'Hokage',body:'#FFFFFF',hair:'#FFD700',effect:'#ffffff'}
-        ],
-        stats:{hp:1100,speed:7,jump:14},
-        moves:{p:{n:'Uppercut',d:90,c:0},k:{n:'Konoha Kick',d:130,c:0},s1:{n:'RASENGAN!',d:220,c:30},s2:{n:'CLONE STORM',d:300,c:50},ul:{n:'RASENSHURIKEN',d:550,c:100}}
-    },
-    {
-        name:'Son Goku',universe:'Dragon Ball',icon:'⚡',
-        skins:[
-            {name:'Classic',body:'#FF6600',hair:'#000',effect:'#ff6600'},
-            {name:'Super Saiyan',body:'#FF6600',hair:'#FFD700',effect:'#ffdd00'},
-            {name:'Ultra Instinct',body:'#FF6600',hair:'#C0C0C0',effect:'#ffffff'}
-        ],
-        stats:{hp:1200,speed:7.5,jump:16},
-        moves:{p:{n:'Dragon Fist',d:100,c:0},k:{n:'Super Kick',d:140,c:0},s1:{n:'KAMEHAMEHA!',d:250,c:30},s2:{n:'SPIRIT BOMB',d:350,c:55},ul:{n:'ULTRA INSTINCT',d:600,c:100}}
-    },
-    {
-        name:'Saitama',universe:'One Punch Man',icon:'👊',
-        skins:[
-            {name:'Hero',body:'#FFD700',hair:'#FFD700',effect:'#ffdd00'},
-            {name:'Casual',body:'#FFFFFF',hair:'#FFD700',effect:'#ffffff'},
-            {name:'Serious',body:'#FF0000',hair:'#FFD700',effect:'#ff0000'}
-        ],
-        stats:{hp:1500,speed:8,jump:15},
-        moves:{p:{n:'Normal Punch',d:120,c:0},k:{n:'Normal Kick',d:160,c:0},s1:{n:'CONSECUTIVE',d:280,c:30},s2:{n:'SERIOUS PUNCH',d:400,c:55},ul:{n:'ONE PUNCH!',d:999,c:100}}
-    }
+// DATA
+const ROSTER=[
+    {n:'Rick Sanchez',u:'Rick & Morty',e:'🧪',sk:[{n:'Blue Trắng',b:'#87CEEB',h:'#B0C4DE',ef:'#4488ff'},{n:'Pickle',b:'#4CAF50',h:'#2E7D32',ef:'#44ff44'},{n:'Evil',b:'#FF4444',h:'#880000',ef:'#ff4444'}],st:{hp:1000,sp:6,jp:13},mv:{p:{n:'Portal Punch',d:80},k:{n:'Gravity Kick',d:120},s1:{n:'PORTAL GUN',d:200,c:30},s2:{n:'LASER CANNON',d:280,c:50},ul:{n:'MULTIVERSE',d:500,c:100}}},
+    {n:'Morty Smith',u:'Rick & Morty',e:'😰',sk:[{n:'Classic',b:'#FFD700',h:'#8B4513',ef:'#ffaa00'},{n:'Evil',b:'#FF0000',h:'#8B0000',ef:'#ff0000'},{n:'Robot',b:'#808080',h:'#C0C0C0',ef:'#cccccc'}],st:{hp:900,sp:6.5,jp:14},mv:{p:{n:'Nervous Punch',d:60},k:{n:'Panic Kick',d:100},s1:{n:'LASER PISTOL',d:180,c:25},s2:{n:'ARMOTHY',d:250,c:45},ul:{n:'PURGE SUIT',d:450,c:100}}},
+    {n:'Naruto',u:'Naruto',e:'🍥',sk:[{n:'Classic',b:'#FF8C00',h:'#FFD700',ef:'#ff8800'},{n:'Sage',b:'#FF4500',h:'#FFD700',ef:'#ff4400'},{n:'Hokage',b:'#FFFFFF',h:'#FFD700',ef:'#ffffff'}],st:{hp:1100,sp:7,jp:14},mv:{p:{n:'Uppercut',d:90},k:{n:'Konoha Kick',d:130},s1:{n:'RASENGAN',d:220,c:30},s2:{n:'CLONE STORM',d:300,c:50},ul:{n:'RASENSHURIKEN',d:550,c:100}}},
+    {n:'Goku',u:'Dragon Ball',e:'⚡',sk:[{n:'Classic',b:'#FF6600',h:'#000',ef:'#ff6600'},{n:'SSJ',b:'#FF6600',h:'#FFD700',ef:'#ffdd00'},{n:'Ultra',b:'#FF6600',h:'#CCC',ef:'#fff'}],st:{hp:1200,sp:7.5,jp:16},mv:{p:{n:'Dragon Fist',d:100},k:{n:'Super Kick',d:140},s1:{n:'KAMEHAMEHA',d:250,c:30},s2:{n:'SPIRIT BOMB',d:350,c:55},ul:{n:'ULTRA INSTINCT',d:600,c:100}}},
+    {n:'Saitama',u:'One Punch',e:'👊',sk:[{n:'Hero',b:'#FFD700',h:'#FFD700',ef:'#ffdd00'},{n:'Casual',b:'#FFF',h:'#FFD700',ef:'#fff'},{n:'Serious',b:'#F00',h:'#FFD700',ef:'#ff0000'}],st:{hp:1500,sp:8,jp:15},mv:{p:{n:'Normal Punch',d:120},k:{n:'Normal Kick',d:160},s1:{n:'CONSECUTIVE',d:280,c:30},s2:{n:'SERIOUS PUNCH',d:400,c:55},ul:{n:'ONE PUNCH!',d:999,c:100}}},
+    {n:'Tanjiro',u:'Demon Slayer',e:'⚔️',sk:[{n:'Slayer',b:'#2F4F4F',h:'#8B0000',ef:'#2F4F4F'},{n:'Hinokami',b:'#2F4F4F',h:'#FF4500',ef:'#ff4500'},{n:'Demon',b:'#4A0000',h:'#F00',ef:'#ff0000'}],st:{hp:1000,sp:6.5,jp:13},mv:{p:{n:'Water Slash',d:85},k:{n:'Whirlpool',d:115},s1:{n:'HINOKAMI',d:210,c:30},s2:{n:'SUN BREATH',d:290,c:50},ul:{n:'13TH FORM',d:520,c:100}}}
 ];
 
-let pIdx=null,pSk=0,eIdx=null,eSk=0;
-let p1,p2,gameOn=false,timer=99,round=1,pw=0,ew=0;
-let pEn=0,eEn=0,particles=[],hitFX=[],shake=0,keys={},timerID=null;
-const canvas=document.getElementById('gc'),ctx=canvas.getContext('2d');
+let pI=null,pS=0,eI=null,eS=0,p1,p2,on=false,t=99,r=1,pw=0,ew=0,pEn=0,eEn=0,pts=[],fx=[],sh=0,keys={},tid=null;
+const cv=document.getElementById('gc'),cx=cv.getContext('2d');
 
 // BUILD SELECT
-function buildSelect(){
-    const pg=document.getElementById('playerGrid'),eg=document.getElementById('enemyGrid');
+function build(){
+    const pr=document.getElementById('playerRow'),er=document.getElementById('enemyRow');
     ROSTER.forEach((c,i)=>{
-        const box=(side)=>{
-            const d=document.createElement('div');d.className='char-box';d.id=side+'-'+i;
-            d.innerHTML=`
-                <div class="char-icon">${c.icon}</div>
-                <div class="char-name">${c.name}</div>
-                <div class="char-universe">${c.universe}</div>
-                <div class="skin-selector">
-                    ${c.skins.map((s,si)=>`<div class="skin-box" data-name="${s.name}" style="background:${s.body}" id="sk-${side}-${i}-${si}"></div>`).join('')}
-                </div>`;
-            d.addEventListener('click',(e)=>{
-                if(e.target.classList.contains('skin-box')){
-                    e.stopPropagation();
-                    const si=parseInt(e.target.id.split('-')[3]);
-                    if(side==='p'&&pIdx===i)pSk=si;
-                    if(side==='e'&&eIdx===i)eSk=si;
-                    updateSelect();return;
-                }
-                if(side==='p'){pIdx=i;pSk=0}else{eIdx=i;eSk=0}
-                updateSelect();
-            });
+        const box=(s)=>{
+            const d=document.createElement('div');d.className='char-box';d.id=s+'-'+i;
+            d.innerHTML=`<div class="char-portrait">${c.e}</div><div class="char-name">${c.n}</div><div class="char-universe">${c.u}</div><div class="skin-dots">${c.sk.map((k,si)=>`<div class="skin-dot" style="background:${k.b}" id="sk-${s}-${i}-${si}"></div>`).join('')}</div>`;
+            d.onclick=e=>{if(e.target.classList.contains('skin-dot')){e.stopPropagation();const si=+e.target.id.split('-')[3];if(s==='p'&&pI===i)pS=si;if(s==='e'&&eI===i)eS=si;upd();return}if(s==='p'){pI=i;pS=0}else{eI=i;eS=0}upd()};
             return d;
         };
-        pg.appendChild(box('p'));eg.appendChild(box('e'));
+        pr.appendChild(box('p'));er.appendChild(box('e'));
     });
 }
 
-function updateSelect(){
+function upd(){
     document.querySelectorAll('.char-box').forEach(b=>b.classList.remove('selected-player','selected-enemy'));
-    if(pIdx!=null)document.getElementById('p-'+pIdx).classList.add('selected-player');
-    if(eIdx!=null)document.getElementById('e-'+eIdx).classList.add('selected-enemy');
-    
-    document.querySelectorAll('.skin-box').forEach(b=>b.classList.remove('active'));
-    if(pIdx!=null)document.getElementById('sk-p-'+pIdx+'-'+pSk).classList.add('active');
-    if(eIdx!=null)document.getElementById('sk-e-'+eIdx+'-'+eSk).classList.add('active');
-    
-    document.getElementById('pName').textContent=pIdx!=null?ROSTER[pIdx].name+' ('+ROSTER[pIdx].skins[pSk].name+')':'Chưa chọn';
-    document.getElementById('eName').textContent=eIdx!=null?ROSTER[eIdx].name+' ('+ROSTER[eIdx].skins[eSk].name+')':'Chưa chọn';
-    document.getElementById('fightBtn').disabled=(pIdx==null||eIdx==null);
+    if(pI!=null)document.getElementById('p-'+pI).classList.add('selected-player');
+    if(eI!=null)document.getElementById('e-'+eI).classList.add('selected-enemy');
+    document.querySelectorAll('.skin-dot').forEach(d=>d.classList.remove('active'));
+    if(pI!=null)document.getElementById('sk-p-'+pI+'-'+pS).classList.add('active');
+    if(eI!=null)document.getElementById('sk-e-'+eI+'-'+eS).classList.add('active');
+    document.getElementById('pName').textContent=pI!=null?ROSTER[pI].n:'-';
+    document.getElementById('eName').textContent=eI!=null?ROSTER[eI].n:'-';
+    document.getElementById('fightBtn').disabled=(pI==null||eI==null);
 }
 
-// GAME FUNCTIONS
-function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight}
+function rsz(){cv.width=window.innerWidth;cv.height=window.innerHeight}
 
 function startGame(){
-    if(pIdx==null||eIdx==null)return;
-    document.getElementById('selectScreen').style.display='none';
-    document.getElementById('gameScreen').style.display='block';
-    resizeCanvas();initRound();gameOn=true;timer=99;round=1;pw=0;ew=0;
-    updateHUD();
-    if(timerID)clearInterval(timerID);
-    timerID=setInterval(()=>{if(gameOn){timer--;document.getElementById('timer').textContent=timer;if(timer<=0)endRound('time')}},1000);
-    gameLoop();
+    if(pI==null||eI==null)return;
+    document.getElementById('selectScreen').classList.add('hidden');
+    document.getElementById('gameScreen').classList.add('active');
+    rsz();newRound();on=true;t=99;r=1;pw=0;ew=0;updHUD();
+    document.getElementById('hudP1').textContent=ROSTER[pI].n;document.getElementById('hudP2').textContent=ROSTER[eI].n;
+    document.getElementById('timer').textContent=t;document.getElementById('round').textContent='Round '+r;
+    if(tid)clearInterval(tid);
+    tid=setInterval(()=>{if(on){t--;document.getElementById('timer').textContent=t;if(t<=0)end('time')}},1000);
+    loop();
 }
 
-function initRound(){
-    const pc=ROSTER[pIdx],ec=ROSTER[eIdx];
-    const groundY=canvas.height*0.78;
+function newRound(){
+    const pc=ROSTER[pI],ec=ROSTER[eI],gy=cv.height*0.75;
     pEn=0;eEn=0;
-    p1={x:canvas.width*0.2,y:groundY-90,w:50,h:80,vx:0,vy:0,hp:pc.stats.hp,mhp:pc.stats.hp,body:pc.skins[pSk].body,hair:pc.skins[pSk].hair,effect:pc.skins[pSk].effect,sp:pc.stats.speed,jp:pc.stats.jump,face:1,atk:false,cd:0,mv:pc.moves};
-    p2={x:canvas.width*0.7,y:groundY-90,w:50,h:80,vx:0,vy:0,hp:ec.stats.hp,mhp:ec.stats.hp,body:ec.skins[eSk].body,hair:ec.skins[eSk].hair,effect:ec.skins[eSk].effect,sp:ec.stats.speed,jp:ec.stats.jump,face:-1,atk:false,cd:0,mv:ec.moves};
-    particles=[];hitFX=[];shake=0;
-    document.getElementById('hudP1').textContent=pc.name;
-    document.getElementById('hudP2').textContent=ec.name;
+    p1={x:cv.width*0.15,y:gy-100,w:55,h:90,vx:0,vy:0,hp:pc.st.hp,mhp:pc.st.hp,b:pc.sk[pS].b,h:pc.sk[pS].h,ef:pc.sk[pS].ef,sp:pc.st.sp,jp:pc.st.jp,face:1,atk:false,cd:0,mv:pc.mv};
+    p2={x:cv.width*0.75,y:gy-100,w:55,h:90,vx:0,vy:0,hp:ec.st.hp,mhp:ec.st.hp,b:ec.sk[eS].b,h:ec.sk[eS].h,ef:ec.sk[eS].ef,sp:ec.st.sp,jp:ec.st.jp,face:-1,atk:false,cd:0,mv:ec.mv};
+    pts=[];fx=[];sh=0;
 }
 
-function updateHUD(){
+function updHUD(){
     document.getElementById('hp1').style.width=Math.max(0,p1.hp/p1.mhp*100)+'%';
     document.getElementById('hp2').style.width=Math.max(0,p2.hp/p2.mhp*100)+'%';
     document.getElementById('en1').style.width=pEn+'%';
@@ -299,97 +196,71 @@ function updateHUD(){
     b.addEventListener('mouseup',e=>{keys[id]=false});
 });
 
-// SKILL SYSTEM
-function useSkill(a,d,key,isPlayer){
-    if(a.atk||a.cd>0)return;
-    const mv=a.mv[key],en=isPlayer?pEn:eEn;
-    if(en<mv.c)return;
-    const dist=Math.abs(a.x-d.x),rng=(key==='s2'||key==='ul')?250:90;
+function sk(a,d,k,pl){
+    if(a.atk||a.cd>0)return;const mv=a.mv[k],en=pl?pEn:eEn;
+    if(en<(mv.c||0))return;const dist=Math.abs(a.x-d.x),rng=(k==='s2'||k==='ul')?280:100;
     if(dist>rng||a.face!==(d.x>a.x?1:-1))return;
-    if(isPlayer)pEn-=mv.c;else eEn-=mv.c;
-    d.hp-=mv.d;d.vy=-(key==='ul'?18:10);d.vx=d.face*-(key==='ul'?10:6);
-    a.atk=true;a.cd=(key==='ul'?45:20);
-    shake=(key==='ul'?20:key==='s2'?10:4);
-    hitFX.push({x:d.x+25,y:d.y-20,text:mv.n+' -'+mv.d,life:40,color:key==='ul'?'#ff0':'#fff'});
-    const n=key==='ul'?40:key==='s2'?20:8;
-    for(let i=0;i<n;i++)particles.push({x:d.x+25,y:d.y+40,vx:(Math.random()-.5)*10,vy:(Math.random()-.5)*10,life:25+Math.random()*20,color:a.effect});
-    updateHUD();if(d.hp<=0){d.hp=0;updateHUD();endRound(isPlayer?'p1':'p2')}
+    if(pl)pEn-=mv.c||0;else eEn-=mv.c||0;
+    d.hp-=mv.d;d.vy=-(k==='ul'?20:12);d.vx=d.face*-(k==='ul'?12:7);
+    a.atk=true;a.cd=(k==='ul'?50:25);sh=(k==='ul'?25:k==='s2'?12:5);
+    fx.push({x:d.x+27,y:d.y-25,t:mv.n+' -'+mv.d,l:45,c:k==='ul'?'#ff0':'#fff'});
+    const n=k==='ul'?50:k==='s2'?25:10;
+    for(let i=0;i<n;i++)pts.push({x:d.x+27,y:d.y+45,vx:(Math.random()-.5)*12,vy:(Math.random()-.5)*12,l:30+Math.random()*25,c:a.ef});
+    updHUD();if(d.hp<=0){d.hp=0;updHUD();end(pl?'p1':'p2')}
 }
 
-function endRound(w){
-    gameOn=false;
-    if(w==='p1')pw++;else if(w==='p2')ew++;
-    if(pw>=2||ew>=2){
-        if(timerID)clearInterval(timerID);
-        setTimeout(()=>{alert((pw>=2?ROSTER[pIdx].name:ROSTER[eIdx].name)+' chiến thắng!');location.reload()},500);
-    }else{
-        setTimeout(()=>{timer=99;initRound();gameOn=true;round++;updateHUD();document.getElementById('timer').textContent=timer;document.getElementById('round').textContent='Round '+round},2000);
-    }
+function end(w){
+    on=false;if(w==='p1')pw++;else if(w==='p2')ew++;
+    if(pw>=2||ew>=2){if(tid)clearInterval(tid);setTimeout(()=>{alert((pw>=2?ROSTER[pI].n:ROSTER[eI].n)+' thắng!');location.reload()},500)}
+    else{setTimeout(()=>{t=99;newRound();on=true;r++;updHUD();document.getElementById('timer').textContent=t;document.getElementById('round').textContent='Round '+r},2000)}
 }
 
-// AI
-function updateAI(){
-    if(!gameOn||p2.atk||p2.cd>0)return;
-    const dx=p1.x-p2.x,ad=Math.abs(dx),gy=canvas.height*0.78;
-    if(ad>200)p2.vx=dx>0?p2.sp*0.5:-p2.sp*0.5;
-    else if(ad<70){
-        p2.vx=dx>0?-p2.sp*0.5:p2.sp*0.5;
-        if(Math.random()<0.03){
-            if(eEn>=100)useSkill(p2,p1,'ul',false);
-            else if(eEn>=50)useSkill(p2,p1,'s2',false);
-            else if(eEn>=30)useSkill(p2,p1,'s1',false);
-            else useSkill(p2,p1,Math.random()<0.5?'p':'k',false);
-        }
-    }else{p2.vx*=0.9;if(Math.random()<0.02){if(eEn>=30)useSkill(p2,p1,'s1',false);else useSkill(p2,p1,Math.random()<0.5?'p':'k',false)}}
-    if(p1.y<p2.y-40&&p2.y>=gy-p2.h&&Math.random()<0.03)p2.vy=-p2.jp;
+function ai(){
+    if(!on||p2.atk||p2.cd>0)return;const dx=p1.x-p2.x,ad=Math.abs(dx),gy=cv.height*0.75;
+    if(ad>220)p2.vx=dx>0?p2.sp*0.5:-p2.sp*0.5;
+    else if(ad<80){p2.vx=dx>0?-p2.sp*0.5:p2.sp*0.5;if(Math.random()<0.03){if(eEn>=100)sk(p2,p1,'ul',false);else if(eEn>=50)sk(p2,p1,'s2',false);else if(eEn>=30)sk(p2,p1,'s1',false);else sk(p2,p1,Math.random()<0.5?'p':'k',false)}}
+    else{p2.vx*=0.9;if(Math.random()<0.02){if(eEn>=30)sk(p2,p1,'s1',false);else sk(p2,p1,Math.random()<0.5?'p':'k',false)}}
+    if(p1.y<p2.y-50&&p2.y>=gy-p2.h&&Math.random()<0.03)p2.vy=-p2.jp;
 }
 
-// GAME LOOP
-function gameLoop(){
-    if(!gameOn){requestAnimationFrame(gameLoop);return}
-    const gy=canvas.height*0.78;
-    p1.vx=0;
-    if(keys['bL'])p1.vx=-p1.sp;if(keys['bR'])p1.vx=p1.sp;
-    if(keys['bU']&&p1.y>=gy-p1.h)p1.vy=-p1.jp;
-    if(keys['bP'])useSkill(p1,p2,'p',true);if(keys['bK'])useSkill(p1,p2,'k',true);
-    if(keys['bS1'])useSkill(p1,p2,'s1',true);if(keys['bS2'])useSkill(p1,p2,'s2',true);if(keys['bUL'])useSkill(p1,p2,'ul',true);
-
-    [p1,p2].forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.7;if(p.y>=gy-p.h){p.y=gy-p.h;p.vy=0}p.x=Math.max(0,Math.min(canvas.width-p.w,p.x));if(p.cd>0)p.cd--;if(p.cd===0)p.atk=false});
-    pEn=Math.min(100,pEn+0.1);eEn=Math.min(100,eEn+0.1);
-    p1.face=p1.x<p2.x?1:-1;p2.face=p2.x<p1.x?1:-1;
-    updateAI();
-    particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;return p.life>0});
-    hitFX=hitFX.filter(f=>{f.life--;return f.life>0});
-    if(shake>0)shake--;
-
-    const sx=shake?(Math.random()-.5)*shake:0,sy=shake?(Math.random()-.5)*shake:0;
-    ctx.save();ctx.translate(sx,sy);
-    // Background
-    const bg=ctx.createLinearGradient(0,0,0,canvas.height);
-    bg.addColorStop(0,'#0a0a2e');bg.addColorStop(0.78,'#1a1a4e');bg.addColorStop(1,'#333');
-    ctx.fillStyle=bg;ctx.fillRect(0,0,canvas.width,canvas.height);
+function loop(){
+    if(!on){requestAnimationFrame(loop);return}
+    const gy=cv.height*0.75;
+    p1.vx=0;if(keys['bL'])p1.vx=-p1.sp;if(keys['bR'])p1.vx=p1.sp;if(keys['bU']&&p1.y>=gy-p1.h)p1.vy=-p1.jp;
+    if(keys['bP'])sk(p1,p2,'p',true);if(keys['bK'])sk(p1,p2,'k',true);
+    if(keys['bS1'])sk(p1,p2,'s1',true);if(keys['bS2'])sk(p1,p2,'s2',true);if(keys['bUL'])sk(p1,p2,'ul',true);
+    [p1,p2].forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.8;if(p.y>=gy-p.h){p.y=gy-p.h;p.vy=0}p.x=Math.max(0,Math.min(cv.width-p.w,p.x));if(p.cd>0)p.cd--;if(p.cd===0)p.atk=false});
+    pEn=Math.min(100,pEn+0.12);eEn=Math.min(100,eEn+0.12);
+    p1.face=p1.x<p2.x?1:-1;p2.face=p2.x<p1.x?1:-1;ai();
+    pts=pts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.l--;return p.l>0});
+    fx=fx.filter(f=>{f.l--;return f.l>0});if(sh>0)sh--;
+    
+    const sx=sh?(Math.random()-.5)*sh:0,sy=sh?(Math.random()-.5)*sh:0;
+    cx.save();cx.translate(sx,sy);
+    // Background stage
+    const bg=cx.createLinearGradient(0,0,0,cv.height);
+    bg.addColorStop(0,'#1a0a2e');bg.addColorStop(0.5,'#2a1a4e');bg.addColorStop(1,'#0a0a1a');
+    cx.fillStyle=bg;cx.fillRect(0,0,cv.width,cv.height);
+    // Buildings
+    cx.fillStyle='#111';for(let i=0;i<cv.width;i+=80){cx.fillRect(i,gy-100,40,100);cx.fillStyle='#333';cx.fillRect(i+5,gy-90,10,10);cx.fillRect(i+25,gy-80,10,10);cx.fillStyle='#111'}
     // Ground
-    ctx.fillStyle='#222';ctx.fillRect(0,gy,canvas.width,canvas.height-gy);
-    ctx.strokeStyle='#555';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(canvas.width,gy);ctx.stroke();
-    // Characters
+    cx.fillStyle='#2a2a2a';cx.fillRect(0,gy,cv.width,cv.height-gy);
+    cx.strokeStyle='#555';cx.lineWidth=3;cx.beginPath();cx.moveTo(0,gy);cx.lineTo(cv.width,gy);cx.stroke();
+    
     [{p:p1},{p:p2}].forEach(({p})=>{
-        ctx.fillStyle=p.body;ctx.fillRect(p.x,p.y,p.w,p.h);
-        ctx.fillStyle=p.hair;ctx.beginPath();ctx.arc(p.x+p.w/2,p.y-15,16,0,Math.PI*2);ctx.fill();
-        ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x+p.w/2-5,p.y-19,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(p.x+p.w/2+5,p.y-19,4,0,Math.PI*2);ctx.fill();
-        ctx.fillStyle='#000';ctx.beginPath();ctx.arc(p.x+p.w/2-5+p.face*2,p.y-19,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(p.x+p.w/2+5+p.face*2,p.y-19,2,0,Math.PI*2);ctx.fill();
-        if(p.atk){ctx.fillStyle='#ff0';ctx.fillRect(p.x+p.face*p.w,p.y+p.h/2-5,25,10)}
+        cx.fillStyle=p.b;cx.fillRect(p.x,p.y,p.w,p.h);
+        cx.fillStyle=p.h;cx.beginPath();cx.arc(p.x+p.w/2,p.y-18,18,0,Math.PI*2);cx.fill();
+        cx.fillStyle='#fff';cx.beginPath();cx.arc(p.x+p.w/2-6,p.y-22,5,0,Math.PI*2);cx.fill();cx.beginPath();cx.arc(p.x+p.w/2+6,p.y-22,5,0,Math.PI*2);cx.fill();
+        cx.fillStyle='#000';cx.beginPath();cx.arc(p.x+p.w/2-6+p.face*2,p.y-22,2.5,0,Math.PI*2);cx.fill();cx.beginPath();cx.arc(p.x+p.w/2+6+p.face*2,p.y-22,2.5,0,Math.PI*2);cx.fill();
+        if(p.atk){cx.fillStyle='#ff0';cx.fillRect(p.x+p.face*p.w,p.y+p.h/2-8,30,15)}
     });
-    // Particles
-    particles.forEach(p=>{ctx.fillStyle=p.color;ctx.globalAlpha=p.life/40;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill()});ctx.globalAlpha=1;
-    // Hit FX
-    hitFX.forEach(f=>{ctx.fillStyle=f.color;ctx.globalAlpha=f.life/40;ctx.font='bold 14px Arial';ctx.fillText(f.text,f.x,f.y)});ctx.globalAlpha=1;
-    ctx.restore();
-    updateHUD();
-    requestAnimationFrame(gameLoop);
+    pts.forEach(p=>{cx.fillStyle=p.c;cx.globalAlpha=p.l/50;cx.beginPath();cx.arc(p.x,p.y,4,0,Math.PI*2);cx.fill()});cx.globalAlpha=1;
+    fx.forEach(f=>{cx.fillStyle=f.c;cx.globalAlpha=f.l/45;cx.font='bold 15px Arial';cx.fillText(f.t,f.x,f.y)});cx.globalAlpha=1;
+    cx.restore();
+    updHUD();requestAnimationFrame(loop);
 }
 
-// INIT
-buildSelect();resizeCanvas();gameLoop();
+build();rsz();loop();
 </script>
 </body>
 </html>
