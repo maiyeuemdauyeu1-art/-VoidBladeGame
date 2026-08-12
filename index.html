@@ -1,301 +1,906 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Rick & Morty Fighter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fighter Game</title>
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { background:#000; display:flex; justify-content:center; align-items:center; height:100vh; touch-action:manipulation; }
-        #game { width:400px; height:600px; position:relative; overflow:hidden; }
-        canvas { display:block; background:#1a1a3a; }
-        #ui { position:absolute; top:0; left:0; width:100%; padding:10px; color:#fff; display:flex; justify-content:space-between; font-size:12px; pointer-events:none; }
-        #ui .hp-bar { width:150px; height:15px; background:#333; border-radius:7px; overflow:hidden; }
-        #ui .hp-fill { height:100%; transition:0.3s; }
-        #ui .p1-hp { background:#0f0; } #ui .p2-hp { background:#f44; }
-        #controls { position:absolute; bottom:10px; left:0; width:100%; display:flex; justify-content:space-between; padding:0 10px; }
-        #controls button { width:70px; height:70px; border-radius:50%; border:3px solid #fff; background:rgba(255,255,255,0.2); color:#fff; font-weight:bold; font-size:14px; cursor:pointer; }
-        #controls button:active { background:rgba(255,255,255,0.5); }
-        #dpad { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
-        #dpad button { width:50px; height:50px; font-size:20px; }
+        body { margin:0; background:#000; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; }
+        #screen { width:400px; height:700px; background:#111; color:#fff; overflow:hidden; position:relative; }
+        .hidden { display:none; }
+        
+        /* Select */
+        #select { padding:20px; }
+        h2 { color:#f0f; text-align:center; }
+        .char { background:#222; padding:10px; margin:5px; cursor:pointer; border:2px solid #444; border-radius:10px; display:flex; align-items:center; gap:10px; }
+        .char.sel { border-color:#0f0; background:#030; }
+        .char span { font-size:30px; }
+        
+        /* Game */
+        #game { display:flex; flex-direction:column; height:100%; }
+        #top { display:flex; justify-content:space-between; padding:10px; background:#000; }
+        .hp { width:150px; height:20px; background:#333; border-radius:10px; overflow:hidden; }
+        .hp div { height:100%; width:100%; }
+        .p1hp { background:#0f0; } .p2hp { background:#f44; }
+        canvas { flex:1; }
+        #btns { display:flex; gap:5px; padding:10px; background:#000; }
+        #btns button { flex:1; padding:15px; border:2px solid #fff; background:#222; color:#fff; font-size:20px; border-radius:10px; cursor:pointer; }
+        #btns button:active { background:#444; }
     </style>
 </head>
 <body>
 
-<div id="game">
-    <canvas id="gc" width="400" height="600"></canvas>
-    
-    <div id="ui">
-        <div>
-            <div id="p1name">RICK</div>
-            <div class="hp-bar"><div class="hp-fill p1-hp" id="p1hp" style="width:100%"></div></div>
-        </div>
-        <div style="text-align:right">
-            <div id="p2name">ENEMY</div>
-            <div class="hp-bar"><div class="hp-fill p2-hp" id="p2hp" style="width:100%"></div></div>
-        </div>
+<div id="screen">
+    <!-- SELECT SCREEN -->
+    <div id="select">
+        <h2>CHỌN NHÂN VẬT</h2>
+        <div id="chars"></div>
+        <button onclick="start()" style="width:100%;padding:15px;background:#f0f;color:#fff;border:none;border-radius:10px;font-size:20px;margin-top:10px;" id="fightBtn" disabled>CHIẾN ĐẤU</button>
     </div>
-
-    <div id="controls">
-        <div id="dpad">
-            <div></div><button>▲</button><div></div>
-            <button>◄</button><div></div><button>►</button>
-            <div></div><button>▼</button><div></div>
+    
+    <!-- GAME SCREEN -->
+    <div id="game" class="hidden">
+        <div id="top">
+            <div><b id="n1"></b><div class="hp"><div class="p1hp" id="h1"></div></div></div>
+            <div style="text-align:right"><b id="n2"></b><div class="hp"><div class="p2hp" id="h2"></div></div></div>
         </div>
-        <button style="background:rgba(255,0,0,0.3)">👊</button>
-        <button style="background:rgba(255,255,0,0.3)">💥</button>
+        <canvas id="c"></canvas>
+        <div id="btns">
+            <button id="bl">◄</button>
+            <button id="bj">▲</button>
+            <button id="br">►</button>
+            <button id="bp">👊</button>
+            <button id="bk">💥</button>
+        </div>
     </div>
 </div>
 
 <script>
-const canvas = document.getElementById('gc');
-const ctx = canvas.getContext('2d');
+// DATA
+const chars = [
+    {n:'Rick',e:'🧪',c:'#87CEEB',h:'#B0C4DE',hp:100,s:5},
+    {n:'Morty',e:'😰',c:'#FFD700',h:'#8B4513',hp:90,s:5.5},
+    {n:'Naruto',e:'🍥',c:'#FF8C00',h:'#FFD700',hp:110,s:5.5},
+    {n:'Goku',e:'⚡',c:'#FF6600',h:'#000',hp:120,s:6}
+];
 
-// Characters
-const rick = {
-    name: 'Rick Sanchez',
-    x: 100, y: 400, w: 40, h: 80,
-    hp: 100, maxHp: 100,
-    vx: 0, vy: 0,
-    color: '#87CEEB',
-    hairColor: '#B0C4DE',
-    facing: 1,
-    attacking: false,
-    attackCooldown: 0
-};
+let pPick=null, ePick=null;
+let p1,p2, running=false;
+let keys={};
+const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
+const GND=400, GRV=0.6;
 
-const enemy = {
-    name: 'Evil Morty',
-    x: 260, y: 400, w: 35, h: 70,
-    hp: 100, maxHp: 100,
-    vx: 0, vy: 0,
-    color: '#FFD700',
-    hairColor: '#8B4513',
-    facing: -1,
-    attacking: false,
-    attackCooldown: 0
-};
-
-const GROUND = 480;
-const GRAVITY = 0.8;
-
-// Input
-const keys = {};
-
-// Control buttons
-document.querySelectorAll('#dpad button').forEach((btn, i) => {
-    const dirs = ['up', 'left', 'down', 'right'];
-    if (i === 0) { // up
-        btn.addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowUp'] = true; });
-        btn.addEventListener('touchend', e => { keys['ArrowUp'] = false; });
-    } else if (i === 1) { // left
-        btn.addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowLeft'] = true; });
-        btn.addEventListener('touchend', e => { keys['ArrowLeft'] = false; });
-    } else if (i === 2) { // down
-        btn.addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowDown'] = true; });
-        btn.addEventListener('touchend', e => { keys['ArrowDown'] = false; });
-    } else if (i === 3) { // right
-        btn.addEventListener('touchstart', e => { e.preventDefault(); keys['ArrowRight'] = true; });
-        btn.addEventListener('touchend', e => { keys['ArrowRight'] = false; });
-    }
+// BUILD SELECT
+chars.forEach((c,i)=>{
+    const d=document.createElement('div');
+    d.className='char'; d.id='c'+i;
+    d.innerHTML=`<span>${c.e}</span><div><b>${c.n}</b><br>HP:${c.hp} Speed:${c.s}</div>`;
+    d.onclick=()=>{
+        if(pPick===null){pPick=i; ePick=(i+1)%chars.length;}
+        else if(pPick===i){pPick=null;}
+        else{pPick=i;}
+        document.querySelectorAll('.char').forEach(el=>el.classList.remove('sel'));
+        if(pPick!==null)document.getElementById('c'+pPick).classList.add('sel');
+        document.getElementById('fightBtn').disabled=(pPick===null);
+    };
+    document.getElementById('chars').appendChild(d);
 });
 
-// Punch button
-const punchBtn = document.querySelectorAll('#controls button')[4];
-punchBtn.addEventListener('touchstart', e => {
-    e.preventDefault();
-    if (!rick.attacking) {
-        rick.attacking = true;
-        rick.attackCooldown = 15;
-        // Check hit
-        const dist = Math.abs(rick.x - enemy.x);
-        if (dist < 60 && rick.facing === (enemy.x > rick.x ? 1 : -1)) {
-            enemy.hp -= 10;
-            enemy.vy = -8;
-            enemy.vx = enemy.facing * -5;
-            updateHP();
-        }
-    }
-});
-
-// Special button
-const specialBtn = document.querySelectorAll('#controls button')[5];
-specialBtn.addEventListener('touchstart', e => {
-    e.preventDefault();
-    if (!rick.attacking) {
-        rick.attacking = true;
-        rick.attackCooldown = 25;
-        const dist = Math.abs(rick.x - enemy.x);
-        if (dist < 100 && rick.facing === (enemy.x > rick.x ? 1 : -1)) {
-            enemy.hp -= 25;
-            enemy.vy = -12;
-            enemy.vx = enemy.facing * -8;
-            updateHP();
-        }
-    }
-});
-
-// Keyboard controls
-document.addEventListener('keydown', e => keys[e.key] = true);
-document.addEventListener('keyup', e => keys[e.key] = false);
-
-function updateHP() {
-    document.getElementById('p1hp').style.width = Math.max(0, rick.hp/rick.maxHp*100) + '%';
-    document.getElementById('p2hp').style.width = Math.max(0, enemy.hp/enemy.maxHp*100) + '%';
-}
-
-function drawCharacter(char, isRick = true) {
-    // Body
-    ctx.fillStyle = char.color;
-    ctx.fillRect(char.x, char.y, char.w, char.h);
+// START GAME
+function start(){
+    if(pPick===null)return;
+    if(ePick===pPick)ePick=(pPick+1)%chars.length;
+    document.getElementById('select').classList.add('hidden');
+    document.getElementById('game').classList.remove('hidden');
     
-    // Head
-    ctx.fillStyle = char.hairColor;
-    ctx.beginPath();
-    ctx.arc(char.x + char.w/2, char.y - 20, 20, 0, Math.PI*2);
-    ctx.fill();
+    canvas.width=400; canvas.height=450;
     
-    // Eyes
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(char.x + char.w/2 - 6, char.y - 25, 5, 0, Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(char.x + char.w/2 + 6, char.y - 25, 5, 0, Math.PI*2);
-    ctx.fill();
+    const pc=chars[pPick], ec=chars[ePick];
+    p1={x:80,y:GND-70,w:35,h:60,vx:0,vy:0,hp:pc.hp,mhp:pc.hp,c:pc.c,h:pc.h,s:pc.s,face:1,atk:false,atkCD:0};
+    p2={x:285,y:GND-70,w:35,h:60,vx:0,vy:0,hp:ec.hp,mhp:ec.hp,c:ec.c,h:ec.h,s:ec.s,face:-1,atk:false,atkCD:0};
     
-    // Pupils
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.arc(char.x + char.w/2 - 6 + char.facing*2, char.y - 25, 2.5, 0, Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(char.x + char.w/2 + 6 + char.facing*2, char.y - 25, 2.5, 0, Math.PI*2);
-    ctx.fill();
-    
-    // Attack effect
-    if (char.attacking) {
-        ctx.fillStyle = isRick ? '#00ff88' : '#ff4444';
-        ctx.fillRect(char.x + char.facing*char.w, char.y + char.h/2 - 10, 30, 20);
-    }
-    
-    // Name tag
-    ctx.fillStyle = '#fff';
-    ctx.font = '12px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(char.name, char.x + char.w/2, char.y - 40);
-}
-
-function draw() {
-    ctx.clearRect(0, 0, 400, 600);
-    
-    // Background
-    ctx.fillStyle = '#1a1a3a';
-    ctx.fillRect(0, 0, 400, GROUND);
-    ctx.fillStyle = '#333';
-    ctx.fillRect(0, GROUND, 400, 120);
-    ctx.strokeStyle = '#555';
-    ctx.beginPath();
-    ctx.moveTo(0, GROUND);
-    ctx.lineTo(400, GROUND);
-    ctx.stroke();
-    
-    drawCharacter(enemy, false);
-    drawCharacter(rick, true);
-}
-
-function update() {
-    // Rick movement
-    rick.vx = 0;
-    if (keys['ArrowLeft']) rick.vx = -5;
-    if (keys['ArrowRight']) rick.vx = 5;
-    if (keys['ArrowUp'] && rick.y >= GROUND - rick.h) {
-        rick.vy = -15;
-    }
-    
-    // Apply physics
-    rick.x += rick.vx;
-    rick.y += rick.vy;
-    rick.vy += GRAVITY;
-    
-    if (rick.y >= GROUND - rick.h) {
-        rick.y = GROUND - rick.h;
-        rick.vy = 0;
-    }
-    
-    // Attack cooldown
-    if (rick.attackCooldown > 0) {
-        rick.attackCooldown--;
-        if (rick.attackCooldown === 0) rick.attacking = false;
-    }
-    
-    // Simple AI for enemy
-    const dist = rick.x - enemy.x;
-    if (Math.abs(dist) > 150) {
-        enemy.vx = dist > 0 ? 2 : -2;
-    } else if (Math.abs(dist) < 50) {
-        enemy.vx = dist > 0 ? -3 : 3;
-        // Random attack
-        if (Math.random() < 0.02 && !enemy.attacking) {
-            enemy.attacking = true;
-            enemy.attackCooldown = 20;
-            if (Math.abs(dist) < 70) {
-                rick.hp -= 8;
-                rick.vy = -6;
-                rick.vx = rick.facing * -4;
-                updateHP();
-            }
-        }
-    } else {
-        enemy.vx *= 0.9;
-    }
-    
-    enemy.x += enemy.vx;
-    enemy.y += enemy.vy;
-    enemy.vy += GRAVITY;
-    
-    if (enemy.y >= GROUND - enemy.h) {
-        enemy.y = GROUND - enemy.h;
-        enemy.vy = 0;
-    }
-    
-    if (enemy.attackCooldown > 0) {
-        enemy.attackCooldown--;
-        if (enemy.attackCooldown === 0) enemy.attacking = false;
-    }
-    
-    // Boundaries
-    rick.x = Math.max(0, Math.min(400 - rick.w, rick.x));
-    enemy.x = Math.max(0, Math.min(400 - enemy.w, enemy.x));
-    
-    // Facing directions
-    rick.facing = rick.x < enemy.x ? 1 : -1;
-    enemy.facing = enemy.x < rick.x ? 1 : -1;
-    
-    // Check win/lose
-    if (enemy.hp <= 0) {
-        alert('Bạn thắng! Refresh để chơi lại.');
-        enemy.hp = 100;
-        rick.hp = 100;
-    }
-    if (rick.hp <= 0) {
-        alert('Bạn thua! Refresh để chơi lại.');
-        enemy.hp = 100;
-        rick.hp = 100;
-    }
-}
-
-function gameLoop() {
-    update();
-    draw();
+    document.getElementById('n1').textContent=pc.n;
+    document.getElementById('n2').textContent=ec.n;
     updateHP();
-    requestAnimationFrame(gameLoop);
+    running=true;
+    loop();
 }
 
-// Initialize
-document.getElementById('p1name').textContent = 'RICK';
-document.getElementById('p2name').textContent = 'EVIL MORTY';
-gameLoop();
+function updateHP(){
+    document.getElementById('h1').style.width=Math.max(0,p1.hp/p1.mhp*100)+'%';
+    document.getElementById('h2').style.width=Math.max(0,p2.hp/p2.mhp*100)+'%';
+}
+
+// INPUT
+['bl','bj','br','bp','bk'].forEach(id=>{
+    const b=document.getElementById(id);
+    b.addEventListener('touchstart',e=>{e.preventDefault();keys[id]=true;});
+    b.addEventListener('touchend',e=>{keys[id]=false;});
+    b.addEventListener('mousedown',e=>{keys[id]=true;});
+    b.addEventListener('mouseup',e=>{keys[id]=false;});
+});
+
+document.addEventListener('keydown',e=>{
+    if(e.key==='a')keys['bl']=true;
+    if(e.key==='d')keys['br']=true;
+    if(e.key==='w')keys['bj']=true;
+    if(e.key==='j')keys['bp']=true;
+    if(e.key==='k')keys['bk']=true;
+});
+document.addEventListener('keyup',e=>{
+    if(e.key==='a')keys['bl']=false;
+    if(e.key==='d')keys['br']=false;
+    if(e.key==='w')keys['bj']=false;
+    if(e.key==='j')keys['bp']=false;
+    if(e.key==='k')keys['bk']=false;
+});
+
+// ATTACK
+function attack(attacker, defender, dmg){
+    if(attacker.atk)return;
+    const dist=Math.abs(attacker.x-defender.x);
+    if(dist>80 || attacker.face!==(defender.x>attacker.x?1:-1))return;
+    defender.hp-=dmg;
+    defender.vy=-8;
+    defender.vx=defender.face*-5;
+    attacker.atk=true;
+    attacker.atkCD=20;
+    updateHP();
+    if(defender.hp<=0){
+        alert((attacker===p1?chars[pPick].n:chars[ePick].n)+' thắng! Chơi lại.');
+        location.reload();
+    }
+}
+
+// GAME LOOP
+function loop(){
+    if(!running)return;
+    
+    // Player movement
+    p1.vx=0;
+    if(keys['bl'])p1.vx=-p1.s;
+    if(keys['br'])p1.vx=p1.s;
+    if(keys['bj'] && p1.y>=GND-p1.h){p1.vy=-13;}
+    if(keys['bp'] && !p1.atk){attack(p1,p2,15);}
+    if(keys['bk'] && !p1.atk){attack(p1,p2,30);}
+    
+    // Physics p1
+    p1.x+=p1.vx; p1.y+=p1.vy; p1.vy+=GRV;
+    if(p1.y>=GND-p1.h){p1.y=GND-p1.h; p1.vy=0;}
+    if(p1.x<0)p1.x=0; if(p1.x>400-p1.w)p1.x=400-p1.w;
+    if(p1.atkCD>0){p1.atkCD--;if(p1.atkCD===0)p1.atk=false;}
+    
+    // AI p2
+    const d=p1.x-p2.x;
+    if(Math.abs(d)>150)p2.vx=d>0?2:-2;
+    else if(Math.abs(d)<60){p2.vx=d>0?-3:3; if(Math.random()<0.03)attack(p2,p1,12);}
+    else p2.vx*=0.8;
+    
+    // Physics p2
+    p2.x+=p2.vx; p2.y+=p2.vy; p2.vy+=GRV;
+    if(p2.y>=GND-p2.h){p2.y=GND-p2.h; p2.vy=0;}
+    if(p2.x<0)p2.x=0; if(p2.x>400-p2.w)p2.x=400-p2.w;
+    if(p2.atkCD>0){p2.atkCD--;if(p2.atkCD===0)p2.atk=false;}
+    
+    // Facing
+    p1.face=p1.x<p2.x?1:-1;
+    p2.face=p2.x<p1.x?1:-1;
+    
+    // DRAW
+    ctx.clearRect(0,0,400,450);
+    ctx.fillStyle='#1a1a3a';ctx.fillRect(0,0,400,GND);
+    ctx.fillStyle='#333';ctx.fillRect(0,GND,400,50);
+    
+    [p1,p2].forEach(p=>{
+        ctx.fillStyle=p.c;ctx.fillRect(p.x,p.y,p.w,p.h);
+        ctx.fillStyle=p.h;ctx.beginPath();ctx.arc(p.x+p.w/2,p.y-15,16,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x+p.w/2-5,p.y-19,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(p.x+p.w/2+5,p.y-19,4,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#000';ctx.beginPath();ctx.arc(p.x+p.w/2-5+p.face*2,p.y-19,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(p.x+p.w/2+5+p.face*2,p.y-19,2,0,Math.PI*2);ctx.fill();
+        if(p.atk){ctx.fillStyle='#ff0';ctx.fillRect(p.x+p.face*p.w,p.y+p.h/2-5,25,10);}
+    });
+    
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fighter Game - Skin System</title>
+    <style>
+        body { margin:0; background:#000; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; }
+        #screen { width:400px; height:700px; background:#111; color:#fff; overflow-y:auto; position:relative; }
+        .hidden { display:none; }
+        
+        #select { padding:15px; }
+        h2 { color:#f0f; text-align:center; margin:5px 0; }
+        h3 { color:#0f0; margin:10px 0 5px; }
+        .char-card { background:#222; padding:10px; margin:5px 0; cursor:pointer; border:2px solid #444; border-radius:10px; display:flex; align-items:center; gap:10px; }
+        .char-card.sel { border-color:#0f0; background:#030; }
+        .char-card .emoji { font-size:35px; }
+        .char-card .info { flex:1; }
+        .char-card .name { font-weight:bold; font-size:16px; }
+        .char-card .detail { font-size:11px; color:#aaa; }
+        .skins { display:flex; gap:5px; margin-top:5px; }
+        .skin-dot { width:20px; height:20px; border-radius:50%; border:2px solid #555; cursor:pointer; }
+        .skin-dot.on { border-color:#fff; box-shadow:0 0 8px #fff; transform:scale(1.3); }
+        .skin-name { font-size:9px; color:#aaa; margin-top:2px; }
+        .info-box { background:#000; padding:10px; border-radius:8px; margin:10px 0; font-size:13px; }
+        .green { color:#0f0; } .red { color:#f44; }
+        button { width:100%; padding:15px; background:#f0f; color:#fff; border:none; border-radius:10px; font-size:20px; cursor:pointer; }
+        button:disabled { background:#444; color:#888; }
+        
+        #game { display:flex; flex-direction:column; height:100%; }
+        #top { display:flex; justify-content:space-between; padding:10px; background:#000; }
+        .hp { width:150px; height:20px; background:#333; border-radius:10px; overflow:hidden; }
+        .hp div { height:100%; width:100%; }
+        .p1hp { background:#0f0; } .p2hp { background:#f44; }
+        canvas { flex:1; display:block; }
+        #btns { display:flex; gap:5px; padding:10px; background:#000; }
+        #btns button { flex:1; padding:15px; border:2px solid #fff; background:#222; color:#fff; font-size:22px; border-radius:10px; cursor:pointer; }
+    </style>
+</head>
+<body>
+
+<div id="screen">
+    <!-- SELECT -->
+    <div id="select">
+        <h2>⚔️ CHỌN NHÂN VẬT</h2>
+        <h3>👤 BẠN</h3>
+        <div id="playerChars"></div>
+        <h3>🤖 ĐỐI THỦ</h3>
+        <div id="enemyChars"></div>
+        <div class="info-box">
+            <div>Bạn: <span class="green" id="ip">-</span></div>
+            <div>Skin: <span class="green" id="ips">-</span></div>
+            <div>Đối thủ: <span class="red" id="ie">-</span></div>
+            <div>Skin: <span class="red" id="ies">-</span></div>
+        </div>
+        <button id="fightBtn" disabled onclick="startGame()">⚡ CHIẾN ĐẤU</button>
+    </div>
+    
+    <!-- GAME -->
+    <div id="game" class="hidden">
+        <div id="top">
+            <div><b id="n1"></b><div class="hp"><div class="p1hp" id="h1"></div></div></div>
+            <div style="text-align:right"><b id="n2"></b><div class="hp"><div class="p2hp" id="h2"></div></div></div>
+        </div>
+        <canvas id="c"></canvas>
+        <div id="btns">
+            <button id="bl">◄</button>
+            <button id="bj">▲</button>
+            <button id="br">►</button>
+            <button id="bp">👊</button>
+            <button id="bs">💥</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== DATA WITH SKINS =====
+const chars = [
+    {
+        name:'Rick Sanchez', emoji:'🧪',
+        skins:[
+            {name:'Áo Blue', body:'#87CEEB', hair:'#B0C4DE'},
+            {name:'Pickle Rick', body:'#4CAF50', hair:'#2E7D32'},
+            {name:'Evil Rick', body:'#FF4444', hair:'#880000'}
+        ],
+        hp:100, speed:5
+    },
+    {
+        name:'Morty Smith', emoji:'😰',
+        skins:[
+            {name:'Classic', body:'#FFD700', hair:'#8B4513'},
+            {name:'Evil Morty', body:'#FF0000', hair:'#8B0000'},
+            {name:'Robot Morty', body:'#808080', hair:'#C0C0C0'}
+        ],
+        hp:90, speed:5.5
+    },
+    {
+        name:'Naruto', emoji:'🍥',
+        skins:[
+            {name:'Classic', body:'#FF8C00', hair:'#FFD700'},
+            {name:'Sage Mode', body:'#FF4500', hair:'#FFD700'},
+            {name:'Hokage', body:'#FFFFFF', hair:'#FFD700'}
+        ],
+        hp:110, speed:5.5
+    },
+    {
+        name:'Goku', emoji:'⚡',
+        skins:[
+            {name:'Classic', body:'#FF6600', hair:'#000000'},
+            {name:'Super Saiyan', body:'#FF6600', hair:'#FFD700'},
+            {name:'Ultra Instinct', body:'#FF6600', hair:'#C0C0C0'}
+        ],
+        hp:120, speed:6
+    }
+];
+
+let pIdx=null, pSkin=0, eIdx=null, eSkin=0;
+let p1,p2, running=false, keys={};
+const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
+const GND=400, GRV=0.6;
+
+// ===== BUILD SELECT =====
+function buildSelect() {
+    const pg=document.getElementById('playerChars'), eg=document.getElementById('enemyChars');
+    chars.forEach((c,i)=>{
+        const card=(type)=>{
+            const d=document.createElement('div');
+            d.className='char-card'; d.id=`${type}-${i}`;
+            d.innerHTML=`
+                <div class="emoji">${c.emoji}</div>
+                <div class="info">
+                    <div class="name">${c.name}</div>
+                    <div class="detail">HP:${c.hp} | Tốc:${c.speed}</div>
+                    <div class="skins">
+                        ${c.skins.map((s,si)=>`<div class="skin-dot" style="background:${s.body}" id="sk-${type}-${i}-${si}" title="${s.name}"></div>`).join('')}
+                    </div>
+                    <div class="skin-name" id="sn-${type}-${i}">${c.skins[0].name}</div>
+                </div>`;
+            d.addEventListener('click',(e)=>{
+                if(e.target.classList.contains('skin-dot')){
+                    e.stopPropagation();
+                    const si=parseInt(e.target.id.split('-')[3]);
+                    if(type==='p'&&pIdx===i)pSkin=si;
+                    if(type==='e'&&eIdx===i)eSkin=si;
+                    refreshUI(); return;
+                }
+                if(type==='p'){pIdx=i; pSkin=0;}
+                else{eIdx=i; eSkin=0;}
+                refreshUI();
+            });
+            return d;
+        };
+        pg.appendChild(card('p'));
+        eg.appendChild(card('e'));
+    });
+}
+
+function refreshUI() {
+    // Card highlights
+    document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('sel'));
+    if(pIdx!==null)document.getElementById(`p-${pIdx}`).classList.add('sel');
+    if(eIdx!==null)document.getElementById(`e-${eIdx}`).classList.add('sel');
+    
+    // Skin dots
+    document.querySelectorAll('.skin-dot').forEach(d=>d.classList.remove('on'));
+    if(pIdx!==null){
+        const pd=document.getElementById(`sk-p-${pIdx}-${pSkin}`);
+        if(pd)pd.classList.add('on');
+        document.getElementById(`sn-p-${pIdx}`).textContent=chars[pIdx].skins[pSkin].name;
+    }
+    if(eIdx!==null){
+        const ed=document.getElementById(`sk-e-${eIdx}-${eSkin}`);
+        if(ed)ed.classList.add('on');
+        document.getElementById(`sn-e-${eIdx}`).textContent=chars[eIdx].skins[eSkin].name;
+    }
+    
+    // Info box
+    document.getElementById('ip').textContent=pIdx!==null?chars[pIdx].name:'-';
+    document.getElementById('ips').textContent=pIdx!==null?chars[pIdx].skins[pSkin].name:'-';
+    document.getElementById('ie').textContent=eIdx!==null?chars[eIdx].name:'-';
+    document.getElementById('ies').textContent=eIdx!==null?chars[eIdx].skins[eSkin].name:'-';
+    document.getElementById('fightBtn').disabled=(pIdx===null||eIdx===null);
+}
+
+// ===== START GAME =====
+function startGame(){
+    if(pIdx===null||eIdx===null)return;
+    document.getElementById('select').classList.add('hidden');
+    document.getElementById('game').classList.remove('hidden');
+    canvas.width=400; canvas.height=450;
+    
+    const pc=chars[pIdx], ec=chars[eIdx];
+    const ps=pc.skins[pSkin], es=ec.skins[eSkin];
+    
+    p1={x:80,y:GND-70,w:35,h:60,vx:0,vy:0,hp:pc.hp,mhp:pc.hp,body:ps.body,hair:ps.hair,s:pc.speed,face:1,atk:false,cd:0};
+    p2={x:285,y:GND-70,w:35,h:60,vx:0,vy:0,hp:ec.hp,mhp:ec.hp,body:es.body,hair:es.hair,s:ec.speed,face:-1,atk:false,cd:0};
+    
+    document.getElementById('n1').textContent=pc.name;
+    document.getElementById('n2').textContent=ec.name;
+    updateHP();
+    running=true;
+    loop();
+}
+
+function updateHP(){
+    document.getElementById('h1').style.width=Math.max(0,p1.hp/p1.mhp*100)+'%';
+    document.getElementById('h2').style.width=Math.max(0,p2.hp/p2.mhp*100)+'%';
+}
+
+// ===== INPUT =====
+['bl','bj','br','bp','bs'].forEach(id=>{
+    const b=document.getElementById(id);
+    b.addEventListener('touchstart',e=>{e.preventDefault();keys[id]=true;});
+    b.addEventListener('touchend',e=>{keys[id]=false;});
+    b.addEventListener('mousedown',e=>{keys[id]=true;});
+    b.addEventListener('mouseup',e=>{keys[id]=false;});
+});
+document.addEventListener('keydown',e=>{
+    if(e.key==='a')keys['bl']=true; if(e.key==='d')keys['br']=true;
+    if(e.key==='w')keys['bj']=true; if(e.key==='j')keys['bp']=true; if(e.key==='k')keys['bs']=true;
+});
+document.addEventListener('keyup',e=>{
+    if(e.key==='a')keys['bl']=false; if(e.key==='d')keys['br']=false;
+    if(e.key==='w')keys['bj']=false; if(e.key==='j')keys['bp']=false; if(e.key==='k')keys['bs']=false;
+});
+
+// ===== ATTACK =====
+function hit(a,d,dmg){
+    if(a.atk)return;
+    const dist=Math.abs(a.x-d.x);
+    if(dist>80||a.face!==(d.x>a.x?1:-1))return;
+    d.hp-=dmg; d.vy=-8; d.vx=d.face*-5;
+    a.atk=true; a.cd=20;
+    updateHP();
+    if(d.hp<=0){
+        const winner=a===p1?chars[pIdx].name:chars[eIdx].name;
+        alert(winner+' thắng!');
+        location.reload();
+    }
+}
+
+// ===== GAME LOOP =====
+function loop(){
+    if(!running)return;
+    
+    p1.vx=0;
+    if(keys['bl'])p1.vx=-p1.s;
+    if(keys['br'])p1.vx=p1.s;
+    if(keys['bj']&&p1.y>=GND-p1.h){p1.vy=-13;}
+    if(keys['bp']&&!p1.atk)hit(p1,p2,15);
+    if(keys['bs']&&!p1.atk)hit(p1,p2,30);
+    
+    p1.x+=p1.vx; p1.y+=p1.vy; p1.vy+=GRV;
+    if(p1.y>=GND-p1.h){p1.y=GND-p1.h; p1.vy=0;}
+    p1.x=Math.max(0,Math.min(400-p1.w,p1.x));
+    if(p1.cd>0){p1.cd--;if(p1.cd===0)p1.atk=false;}
+    
+    // AI
+    const d=p1.x-p2.x;
+    if(Math.abs(d)>150)p2.vx=d>0?2:-2;
+    else if(Math.abs(d)<60){p2.vx=d>0?-3:3; if(Math.random()<0.03)hit(p2,p1,12);}
+    else p2.vx*=0.8;
+    
+    p2.x+=p2.vx; p2.y+=p2.vy; p2.vy+=GRV;
+    if(p2.y>=GND-p2.h){p2.y=GND-p2.h; p2.vy=0;}
+    p2.x=Math.max(0,Math.min(400-p2.w,p2.x));
+    if(p2.cd>0){p2.cd--;if(p2.cd===0)p2.atk=false;}
+    
+    p1.face=p1.x<p2.x?1:-1; p2.face=p2.x<p1.x?1:-1;
+    
+    // DRAW
+    ctx.clearRect(0,0,400,450);
+    ctx.fillStyle='#1a1a3a';ctx.fillRect(0,0,400,GND);
+    ctx.fillStyle='#333';ctx.fillRect(0,GND,400,50);
+    
+    [p1,p2].forEach(p=>{
+        ctx.fillStyle=p.body;ctx.fillRect(p.x,p.y,p.w,p.h);
+        ctx.fillStyle=p.hair;ctx.beginPath();ctx.arc(p.x+p.w/2,p.y-15,16,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x+p.w/2-5,p.y-19,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(p.x+p.w/2+5,p.y-19,4,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#000';ctx.beginPath();ctx.arc(p.x+p.w/2-5+p.face*2,p.y-19,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(p.x+p.w/2+5+p.face*2,p.y-19,2,0,Math.PI*2);ctx.fill();
+        if(p.atk){ctx.fillStyle='#ff0';ctx.fillRect(p.x+p.face*p.w,p.y+p.h/2-5,25,10);}
+    });
+    
+    requestAnimationFrame(loop);
+}
+
+buildSelect();
+loop();
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fighter - Skill System</title>
+    <style>
+        body { margin:0; background:#000; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; }
+        #screen { width:400px; height:750px; background:#111; color:#fff; overflow-y:auto; position:relative; }
+        .hidden { display:none; }
+        
+        #select { padding:15px; }
+        h2 { color:#f0f; text-align:center; margin:5px 0; }
+        h3 { color:#0f0; margin:10px 0 5px; }
+        .char-card { background:#222; padding:10px; margin:5px 0; cursor:pointer; border:2px solid #444; border-radius:10px; }
+        .char-card.sel { border-color:#0f0; background:#030; }
+        .char-card .top { display:flex; align-items:center; gap:10px; }
+        .char-card .emoji { font-size:35px; }
+        .char-card .info { flex:1; }
+        .char-card .name { font-weight:bold; font-size:15px; }
+        .char-card .skills { font-size:10px; color:#aaa; margin-top:3px; }
+        .skins { display:flex; gap:5px; margin-top:5px; }
+        .skin-dot { width:18px; height:18px; border-radius:50%; border:2px solid #555; cursor:pointer; }
+        .skin-dot.on { border-color:#fff; box-shadow:0 0 8px #fff; transform:scale(1.3); }
+        .skin-name { font-size:9px; color:#aaa; margin-top:2px; }
+        .info-box { background:#000; padding:10px; border-radius:8px; margin:10px 0; font-size:13px; }
+        .green { color:#0f0; } .red { color:#f44; }
+        button { width:100%; padding:15px; background:#f0f; color:#fff; border:none; border-radius:10px; font-size:20px; cursor:pointer; }
+        button:disabled { background:#444; color:#888; }
+        
+        #game { display:flex; flex-direction:column; height:100%; }
+        #top { display:flex; justify-content:space-between; padding:10px; background:#000; }
+        .hp { width:140px; height:20px; background:#333; border-radius:10px; overflow:hidden; }
+        .hp div { height:100%; width:100%; }
+        .p1hp { background:#0f0; } .p2hp { background:#f44; }
+        .en { width:140px; height:10px; background:#222; border-radius:5px; overflow:hidden; margin-top:3px; }
+        .en div { height:100%; background:#fa0; }
+        canvas { flex:1; display:block; }
+        #btns { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:5px; padding:10px; background:#000; }
+        #btns button { padding:12px 5px; border:2px solid #fff; background:#222; color:#fff; font-size:13px; border-radius:10px; cursor:pointer; }
+        #btns .atk { border-color:#f44; background:#300; }
+        #btns .sp { border-color:#fa0; background:#320; }
+    </style>
+</head>
+<body>
+
+<div id="screen">
+    <!-- SELECT -->
+    <div id="select">
+        <h2>⚔️ CHỌN NHÂN VẬT</h2>
+        <h3>👤 BẠN</h3>
+        <div id="playerChars"></div>
+        <h3>🤖 ĐỐI THỦ</h3>
+        <div id="enemyChars"></div>
+        <div class="info-box">
+            <div>Bạn: <span class="green" id="ip">-</span></div>
+            <div>Đối thủ: <span class="red" id="ie">-</span></div>
+        </div>
+        <button id="fightBtn" disabled onclick="startGame()">⚡ CHIẾN ĐẤU</button>
+    </div>
+    
+    <!-- GAME -->
+    <div id="game" class="hidden">
+        <div id="top">
+            <div>
+                <b id="n1"></b>
+                <div class="hp"><div class="p1hp" id="h1"></div></div>
+                <div class="en"><div id="e1" style="width:0%"></div></div>
+            </div>
+            <div style="text-align:right">
+                <b id="n2"></b>
+                <div class="hp"><div class="p2hp" id="h2"></div></div>
+                <div class="en"><div id="e2" style="width:0%"></div></div>
+            </div>
+        </div>
+        <canvas id="c"></canvas>
+        <div id="btns">
+            <button id="bl">◄</button>
+            <button id="bj">▲ NHẢY</button>
+            <button id="br">►</button>
+            <button class="atk" id="ba">👊 ĐẤM</button>
+            <button class="atk" id="bk">🦶 ĐÁ</button>
+            <button class="sp" id="bs1">💥 SKILL 1</button>
+            <button class="sp" id="bs2">⭐ SKILL 2</button>
+            <button class="sp" id="bu">🌀 ULTIMATE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== CHARACTERS WITH SKILLS =====
+const chars = [
+    {
+        name:'Rick Sanchez', emoji:'🧪',
+        skins:[
+            {name:'Áo Blue', body:'#87CEEB', hair:'#B0C4DE'},
+            {name:'Pickle Rick', body:'#4CAF50', hair:'#2E7D32'},
+            {name:'Evil Rick', body:'#FF4444', hair:'#880000'}
+        ],
+        hp:100, speed:5,
+        skills: {
+            punch: {name:'Portal Punch', dmg:15, cost:0},
+            kick: {name:'Gravity Kick', dmg:22, cost:0},
+            skill1: {name:'Portal Gun', dmg:35, cost:30},
+            skill2: {name:'Laser Blast', dmg:45, cost:50},
+            ultimate: {name:'MULTIVERSE COLLAPSE', dmg:70, cost:100}
+        }
+    },
+    {
+        name:'Morty Smith', emoji:'😰',
+        skins:[
+            {name:'Classic', body:'#FFD700', hair:'#8B4513'},
+            {name:'Evil Morty', body:'#FF0000', hair:'#8B0000'},
+            {name:'Robot Morty', body:'#808080', hair:'#C0C0C0'}
+        ],
+        hp:90, speed:5.5,
+        skills: {
+            punch: {name:'Nervous Punch', dmg:12, cost:0},
+            kick: {name:'Panic Kick', dmg:18, cost:0},
+            skill1: {name:'Laser Gun', dmg:30, cost:25},
+            skill2: {name:'Armothy Assist', dmg:40, cost:45},
+            ultimate: {name:'PURGE SUIT', dmg:65, cost:100}
+        }
+    },
+    {
+        name:'Naruto', emoji:'🍥',
+        skins:[
+            {name:'Classic', body:'#FF8C00', hair:'#FFD700'},
+            {name:'Sage Mode', body:'#FF4500', hair:'#FFD700'},
+            {name:'Hokage', body:'#FFFFFF', hair:'#FFD700'}
+        ],
+        hp:110, speed:5.5,
+        skills: {
+            punch: {name:'Uppercut', dmg:16, cost:0},
+            kick: {name:'Konoha Kick', dmg:24, cost:0},
+            skill1: {name:'RASENGAN', dmg:38, cost:30},
+            skill2: {name:'Shadow Clone Jutsu', dmg:48, cost:50},
+            ultimate: {name:'RASENSHURIKEN', dmg:75, cost:100}
+        }
+    },
+    {
+        name:'Goku', emoji:'⚡',
+        skins:[
+            {name:'Classic', body:'#FF6600', hair:'#000000'},
+            {name:'Super Saiyan', body:'#FF6600', hair:'#FFD700'},
+            {name:'Ultra Instinct', body:'#FF6600', hair:'#C0C0C0'}
+        ],
+        hp:120, speed:6,
+        skills: {
+            punch: {name:'Dragon Fist', dmg:18, cost:0},
+            kick: {name:'Super Kick', dmg:26, cost:0},
+            skill1: {name:'KAMEHAMEHA', dmg:40, cost:30},
+            skill2: {name:'Spirit Bomb', dmg:55, cost:55},
+            ultimate: {name:'ULTRA INSTINCT', dmg:80, cost:100}
+        }
+    }
+];
+
+let pIdx=null, pSkin=0, eIdx=null, eSkin=0;
+let p1,p2, running=false, keys={};
+let particles=[], hitTexts=[], skillNames=[];
+const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
+const GND=400, GRV=0.6;
+let playerEnergy=0, enemyEnergy=0;
+
+// ===== BUILD SELECT =====
+function buildSelect() {
+    const pg=document.getElementById('playerChars'), eg=document.getElementById('enemyChars');
+    chars.forEach((c,i)=>{
+        const card=(type)=>{
+            const d=document.createElement('div');
+            d.className='char-card'; d.id=`${type}-${i}`;
+            d.innerHTML=`
+                <div class="top">
+                    <div class="emoji">${c.emoji}</div>
+                    <div class="info">
+                        <div class="name">${c.name}</div>
+                        <div class="skills">
+                            ${c.skills.skill1.name} | ${c.skills.skill2.name} | ${c.skills.ultimate.name}
+                        </div>
+                    </div>
+                </div>
+                <div class="skins">
+                    ${c.skins.map((s,si)=>`<div class="skin-dot" style="background:${s.body}" id="sk-${type}-${i}-${si}" title="${s.name}"></div>`).join('')}
+                </div>
+                <div class="skin-name" id="sn-${type}-${i}">${c.skins[0].name}</div>`;
+            d.addEventListener('click',(e)=>{
+                if(e.target.classList.contains('skin-dot')){
+                    e.stopPropagation();
+                    const si=parseInt(e.target.id.split('-')[3]);
+                    if(type==='p'&&pIdx===i)pSkin=si;
+                    if(type==='e'&&eIdx===i)eSkin=si;
+                    refreshUI(); return;
+                }
+                if(type==='p'){pIdx=i; pSkin=0;}else{eIdx=i; eSkin=0;}
+                refreshUI();
+            });
+            return d;
+        };
+        pg.appendChild(card('p')); eg.appendChild(card('e'));
+    });
+}
+
+function refreshUI() {
+    document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('sel'));
+    if(pIdx!==null)document.getElementById(`p-${pIdx}`).classList.add('sel');
+    if(eIdx!==null)document.getElementById(`e-${eIdx}`).classList.add('sel');
+    document.querySelectorAll('.skin-dot').forEach(d=>d.classList.remove('on'));
+    if(pIdx!==null){document.getElementById(`sk-p-${pIdx}-${pSkin}`).classList.add('on');document.getElementById(`sn-p-${pIdx}`).textContent=chars[pIdx].skins[pSkin].name;}
+    if(eIdx!==null){document.getElementById(`sk-e-${eIdx}-${eSkin}`).classList.add('on');document.getElementById(`sn-e-${eIdx}`).textContent=chars[eIdx].skins[eSkin].name;}
+    document.getElementById('ip').textContent=pIdx!==null?chars[pIdx].name:'-';
+    document.getElementById('ie').textContent=eIdx!==null?chars[eIdx].name:'-';
+    document.getElementById('fightBtn').disabled=(pIdx===null||eIdx===null);
+}
+
+// ===== START GAME =====
+function startGame(){
+    if(pIdx===null||eIdx===null)return;
+    document.getElementById('select').classList.add('hidden');
+    document.getElementById('game').classList.remove('hidden');
+    canvas.width=400; canvas.height=420;
+    
+    const pc=chars[pIdx], ec=chars[eIdx];
+    const ps=pc.skins[pSkin], es=ec.skins[eSkin];
+    
+    playerEnergy=0; enemyEnergy=0;
+    p1={x:80,y:GND-70,w:35,h:60,vx:0,vy:0,hp:pc.hp,mhp:pc.hp,body:ps.body,hair:ps.hair,s:pc.speed,face:1,atk:false,cd:0};
+    p2={x:285,y:GND-70,w:35,h:60,vx:0,vy:0,hp:ec.hp,mhp:ec.hp,body:es.body,hair:es.hair,s:ec.speed,face:-1,atk:false,cd:0};
+    
+    document.getElementById('n1').textContent=pc.name;
+    document.getElementById('n2').textContent=ec.name;
+    
+    // Update button labels
+    document.getElementById('bs1').textContent=pc.skills.skill1.name.split(' ')[0];
+    document.getElementById('bs2').textContent=pc.skills.skill2.name.split(' ')[0];
+    document.getElementById('bu').textContent='🌀 ULT';
+    
+    updateHP();
+    running=true;
+    loop();
+}
+
+function updateHP(){
+    document.getElementById('h1').style.width=Math.max(0,p1.hp/p1.mhp*100)+'%';
+    document.getElementById('h2').style.width=Math.max(0,p2.hp/p2.mhp*100)+'%';
+    document.getElementById('e1').style.width=playerEnergy+'%';
+    document.getElementById('e2').style.width=enemyEnergy+'%';
+}
+
+// ===== INPUT =====
+['bl','bj','br','ba','bk','bs1','bs2','bu'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(!b)return;
+    b.addEventListener('touchstart',e=>{e.preventDefault();keys[id]=true;});
+    b.addEventListener('touchend',e=>{keys[id]=false;});
+    b.addEventListener('mousedown',e=>{keys[id]=true;});
+    b.addEventListener('mouseup',e=>{keys[id]=false;});
+});
+
+document.addEventListener('keydown',e=>{
+    if(e.key==='a')keys['bl']=true; if(e.key==='d')keys['br']=true;
+    if(e.key==='w')keys['bj']=true;
+    if(e.key==='j')keys['ba']=true; if(e.key==='k')keys['bk']=true;
+    if(e.key==='u')keys['bs1']=true; if(e.key==='i')keys['bs2']=true; if(e.key==='o')keys['bu']=true;
+});
+document.addEventListener('keyup',e=>{
+    if(e.key==='a')keys['bl']=false; if(e.key==='d')keys['br']=false;
+    if(e.key==='w')keys['bj']=false;
+    if(e.key==='j')keys['ba']=false; if(e.key==='k')keys['bk']=false;
+    if(e.key==='u')keys['bs1']=false; if(e.key==='i')keys['bs2']=false; if(e.key==='o')keys['bu']=false;
+});
+
+// ===== SKILL SYSTEM =====
+function useSkill(attacker, defender, skillKey, isPlayer){
+    if(attacker.atk)return;
+    const charData=isPlayer?chars[pIdx]:chars[eIdx];
+    const skill=charData.skills[skillKey];
+    const energy=isPlayer?playerEnergy:enemyEnergy;
+    
+    if(energy<skill.cost)return;
+    
+    const dist=Math.abs(attacker.x-defender.x);
+    const range=(skillKey==='skill2'||skillKey==='ultimate')?160:80;
+    
+    if(dist>range||attacker.face!==(defender.x>attacker.x?1:-1))return;
+    
+    // Consume energy
+    if(isPlayer){playerEnergy-=skill.cost;}else{enemyEnergy-=skill.cost;}
+    
+    defender.hp-=skill.dmg;
+    defender.vy=(skillKey==='ultimate')?-15:-8;
+    defender.vx=defender.face*-(skillKey==='ultimate'?8:5);
+    attacker.atk=true;
+    attacker.cd=(skillKey==='ultimate')?40:25;
+    
+    // Show skill name
+    skillNames.push({
+        x:defender.x, y:defender.y-30,
+        text:skill.name+'! -'+skill.dmg,
+        life:40, color:skillKey==='ultimate'?'#ff0':'#fff'
+    });
+    
+    // Particles for big skills
+    if(skillKey==='skill2'||skillKey==='ultimate'){
+        const count=skillKey==='ultimate'?30:15;
+        for(let i=0;i<count;i++){
+            particles.push({
+                x:defender.x+defender.w/2, y:defender.y+defender.h/2,
+                vx:(Math.random()-0.5)*8, vy:(Math.random()-0.5)*8,
+                life:20+Math.random()*20,
+                color:skillKey==='ultimate'?'#ff0':'#f60'
+            });
+        }
+    }
+    
+    updateHP();
+    if(defender.hp<=0){
+        const winner=isPlayer?chars[pIdx].name:chars[eIdx].name;
+        alert(winner+' thắng! Skill: '+skill.name);
+        location.reload();
+    }
+}
+
+// ===== GAME LOOP =====
+function loop(){
+    if(!running)return;
+    
+    // Player movement
+    p1.vx=0;
+    if(keys['bl'])p1.vx=-p1.s;
+    if(keys['br'])p1.vx=p1.s;
+    if(keys['bj']&&p1.y>=GND-p1.h){p1.vy=-13;}
+    
+    // Player skills
+    if(keys['ba']&&!p1.atk)useSkill(p1,p2,'punch',true);
+    if(keys['bk']&&!p1.atk)useSkill(p1,p2,'kick',true);
+    if(keys['bs1']&&!p1.atk)useSkill(p1,p2,'skill1',true);
+    if(keys['bs2']&&!p1.atk)useSkill(p1,p2,'skill2',true);
+    if(keys['bu']&&!p1.atk)useSkill(p1,p2,'ultimate',true);
+    
+    // Physics p1
+    p1.x+=p1.vx; p1.y+=p1.vy; p1.vy+=GRV;
+    if(p1.y>=GND-p1.h){p1.y=GND-p1.h; p1.vy=0;}
+    p1.x=Math.max(0,Math.min(400-p1.w,p1.x));
+    if(p1.cd>0){p1.cd--;if(p1.cd===0)p1.atk=false;}
+    playerEnergy=Math.min(100,playerEnergy+0.15);
+    
+    // AI p2
+    const d=p1.x-p2.x;
+    if(Math.abs(d)>150)p2.vx=d>0?2:-2;
+    else if(Math.abs(d)<60){
+        p2.vx=d>0?-3:3;
+        if(Math.random()<0.02){
+            if(enemyEnergy>=100)useSkill(p2,p1,'ultimate',false);
+            else if(enemyEnergy>=50)useSkill(p2,p1,'skill2',false);
+            else if(enemyEnergy>=30)useSkill(p2,p1,'skill1',false);
+            else if(Math.random()<0.5)useSkill(p2,p1,'punch',false);
+            else useSkill(p2,p1,'kick',false);
+        }
+    }else p2.vx*=0.8;
+    
+    // Physics p2
+    p2.x+=p2.vx; p2.y+=p2.vy; p2.vy+=GRV;
+    if(p2.y>=GND-p2.h){p2.y=GND-p2.h; p2.vy=0;}
+    p2.x=Math.max(0,Math.min(400-p2.w,p2.x));
+    if(p2.cd>0){p2.cd--;if(p2.cd===0)p2.atk=false;}
+    enemyEnergy=Math.min(100,enemyEnergy+0.15);
+    
+    p1.face=p1.x<p2.x?1:-1; p2.face=p2.x<p1.x?1:-1;
+    
+    // Update particles
+    particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;return p.life>0;});
+    skillNames=skillNames.filter(s=>{s.life--;return s.life>0;});
+    
+    // DRAW
+    ctx.clearRect(0,0,400,420);
+    ctx.fillStyle='#1a1a3a';ctx.fillRect(0,0,400,GND);
+    ctx.fillStyle='#333';ctx.fillRect(0,GND,400,20);
+    
+    [p1,p2].forEach(p=>{
+        ctx.fillStyle=p.body;ctx.fillRect(p.x,p.y,p.w,p.h);
+        ctx.fillStyle=p.hair;ctx.beginPath();ctx.arc(p.x+p.w/2,p.y-15,16,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x+p.w/2-5,p.y-19,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(p.x+p.w/2+5,p.y-19,4,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#000';ctx.beginPath();ctx.arc(p.x+p.w/2-5+p.face*2,p.y-19,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(p.x+p.w/2+5+p.face*2,p.y-19,2,0,Math.PI*2);ctx.fill();
+        if(p.atk){ctx.fillStyle='#ff0';ctx.fillRect(p.x+p.face*p.w,p.y+p.h/2-5,25,10);}
+    });
+    
+    // Draw particles
+    particles.forEach(p=>{ctx.fillStyle=p.color;ctx.globalAlpha=p.life/40;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();});
+    ctx.globalAlpha=1;
+    
+    // Draw skill names
+    skillNames.forEach(s=>{
+        ctx.fillStyle=s.color;ctx.globalAlpha=s.life/40;
+        ctx.font='bold 13px Arial';ctx.fillText(s.text,s.x,s.y);
+    });
+    ctx.globalAlpha=1;
+    
+    updateHP();
+    requestAnimationFrame(loop);
+}
+
+buildSelect();
+loop();
 </script>
 </body>
 </html>
