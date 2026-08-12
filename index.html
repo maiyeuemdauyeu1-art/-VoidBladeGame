@@ -8,137 +8,127 @@
         *{margin:0;padding:0;box-sizing:border-box}
         body{background:#000;font-family:Arial;overflow:hidden;touch-action:manipulation;user-select:none}
         
-        #selectScreen{width:100vw;height:100vh;background:linear-gradient(180deg,#0a0a1a,#1a0a2e,#0a0a1a);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px}
+        #selectScreen{width:100vw;height:100vh;background:linear-gradient(180deg,#0a0a1a,#1a0a2e,#0a0a1a);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px}
         #selectScreen.hidden{display:none}
-        
-        .title{font-size:2em;color:#ffcc00;font-weight:bold;text-shadow:0 0 30px #ffcc00;text-align:center}
-        
-        .section{width:95%;max-width:500px}
-        .section-label{color:#00ff88;font-weight:bold;font-size:1em;margin-bottom:5px;text-align:center}
+        .title{font-size:1.8em;color:#ffcc00;font-weight:bold;text-shadow:0 0 20px #ffcc00;text-align:center}
+        .section{width:95%}
+        .section-label{color:#00ff88;font-weight:bold;font-size:0.9em;margin-bottom:5px;text-align:center}
         .section-label.enemy{color:#ff4444}
-        
-        .char-row{display:flex;gap:6px;overflow-x:auto;padding:5px}
-        .char-box{min-width:85px;background:#1a1a35;border:3px solid #333;border-radius:10px;padding:8px;text-align:center;cursor:pointer;transition:0.3s;flex-shrink:0}
-        .char-box.sel-p{border-color:#00ff88!important;background:#003322!important;box-shadow:0 0 15px #00ff88}
-        .char-box.sel-e{border-color:#ff4444!important;background:#330000!important;box-shadow:0 0 15px #ff4444}
-        
-        .char-portrait{width:65px;height:65px;border-radius:10px;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:2.2em;background:#0003;border:2px solid #444}
-        .char-name{color:#fff;font-weight:bold;font-size:0.7em}
-        
-        .skin-area{display:flex;gap:3px;justify-content:center;margin-top:4px;flex-wrap:wrap}
-        .skin-btn{width:18px;height:18px;border-radius:4px;border:2px solid #555;cursor:pointer}
-        .skin-btn.active{border-color:#fff!important;box-shadow:0 0 6px #fff}
-        .skin-label{font-size:0.5em;color:#aaa;text-align:center;margin-top:2px}
-        
-        .vs-display{display:flex;align-items:center;gap:15px;color:#fff;font-size:1em}
-        .vs-display .p{color:#00ff88;font-weight:bold}
-        .vs-display .e{color:#ff4444;font-weight:bold}
-        .vs-display .vs{font-size:1.5em;color:#ffcc00;font-weight:bold}
-        
-        .fight-btn{padding:12px 40px;background:linear-gradient(135deg,#ff4400,#ffaa00);color:#fff;border:none;border-radius:25px;font-size:1.2em;font-weight:bold;cursor:pointer;letter-spacing:2px}
+        .char-row{display:flex;gap:5px;overflow-x:auto;padding:3px}
+        .char-box{min-width:80px;background:#1a1a35;border:3px solid #333;border-radius:10px;padding:6px;text-align:center;cursor:pointer;flex-shrink:0}
+        .char-box.sel-p{border-color:#00ff88!important;background:#003322!important}
+        .char-box.sel-e{border-color:#ff4444!important;background:#330000!important}
+        .char-icon{font-size:2em}
+        .char-name{color:#fff;font-weight:bold;font-size:0.65em}
+        .skin-row{display:flex;gap:3px;justify-content:center;margin-top:3px}
+        .skin-dot{width:14px;height:14px;border-radius:50%;border:2px solid #555;cursor:pointer}
+        .skin-dot.active{border-color:#fff!important}
+        .skill-info{color:#aaa;font-size:0.5em;margin-top:2px}
+        .vs-row{display:flex;align-items:center;gap:10px;color:#fff;font-size:0.9em}
+        .vs-row .p{color:#00ff88;font-weight:bold}.vs-row .e{color:#ff4444;font-weight:bold}
+        .vs-row .vs{font-size:1.3em;color:#ffcc00;font-weight:bold}
+        .fight-btn{padding:10px 35px;background:linear-gradient(135deg,#ff4400,#ffaa00);color:#fff;border:none;border-radius:25px;font-size:1.1em;font-weight:bold;cursor:pointer}
         .fight-btn:disabled{background:#444;color:#888}
-        .fight-btn:active:not(:disabled){transform:scale(0.95)}
         
         #gameScreen{width:100vw;height:100vh;position:relative;display:none}
         #gameScreen.active{display:block}
         
-        #hud{position:absolute;top:5px;left:5px;right:5px;display:flex;justify-content:space-between;z-index:10;pointer-events:none;background:rgba(0,0,0,0.5);border-radius:10px;padding:5px}
-        .hud-side{width:38%}
-        .hud-right{text-align:right}
+        #hud{position:absolute;top:5px;left:5px;right:5px;display:flex;justify-content:space-between;z-index:10;pointer-events:none}
+        .hud-side{width:35%}.hud-right{text-align:right}
         .hud-name{color:#fff;font-size:0.7em;font-weight:bold}
-        .hp-bar{height:15px;background:#333;border-radius:7px;overflow:hidden;margin:2px 0;border:1px solid #555}
-        .hp-fill{height:100%;transition:0.3s}
-        .hp-p1{background:linear-gradient(90deg,#00ff88,#008844)}
-        .hp-p2{background:linear-gradient(90deg,#ff4444,#880000)}
-        .en-bar{height:7px;background:#222;border-radius:3px;overflow:hidden}
-        .en-fill{height:100%;background:linear-gradient(90deg,#ffcc00,#ff8800);transition:0.3s}
-        .hud-center{text-align:center;color:#fff}
-        .hud-timer{font-size:1.5em;font-weight:bold;color:#ffcc00}
+        .hp-bar{height:14px;background:#333;border-radius:7px;overflow:hidden;margin:2px 0}
+        .hp-fill{height:100%}.hp-p1{background:#0f0}.hp-p2{background:#f44}
+        .en-bar{height:6px;background:#222;border-radius:3px;overflow:hidden}
+        .en-fill{height:100%;background:#fa0}
+        .hud-center{text-align:center;color:#fff}.hud-timer{font-size:1.3em;font-weight:bold;color:#ff0}
         
         canvas{display:block;width:100%;height:100%}
         
-        #controls{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:10}
-        #controls button{width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);background:rgba(0,0,0,0.7);color:#fff;font-size:1em;cursor:pointer;display:flex;align-items:center;justify-content:center}
-        #controls button:active{background:rgba(255,255,255,0.3)}
-        #controls .atk{border-color:#ff4444;background:rgba(255,0,0,0.3)}
-        #controls .sp{border-color:#ffcc00;background:rgba(255,170,0,0.3)}
+        #skillBar{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:10;align-items:center}
+        .skill-btn{width:50px;height:50px;border-radius:50%;border:2px solid rgba(255,255,255,0.5);background:rgba(0,0,0,0.7);color:#fff;font-size:1.3em;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative}
+        .skill-btn:active{background:rgba(255,255,255,0.3)}
+        .skill-btn .label{position:absolute;bottom:-12px;font-size:0.5em;white-space:nowrap;color:#ccc}
+        .skill-btn.ult{border-color:#ffcc00;background:rgba(255,170,0,0.4);width:60px;height:60px;font-size:1.8em}
     </style>
 </head>
 <body>
 
 <div id="selectScreen">
     <div class="title">⚔️ ANIME MUGEN ⚔️</div>
-    
-    <div class="section">
-        <div class="section-label">👤 CHỌN NHÂN VẬT</div>
-        <div class="char-row" id="playerRow"></div>
-    </div>
-    
-    <div class="section">
-        <div class="section-label enemy">🤖 ĐỐI THỦ</div>
-        <div class="char-row" id="enemyRow"></div>
-    </div>
-    
-    <div class="vs-display">
-        <span class="p" id="pName">-</span>
-        <span class="vs">VS</span>
-        <span class="e" id="eName">-</span>
-    </div>
-    
+    <div class="section"><div class="section-label">👤 CHỌN NHÂN VẬT</div><div class="char-row" id="playerRow"></div></div>
+    <div class="section"><div class="section-label enemy">🤖 ĐỐI THỦ</div><div class="char-row" id="enemyRow"></div></div>
+    <div class="vs-row"><span class="p" id="pName">-</span><span class="vs">VS</span><span class="e" id="eName">-</span></div>
     <button class="fight-btn" id="fightBtn" disabled onclick="startGame()">⚡ CHIẾN ĐẤU ⚡</button>
 </div>
 
 <div id="gameScreen">
     <div id="hud">
-        <div class="hud-side">
-            <div class="hud-name" id="hudP1">P1</div>
-            <div class="hp-bar"><div class="hp-fill hp-p1" id="hp1" style="width:100%"></div></div>
-            <div class="en-bar"><div class="en-fill" id="en1" style="width:0%"></div></div>
-        </div>
-        <div class="hud-center">
-            <div class="hud-timer" id="timer">99</div>
-            <div id="round" style="font-size:0.6em;color:#aaa">Round 1</div>
-        </div>
-        <div class="hud-side hud-right">
-            <div class="hud-name" id="hudP2">P2</div>
-            <div class="hp-bar"><div class="hp-fill hp-p2" id="hp2" style="width:100%"></div></div>
-            <div class="en-bar"><div class="en-fill" id="en2" style="width:0%"></div></div>
-        </div>
+        <div class="hud-side"><div class="hud-name" id="hudP1">P1</div><div class="hp-bar"><div class="hp-fill hp-p1" id="hp1" style="width:100%"></div></div><div class="en-bar"><div class="en-fill" id="en1" style="width:0%"></div></div></div>
+        <div class="hud-center"><div class="hud-timer" id="timer">99</div><div id="round" style="font-size:0.6em;color:#aaa">Round 1</div></div>
+        <div class="hud-side hud-right"><div class="hud-name" id="hudP2">P2</div><div class="hp-bar"><div class="hp-fill hp-p2" id="hp2" style="width:100%"></div></div><div class="en-bar"><div class="en-fill" id="en2" style="width:0%"></div></div></div>
     </div>
     <canvas id="gc"></canvas>
-    <div id="controls">
-        <button id="bL">◄</button>
-        <button id="bU">▲</button>
-        <button id="bR">►</button>
-        <button class="atk" id="bP">👊</button>
-        <button class="atk" id="bK">🦶</button>
-        <button class="sp" id="bS1">💥</button>
-        <button class="sp" id="bS2">⚡</button>
-        <button class="sp" id="bUL">🌀</button>
+    <div id="skillBar">
+        <div class="skill-btn" id="bL"><span>◄</span></div>
+        <div class="skill-btn" id="bU"><span>▲</span></div>
+        <div class="skill-btn" id="bR"><span>►</span></div>
+        <div class="skill-btn" id="bP"><span>👊</span><span class="label" id="lblP">Đấm</span></div>
+        <div class="skill-btn" id="bK"><span>🦶</span><span class="label" id="lblK">Đá</span></div>
+        <div class="skill-btn" id="bS1"><span>💥</span><span class="label" id="lblS1">Skill 1</span></div>
+        <div class="skill-btn" id="bS2"><span>⚡</span><span class="label" id="lblS2">Skill 2</span></div>
+        <div class="skill-btn ult" id="bUL"><span>🌀</span><span class="label" id="lblUL">Ultimate</span></div>
     </div>
 </div>
 
 <script>
-const R=[
-    {n:'Rick Sanchez',u:'Rick & Morty',e:'🧪',sk:[{n:'Blue Trắng',b:'#87CEEB',h:'#B0C4DE',ef:'#4488ff'},{n:'Pickle Rick',b:'#4CAF50',h:'#2E7D32',ef:'#44ff44'},{n:'Evil Rick',b:'#FF4444',h:'#880000',ef:'#ff4444'}],st:{hp:1000,sp:5,jp:12},mv:{p:{n:'Portal Punch',d:80},k:{n:'Gravity Kick',d:120},s1:{n:'PORTAL GUN',d:200,c:30},s2:{n:'LASER CANNON',d:280,c:50},ul:{n:'MULTIVERSE',d:500,c:100}}},
-    {n:'Morty Smith',u:'Rick & Morty',e:'😰',sk:[{n:'Classic',b:'#FFD700',h:'#8B4513',ef:'#ffaa00'},{n:'Evil Morty',b:'#FF0000',h:'#8B0000',ef:'#ff0000'},{n:'Robot',b:'#808080',h:'#C0C0C0',ef:'#cccccc'}],st:{hp:900,sp:5.5,jp:13},mv:{p:{n:'Nervous Punch',d:60},k:{n:'Panic Kick',d:100},s1:{n:'LASER PISTOL',d:180,c:25},s2:{n:'ARMOTHY',d:250,c:45},ul:{n:'PURGE SUIT',d:450,c:100}}},
-    {n:'Naruto',u:'Naruto',e:'🍥',sk:[{n:'Classic',b:'#FF8C00',h:'#FFD700',ef:'#ff8800'},{n:'Sage Mode',b:'#FF4500',h:'#FFD700',ef:'#ff4400'},{n:'Hokage',b:'#FFFFFF',h:'#FFD700',ef:'#ffffff'}],st:{hp:1100,sp:6,jp:13},mv:{p:{n:'Uppercut',d:90},k:{n:'Konoha Kick',d:130},s1:{n:'RASENGAN',d:220,c:30},s2:{n:'CLONE STORM',d:300,c:50},ul:{n:'RASENSHURIKEN',d:550,c:100}}},
-    {n:'Goku',u:'Dragon Ball',e:'⚡',sk:[{n:'Classic',b:'#FF6600',h:'#000',ef:'#ff6600'},{n:'Super Saiyan',b:'#FF6600',h:'#FFD700',ef:'#ffdd00'},{n:'Ultra Instinct',b:'#FF6600',h:'#CCC',ef:'#fff'}],st:{hp:1200,sp:6.5,jp:15},mv:{p:{n:'Dragon Fist',d:100},k:{n:'Super Kick',d:140},s1:{n:'KAMEHAMEHA',d:250,c:30},s2:{n:'SPIRIT BOMB',d:350,c:55},ul:{n:'ULTRA INSTINCT',d:600,c:100}}},
-    {n:'Saitama',u:'One Punch Man',e:'👊',sk:[{n:'Hero',b:'#FFD700',h:'#FFD700',ef:'#ffdd00'},{n:'Casual',b:'#FFF',h:'#FFD700',ef:'#fff'},{n:'Serious',b:'#F00',h:'#FFD700',ef:'#ff0000'}],st:{hp:1500,sp:7,jp:14},mv:{p:{n:'Normal Punch',d:120},k:{n:'Normal Kick',d:160},s1:{n:'CONSECUTIVE',d:280,c:30},s2:{n:'SERIOUS PUNCH',d:400,c:55},ul:{n:'ONE PUNCH!',d:999,c:100}}}
+const ROSTER=[
+    {
+        n:'Rick Sanchez',e:'🧪',
+        skins:[
+            {name:'Áo Blue Trắng',body:'#87CEEB',hair:'#B0C4DE',ef:'#4488ff',
+             skills:{p:{n:'Portal Punch',d:80},k:{n:'Gravity Kick',d:120},s1:{n:'PORTAL GUN',d:200,c:30},s2:{n:'LASER CANNON',d:280,c:50},ul:{n:'MULTIVERSE COLLAPSE',d:500,c:100}}},
+            {name:'Pickle Rick',body:'#4CAF50',hair:'#2E7D32',ef:'#44ff44',
+             skills:{p:{n:'Pickle Punch',d:70},k:{n:'Vine Kick',d:110},s1:{n:'ACID SPIT',d:180,c:25},s2:{n:'PICKLE RAGE',d:260,c:45},ul:{n:'CUCUMBER SMASH',d:480,c:100}}},
+            {name:'Evil Rick',body:'#FF4444',hair:'#880000',ef:'#ff4444',
+             skills:{p:{n:'Evil Punch',d:90},k:{n:'Dark Kick',d:130},s1:{n:'DARK PORTAL',d:220,c:30},s2:{n:'CHAOS BLAST',d:300,c:55},ul:{n:'ARMAGEDDON',d:550,c:100}}}
+        ],st:{hp:1000,sp:5,jp:12}
+    },
+    {
+        n:'Morty Smith',e:'😰',
+        skins:[
+            {name:'Classic Yellow',body:'#FFD700',hair:'#8B4513',ef:'#ffaa00',
+             skills:{p:{n:'Nervous Punch',d:60},k:{n:'Panic Kick',d:100},s1:{n:'LASER PISTOL',d:180,c:25},s2:{n:'ARMOTHY STRIKE',d:250,c:45},ul:{n:'PURGE SUIT',d:450,c:100}}},
+            {name:'Evil Morty',body:'#FF0000',hair:'#8B0000',ef:'#ff0000',
+             skills:{p:{n:'Evil Punch',d:70},k:{n:'Dark Kick',d:110},s1:{n:'DARK LASER',d:190,c:25},s2:{n:'SHADOW STRIKE',d:260,c:45},ul:{n:'TYRANT MORTY',d:480,c:100}}},
+            {name:'Robot Morty',body:'#808080',hair:'#C0C0C0',ef:'#cccccc',
+             skills:{p:{n:'Metal Punch',d:65},k:{n:'Rocket Kick',d:105},s1:{n:'MISSILE LAUNCH',d:170,c:25},s2:{n:'LASER BEAM',d:240,c:45},ul:{n:'MECHA DESTROYER',d:460,c:100}}}
+        ],st:{hp:900,sp:5.5,jp:13}
+    },
+    {
+        n:'Naruto',e:'🍥',
+        skins:[
+            {name:'Classic',body:'#FF8C00',hair:'#FFD700',ef:'#ff8800',
+             skills:{p:{n:'Uppercut',d:85},k:{n:'Konoha Kick',d:125},s1:{n:'RASENGAN',d:210,c:30},s2:{n:'CLONE JUTSU',d:290,c:50},ul:{n:'RASENSHURIKEN',d:530,c:100}}},
+            {name:'Sage Mode',body:'#FF4500',hair:'#FFD700',ef:'#ff4400',
+             skills:{p:{n:'Sage Punch',d:95},k:{n:'Frog Kick',d:135},s1:{n:'SAGE RASENGAN',d:230,c:30},s2:{n:'FROG STRIKE',d:310,c:50},ul:{n:'SAGE MODE: ULTIMATE',d:580,c:100}}},
+            {name:'Hokage',body:'#FFFFFF',hair:'#FFD700',ef:'#ffffff',
+             skills:{p:{n:'Hokage Punch',d:90},k:{n:'Leader Kick',d:130},s1:{n:'HOKAGE RASENGAN',d:220,c:30},s2:{n:'SHADOW CLONE',d:300,c:50},ul:{n:'HOKAGE: FINAL',d:560,c:100}}}
+        ],st:{hp:1100,sp:6,jp:13}
+    }
 ];
 
 let pI=null,pS=0,eI=null,eS=0,p1,p2,on=false,t=99,r=1,pw=0,ew=0,pEn=0,eEn=0,pts=[],fx=[],sh=0,keys={},tid=null;
 const cv=document.getElementById('gc'),cx=cv.getContext('2d');
-const GROUND_RATIO=0.8;
+const GR=0.78;
 
 function build(){
     const pr=document.getElementById('playerRow'),er=document.getElementById('enemyRow');
-    R.forEach((c,i)=>{
+    ROSTER.forEach((c,i)=>{
         const box=(s)=>{
             const d=document.createElement('div');d.className='char-box';d.id=s+'-'+i;
-            d.innerHTML=`<div class="char-portrait">${c.e}</div><div class="char-name">${c.n}</div><div class="skin-area">${c.sk.map((k,si)=>`<div class="skin-btn" style="background:${k.b}" id="sk-${s}-${i}-${si}" title="${k.n}"></div>`).join('')}</div><div class="skin-label" id="sn-${s}-${i}">${c.sk[0].n}</div>`;
+            d.innerHTML=`<div class="char-icon">${c.e}</div><div class="char-name">${c.n}</div><div class="skin-row">${c.skins.map((k,si)=>`<div class="skin-dot" style="background:${k.body}" id="sk-${s}-${i}-${si}" title="${k.name}"></div>`).join('')}</div><div class="skill-info" id="si-${s}-${i}">${c.skins[0].skills.s1.n}</div>`;
             d.onclick=e=>{
-                if(e.target.classList.contains('skin-btn')){e.stopPropagation();const si=+e.target.id.split('-')[3];if(s==='p'&&pI===i)pS=si;if(s==='e'&&eI===i)eS=si;upd();return}
+                if(e.target.classList.contains('skin-dot')){e.stopPropagation();const si=+e.target.id.split('-')[3];if(s==='p'&&pI===i)pS=si;if(s==='e'&&eI===i)eS=si;upd();return}
                 if(s==='p'){pI=i;pS=0}else{eI=i;eS=0}upd();
             };
             return d;
@@ -148,14 +138,14 @@ function build(){
 }
 
 function upd(){
-    document.querySelectorAll('.char-box').forEach(b=>{b.classList.remove('sel-p','sel-e')});
-    if(pI!=null){document.getElementById('p-'+pI).classList.add('sel-p');document.getElementById('sn-p-'+pI).textContent=R[pI].sk[pS].n}
-    if(eI!=null){document.getElementById('e-'+eI).classList.add('sel-e');document.getElementById('sn-e-'+eI).textContent=R[eI].sk[eS].n}
-    document.querySelectorAll('.skin-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.char-box').forEach(b=>b.classList.remove('sel-p','sel-e'));
+    if(pI!=null){document.getElementById('p-'+pI).classList.add('sel-p');document.getElementById('si-p-'+pI).textContent=ROSTER[pI].skins[pS].skills.s1.n}
+    if(eI!=null){document.getElementById('e-'+eI).classList.add('sel-e');document.getElementById('si-e-'+eI).textContent=ROSTER[eI].skins[eS].skills.s1.n}
+    document.querySelectorAll('.skin-dot').forEach(d=>d.classList.remove('active'));
     if(pI!=null)document.getElementById('sk-p-'+pI+'-'+pS).classList.add('active');
     if(eI!=null)document.getElementById('sk-e-'+eI+'-'+eS).classList.add('active');
-    document.getElementById('pName').textContent=pI!=null?R[pI].n+' ['+R[pI].sk[pS].n+']':'Chưa chọn';
-    document.getElementById('eName').textContent=eI!=null?R[eI].n+' ['+R[eI].sk[eS].n+']':'Chưa chọn';
+    document.getElementById('pName').textContent=pI!=null?ROSTER[pI].n+' ('+ROSTER[pI].skins[pS].name+')':'Chưa chọn';
+    document.getElementById('eName').textContent=eI!=null?ROSTER[eI].n+' ('+ROSTER[eI].skins[eS].name+')':'Chưa chọn';
     document.getElementById('fightBtn').disabled=(pI==null||eI==null);
 }
 
@@ -166,19 +156,25 @@ function startGame(){
     document.getElementById('selectScreen').classList.add('hidden');
     document.getElementById('gameScreen').classList.add('active');
     rsz();newRound();on=true;t=99;r=1;pw=0;ew=0;updHUD();
-    document.getElementById('hudP1').textContent=R[pI].n;document.getElementById('hudP2').textContent=R[eI].n;
+    document.getElementById('hudP1').textContent=ROSTER[pI].n;document.getElementById('hudP2').textContent=ROSTER[eI].n;
     document.getElementById('timer').textContent=t;document.getElementById('round').textContent='Round '+r;
+    // Update skill labels
+    const sk=ROSTER[pI].skins[pS].skills;
+    document.getElementById('lblP').textContent=sk.p.n;
+    document.getElementById('lblK').textContent=sk.k.n;
+    document.getElementById('lblS1').textContent=sk.s1.n;
+    document.getElementById('lblS2').textContent=sk.s2.n;
+    document.getElementById('lblUL').textContent=sk.ul.n;
     if(tid)clearInterval(tid);
     tid=setInterval(()=>{if(on){t--;document.getElementById('timer').textContent=t;if(t<=0)end('time')}},1000);
     loop();
 }
 
 function newRound(){
-    const pc=R[pI],ec=R[eI];
-    const gy=cv.height*GROUND_RATIO;
+    const gy=cv.height*GR;
     pEn=0;eEn=0;
-    p1={x:cv.width*0.12,y:gy-85,w:55,h:85,vx:0,vy:0,hp:pc.st.hp,mhp:pc.st.hp,b:pc.sk[pS].b,h:pc.sk[pS].h,ef:pc.sk[pS].ef,sp:pc.st.sp,jp:pc.st.jp,face:1,atk:false,cd:0,mv:pc.mv};
-    p2={x:cv.width*0.75,y:gy-85,w:55,h:85,vx:0,vy:0,hp:ec.st.hp,mhp:ec.st.hp,b:ec.sk[eS].b,h:ec.sk[eS].h,ef:ec.sk[eS].ef,sp:ec.st.sp,jp:ec.st.jp,face:-1,atk:false,cd:0,mv:ec.mv};
+    p1={x:cv.width*0.1,y:gy-85,w:55,h:85,vx:0,vy:0,hp:ROSTER[pI].st.hp,mhp:ROSTER[pI].st.hp,b:ROSTER[pI].skins[pS].body,h:ROSTER[pI].skins[pS].hair,ef:ROSTER[pI].skins[pS].ef,sp:ROSTER[pI].st.sp,jp:ROSTER[pI].st.jp,face:1,atk:false,cd:0,mv:ROSTER[pI].skins[pS].skills};
+    p2={x:cv.width*0.75,y:gy-85,w:55,h:85,vx:0,vy:0,hp:ROSTER[eI].st.hp,mhp:ROSTER[eI].st.hp,b:ROSTER[eI].skins[eS].body,h:ROSTER[eI].skins[eS].hair,ef:ROSTER[eI].skins[eS].ef,sp:ROSTER[eI].st.sp,jp:ROSTER[eI].st.jp,face:-1,atk:false,cd:0,mv:ROSTER[eI].skins[eS].skills};
     pts=[];fx=[];sh=0;
 }
 
@@ -212,12 +208,12 @@ function sk(a,d,k,pl){
 
 function end(w){
     on=false;if(w==='p1')pw++;else if(w==='p2')ew++;
-    if(pw>=2||ew>=2){if(tid)clearInterval(tid);setTimeout(()=>{alert((pw>=2?R[pI].n:R[eI].n)+' chiến thắng!');location.reload()},500)}
+    if(pw>=2||ew>=2){if(tid)clearInterval(tid);setTimeout(()=>{alert((pw>=2?ROSTER[pI].n:ROSTER[eI].n)+' thắng!');location.reload()},500)}
     else{setTimeout(()=>{t=99;newRound();on=true;r++;updHUD();document.getElementById('timer').textContent=t;document.getElementById('round').textContent='Round '+r},2000)}
 }
 
 function ai(){
-    if(!on||p2.atk||p2.cd>0)return;const dx=p1.x-p2.x,ad=Math.abs(dx),gy=cv.height*GROUND_RATIO;
+    if(!on||p2.atk||p2.cd>0)return;const dx=p1.x-p2.x,ad=Math.abs(dx),gy=cv.height*GR;
     if(ad>250)p2.vx=dx>0?p2.sp*0.4:-p2.sp*0.4;
     else if(ad<90){p2.vx=dx>0?-p2.sp*0.4:p2.sp*0.4;if(Math.random()<0.03){if(eEn>=100)sk(p2,p1,'ul',false);else if(eEn>=50)sk(p2,p1,'s2',false);else if(eEn>=30)sk(p2,p1,'s1',false);else sk(p2,p1,Math.random()<0.5?'p':'k',false)}}
     else{p2.vx*=0.9;if(Math.random()<0.02){if(eEn>=30)sk(p2,p1,'s1',false);else sk(p2,p1,Math.random()<0.5?'p':'k',false)}}
@@ -226,7 +222,7 @@ function ai(){
 
 function loop(){
     if(!on){requestAnimationFrame(loop);return}
-    const gy=cv.height*GROUND_RATIO;
+    const gy=cv.height*GR;
     p1.vx=0;if(keys['bL'])p1.vx=-p1.sp;if(keys['bR'])p1.vx=p1.sp;if(keys['bU']&&p1.y>=gy-p1.h)p1.vy=-p1.jp;
     if(keys['bP'])sk(p1,p2,'p',true);if(keys['bK'])sk(p1,p2,'k',true);
     if(keys['bS1'])sk(p1,p2,'s1',true);if(keys['bS2'])sk(p1,p2,'s2',true);if(keys['bUL'])sk(p1,p2,'ul',true);
@@ -241,15 +237,14 @@ function loop(){
     const bg=cx.createLinearGradient(0,0,0,cv.height);
     bg.addColorStop(0,'#0a0a2e');bg.addColorStop(0.7,'#1a1a4e');bg.addColorStop(1,'#0a0a1a');
     cx.fillStyle=bg;cx.fillRect(0,0,cv.width,cv.height);
-    for(let i=0;i<cv.width;i+=100){cx.fillStyle='#111';cx.fillRect(i,gy-120,50,120);cx.fillStyle='#ff0';cx.fillRect(i+10,gy-110,10,10);cx.fillRect(i+30,gy-100,10,10)}
     cx.fillStyle='#2a2a2a';cx.fillRect(0,gy,cv.width,cv.height-gy);
-    cx.strokeStyle='#ff0';cx.lineWidth=2;cx.beginPath();cx.moveTo(0,gy);cx.lineTo(cv.width,gy);cx.stroke();
+    cx.strokeStyle='#ff0';cx.lineWidth=3;cx.beginPath();cx.moveTo(0,gy);cx.lineTo(cv.width,gy);cx.stroke();
     
     [{p:p1},{p:p2}].forEach(({p})=>{
         cx.fillStyle=p.b;cx.fillRect(p.x,p.y,p.w,p.h);
         cx.fillStyle=p.h;cx.beginPath();cx.arc(p.x+p.w/2,p.y-18,18,0,Math.PI*2);cx.fill();
         cx.fillStyle='#fff';cx.beginPath();cx.arc(p.x+p.w/2-6,p.y-22,5,0,Math.PI*2);cx.fill();cx.beginPath();cx.arc(p.x+p.w/2+6,p.y-22,5,0,Math.PI*2);cx.fill();
-        cx.fillStyle='#000';cx.beginPath();cx.arc(p.x+p.w/2-6+p.face*2,p.y-22,2.5,0,Math.PI*2);cx.fill();cx.beginPath();ctx.arc(p.x+p.w/2+6+p.face*2,p.y-22,2.5,0,Math.PI*2);cx.fill();
+        cx.fillStyle='#000';cx.beginPath();cx.arc(p.x+p.w/2-6+p.face*2,p.y-22,2.5,0,Math.PI*2);cx.fill();cx.beginPath();cx.arc(p.x+p.w/2+6+p.face*2,p.y-22,2.5,0,Math.PI*2);cx.fill();
         if(p.atk){cx.fillStyle='#ff0';cx.fillRect(p.x+p.face*p.w,p.y+p.h/2-10,35,18)}
     });
     pts.forEach(p=>{cx.fillStyle=p.c;cx.globalAlpha=p.l/50;cx.beginPath();cx.arc(p.x,p.y,4,0,Math.PI*2);cx.fill()});cx.globalAlpha=1;
