@@ -1,147 +1,961 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rick & Morty Multiverse Battle</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Anime Fighter Mobile - Rick & Morty</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            font-family: 'Arial', sans-serif;
+            touch-action: manipulation;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-wrapper {
+            width: 100%;
+            max-width: 450px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Selection Screen */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .screen.hidden {
+            display: none;
+        }
+
+        .selection-screen {
+            background: linear-gradient(180deg, rgba(15,12,41,0.98) 0%, rgba(48,43,99,0.98) 100%);
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .title {
+            font-size: 2em;
+            color: #e94560;
+            text-align: center;
+            margin: 15px 0;
+            text-shadow: 0 0 20px rgba(233,69,96,0.5);
+            font-weight: bold;
+        }
+
+        .subtitle {
+            color: #aaa;
+            text-align: center;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .character-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            padding: 0 10px;
+            margin-bottom: 15px;
+        }
+
+        .character-card {
+            background: linear-gradient(145deg, #1a1a2e, #16213e);
+            border: 2px solid #0f3460;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .character-card:active {
+            transform: scale(0.98);
+        }
+
+        .character-card.selected {
+            border-color: #00ff88;
+            background: linear-gradient(145deg, #0a3d2e, #0d5e3a);
+            box-shadow: 0 0 20px rgba(0,255,136,0.4);
+        }
+
+        .char-emoji {
+            font-size: 2.5em;
+            width: 50px;
+            text-align: center;
+        }
+
+        .char-info {
+            flex: 1;
+            color: white;
+        }
+
+        .char-name {
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        .char-universe {
+            font-size: 0.75em;
+            color: #888;
+        }
+
+        .char-stats {
+            font-size: 0.7em;
+            color: #aaa;
+            margin-top: 3px;
+        }
+
+        .skin-tabs {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .skin-tab {
+            padding: 5px 10px;
+            border: 1px solid #555;
+            background: #222;
+            color: #ccc;
+            border-radius: 15px;
+            font-size: 0.7em;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .skin-tab:active {
+            background: #444;
+        }
+
+        .skin-tab.active {
+            border-color: #00ff88;
+            background: #0a3d2e;
+            color: #00ff88;
+        }
+
+        .selected-info {
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            padding: 10px;
+            width: 90%;
+            margin: 10px 0;
+            color: white;
+            text-align: center;
+        }
+
+        .fight-btn {
+            background: linear-gradient(135deg, #e94560, #c23152);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3em;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 20px rgba(233,69,96,0.4);
+            transition: all 0.3s;
+            margin: 10px 0;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        .fight-btn:active {
+            transform: scale(0.95);
+        }
+
+        .fight-btn:disabled {
+            background: #555;
+            box-shadow: none;
+            color: #999;
+        }
+
+        /* Game Screen */
+        .game-screen {
+            background: #000;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            image-rendering: auto;
+        }
+
+        /* HUD */
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            color: white;
+            font-size: 0.85em;
+            background: rgba(0,0,0,0.7);
+            gap: 10px;
+        }
+
+        .hud-player, .hud-enemy {
+            flex: 1;
+        }
+
+        .hud-name {
+            font-weight: bold;
+            font-size: 0.8em;
+            margin-bottom: 3px;
+        }
+
+        .health-outer {
+            height: 18px;
+            background: #333;
+            border-radius: 9px;
+            overflow: hidden;
+            border: 1px solid #555;
+            margin-bottom: 3px;
+        }
+
+        .health-inner {
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.3s;
+        }
+
+        .health-inner.player {
+            background: linear-gradient(90deg, #00ff88, #00cc6a);
+        }
+
+        .health-inner.enemy {
+            background: linear-gradient(90deg, #e94560, #c23152);
+        }
+
+        .energy-outer {
+            height: 10px;
+            background: #222;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #444;
+        }
+
+        .energy-inner {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ff8c00);
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+
+        .hud-center {
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .hud-timer {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .hud-round {
+            font-size: 0.7em;
+            color: #aaa;
+        }
+
+        /* Touch Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(0,0,0,0.8);
+        }
+
+        .ctrl-btn {
+            padding: 12px 8px;
+            border: 2px solid #555;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .ctrl-btn:active {
+            background: rgba(255,255,255,0.3);
+            transform: scale(0.95);
+            border-color: #fff;
+        }
+
+        .ctrl-btn.special {
+            background: rgba(233,69,96,0.3);
+            border-color: #e94560;
+            grid-column: span 2;
+        }
+
+        .ctrl-btn.ultimate {
+            background: rgba(255,215,0,0.3);
+            border-color: #ffd700;
+            grid-column: span 1;
+            animation: glow 1.5s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,215,0,0.3); }
+            50% { box-shadow: 0 0 20px rgba(255,215,0,0.6); }
+        }
+
+        .dpad {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            gap: 3px;
+            padding: 5px;
+        }
+
+        .dpad-btn {
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9em;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+        }
+
+        .dpad-btn:active {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .dpad-center {
+            background: transparent;
+            border: none;
+        }
+
+        /* Win Screen */
+        .win-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            color: white;
+        }
+
+        .win-overlay.hidden {
+            display: none;
+        }
+
+        .win-text {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .win-text.win {
+            color: #00ff88;
+            text-shadow: 0 0 30px rgba(0,255,136,0.5);
+        }
+
+        .win-text.lose {
+            color: #e94560;
+            text-shadow: 0 0 30px rgba(233,69,96,0.5);
+        }
+
+        .win-detail {
+            color: #ccc;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .rematch-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .rematch-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
 </head>
-
 <body>
+    <div class="game-wrapper" id="gameWrapper">
+        <!-- SELECTION SCREEN -->
+        <div class="screen selection-screen" id="selectionScreen">
+            <div class="title">⚔️ ANIME FIGHTER ⚔️</div>
+            <div class="subtitle">Rick & Morty × Anime</div>
+            
+            <div class="character-list" id="characterList"></div>
+            
+            <div class="selected-info">
+                <div>👤 <strong>Bạn:</strong> <span id="playerPick">Chưa chọn</span></div>
+                <div>🤖 <strong>Đối thủ:</strong> <span id="enemyPick">Ngẫu nhiên</span></div>
+            </div>
+            
+            <button class="fight-btn" id="fightBtn" disabled>⚡ CHIẾN ĐẤU! ⚡</button>
+        </div>
 
-<h1>🌀 Rick & Morty: Multiverse Battle</h1>
+        <!-- GAME SCREEN -->
+        <div class="screen game-screen hidden" id="gameScreen">
+            <!-- HUD -->
+            <div class="hud">
+                <div class="hud-player">
+                    <div class="hud-name" id="pName">Player</div>
+                    <div class="health-outer">
+                        <div class="health-inner player" id="pHealth" style="width:100%"></div>
+                    </div>
+                    <div class="energy-outer">
+                        <div class="energy-inner" id="pEnergy" style="width:0%"></div>
+                    </div>
+                </div>
+                <div class="hud-center">
+                    <div class="hud-timer" id="hudTimer">60</div>
+                    <div class="hud-round" id="hudRound">Round 1</div>
+                </div>
+                <div class="hud-enemy">
+                    <div class="hud-name" id="eName" style="text-align:right">Enemy</div>
+                    <div class="health-outer">
+                        <div class="health-inner enemy" id="eHealth" style="width:100%"></div>
+                    </div>
+                    <div class="energy-outer">
+                        <div class="energy-inner" id="eEnergy" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
 
-<div id="select">
+            <!-- Canvas -->
+            <canvas id="gameCanvas"></canvas>
 
-<h2>Chọn nhân vật</h2>
+            <!-- Controls -->
+            <div class="controls">
+                <div class="dpad">
+                    <div></div>
+                    <button class="dpad-btn" id="btnUp">▲</button>
+                    <div></div>
+                    <button class="dpad-btn" id="btnLeft">◄</button>
+                    <div class="dpad-center"></div>
+                    <button class="dpad-btn" id="btnRight">►</button>
+                    <div></div>
+                    <button class="dpad-btn" id="btnDown">▼</button>
+                    <div></div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px;">
+                    <button class="ctrl-btn" id="btnPunch">👊 Đấm</button>
+                    <button class="ctrl-btn" id="btnKick">🦶 Đá</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px;">
+                    <button class="ctrl-btn special" id="btnSpecial">💥 Chiêu</button>
+                    <button class="ctrl-btn ultimate" id="btnUltimate">⭐ TUYỆT CHIÊU</button>
+                </div>
+            </div>
+        </div>
 
-<button onclick="pickPlayer('rick')">
-🧪 Rick
-</button>
+        <!-- WIN SCREEN -->
+        <div class="win-overlay hidden" id="winScreen">
+            <div class="win-text" id="winText"></div>
+            <div class="win-detail" id="winDetail"></div>
+            <button class="rematch-btn" onclick="rematch()">🔄 ĐẤU LẠI</button>
+            <button class="rematch-btn" onclick="backToSelect()">👥 CHỌN LẠI</button>
+        </div>
+    </div>
 
-<button onclick="pickPlayer('morty')">
-👦 Morty
-</button>
+    <script>
+        // ==================== CHARACTER DATABASE ====================
+        const characters = [
+            {
+                id: 'rick',
+                name: 'Rick Sanchez',
+                universe: 'Rick & Morty',
+                emoji: '🧪',
+                skins: [
+                    { name: 'Áo Blue Trắng', bodyColor: '#87CEEB', hairColor: '#B0C4DE', desc: 'Rick cổ điển' },
+                    { name: 'Pickle Rick', bodyColor: '#4CAF50', hairColor: '#2E7D32', desc: 'Dưa chuột!' },
+                    { name: 'Evil Rick', bodyColor: '#FF4444', hairColor: '#880000', desc: 'Rick ác' }
+                ],
+                stats: { hp: 100, speed: 3, jump: 10, atkMult: 1.1 },
+                moves: { punch: 'Portal Punch', kick: 'Gravity Kick', special: 'Portal Gun', ultimate: 'MULTIVERSE COLLAPSE' }
+            },
+            {
+                id: 'morty',
+                name: 'Morty Smith',
+                universe: 'Rick & Morty',
+                emoji: '😰',
+                skins: [
+                    { name: 'Classic Yellow', bodyColor: '#FFD700', hairColor: '#8B4513', desc: 'Morty thường' },
+                    { name: 'Evil Morty', bodyColor: '#FF0000', hairColor: '#8B0000', desc: 'President Morty' },
+                    { name: 'Mecha Morty', bodyColor: '#808080', hairColor: '#C0C0C0', desc: 'Robot Morty' }
+                ],
+                stats: { hp: 90, speed: 3.5, jump: 11, atkMult: 0.9 },
+                moves: { punch: 'Nervous Punch', kick: 'Panic Kick', special: 'Laser Gun', ultimate: 'PURGE SUIT' }
+            },
+            {
+                id: 'naruto',
+                name: 'Naruto Uzumaki',
+                universe: 'Naruto',
+                emoji: '🍥',
+                skins: [
+                    { name: 'Classic Orange', bodyColor: '#FF8C00', hairColor: '#FFD700', desc: 'Ninja làng Lá' },
+                    { name: 'Sage Mode', bodyColor: '#FF4500', hairColor: '#FFD700', desc: 'Tiên nhân' },
+                    { name: 'Hokage', bodyColor: '#FFFFFF', hairColor: '#FFD700', desc: 'Đệ thất' }
+                ],
+                stats: { hp: 110, speed: 3.5, jump: 11, atkMult: 1.1 },
+                moves: { punch: 'Uppercut', kick: 'Konoha Kick', special: 'RASENGAN!', ultimate: 'RASENSHURIKEN' }
+            },
+            {
+                id: 'goku',
+                name: 'Son Goku',
+                universe: 'Dragon Ball',
+                emoji: '⚡',
+                skins: [
+                    { name: 'Gi Orange', bodyColor: '#FF6600', hairColor: '#000000', desc: 'Goku thường' },
+                    { name: 'Super Saiyan', bodyColor: '#FF6600', hairColor: '#FFD700', desc: 'Siêu Xayda' },
+                    { name: 'Ultra Instinct', bodyColor: '#FF6600', hairColor: '#C0C0C0', desc: 'Vô cực' }
+                ],
+                stats: { hp: 120, speed: 4, jump: 13, atkMult: 1.2 },
+                moves: { punch: 'Dragon Fist', kick: 'Super Kick', special: 'KAMEHAMEHA!', ultimate: 'ULTRA INSTINCT' }
+            },
+            {
+                id: 'tanjiro',
+                name: 'Tanjiro Kamado',
+                universe: 'Demon Slayer',
+                emoji: '⚔️',
+                skins: [
+                    { name: 'Demon Slayer', bodyColor: '#2F4F4F', hairColor: '#8B0000', desc: 'Kiếm sĩ diệt quỷ' },
+                    { name: 'Hinokami', bodyColor: '#2F4F4F', hairColor: '#FF4500', desc: 'Vũ điệu lửa' },
+                    { name: 'Final Form', bodyColor: '#000000', hairColor: '#FF0000', desc: 'Hình thái cuối' }
+                ],
+                stats: { hp: 100, speed: 3.5, jump: 10, atkMult: 1.0 },
+                moves: { punch: 'Water Slash', kick: 'Whirlpool', special: 'HINOKAMI KAGURA', ultimate: 'SUN BREATHING' }
+            },
+            {
+                id: 'levi',
+                name: 'Levi Ackerman',
+                universe: 'Attack on Titan',
+                emoji: '🗡️',
+                skins: [
+                    { name: 'Survey Corps', bodyColor: '#8B7355', hairColor: '#000000', desc: 'Đội trinh sát' },
+                    { name: 'Cleaning Levi', bodyColor: '#FFFFFF', hairColor: '#000000', desc: 'Levi lau dọn' },
+                    { name: 'Wounded', bodyColor: '#8B7355', hairColor: '#000000', desc: 'Levi bị thương' }
+                ],
+                stats: { hp: 95, speed: 4.5, jump: 14, atkMult: 1.15 },
+                moves: { punch: 'Spinning Slash', kick: '3D Strike', special: 'BEYBLADE', ultimate: 'HUMANITY\'S STRONGEST' }
+            }
+        ];
 
-<h2>Chọn Skin</h2>
-
-<select id="skin">
-<option value="normal">Skin thường</option>
-<option value="battle">Skin chiến đấu</option>
-<option value="prime">Skin thức tỉnh</option>
-</select>
-
-</div>
-
-
-<div id="arena">
-
-<div class="team">
-
-<h2 id="playerName">Rick</h2>
-
-<img id="playerImg" src="assets/rick/normal.png">
-
-<div class="bar">
-<div id="hp"></div>
-</div>
-
-<div class="rage">
-<div id="rage"></div>
-</div>
-
-</div>
-
-
-
-<h1>VS</h1>
-
-
-
-<div class="enemy">
-
-<h2>🔥 Gojo</h2>
-
-<img src="assets/enemies/gojo.png">
-
-<div class="bar">
-<div id="enemyHp"></div>
-</div>
-
-</div>
-
-
-</div>
-
-
-
-<div id="buttons">
-
-<button onclick="attack()">⚔️</button>
-
-<button onclick="skill1()">🔵</button>
-
-<button onclick="skill2()">🟣</button>
-
-<button onclick="ultimate()">🔥</button>
-
-</div>
-
-
-<h2>
-🟡 Vàng: <span id="gold">0</span>
-</h2>
-
-
-<script src="game.js"></script>
-
-</body>
-</html>
-<button onclick="extractDNA()">🧬</button>
-
-<button onclick="useDNA()">🌀</button>
-<div id="difficulty">
-
-<h2>Độ khó</h2>
-
-<button onclick="setDifficulty('easy')">
-🟢 Dễ
-</button>
-
-<button onclick="setDifficulty('normal')">
-🟡 Trung bình
-</button>
-
-<button onclick="setDifficulty('hard')">
-🔴 Khó
-</button>
-
-</div>
-
-
-<div id="stage">
-
-<h2>Màn: <span id="stageNumber">1</span></h2>
-
-<h2>Boss:
-<span id="bossName">Gojo</span>
-</h2>
-
-</div>
-<div id="skinMenu">
-
-<h2>👕 Skin</h2>
-
-<button onclick="changeSkin('normal')">
-Thường
-</button>
-
-<button onclick="changeSkin('battle')">
-Chiến đấu
-</button>
-
-<button onclick="changeSkin('prime')">
-🔥 Thức tỉnh
-</button>
-
-</div>
+        // ==================== GAME STATE ====================
+        let selectedCharacter = null;
+        let selectedSkin = 0;
+        let enemyCharacter = null;
+        let enemySkin = 0;
+        
+        // Players in game
+        let player = { x: 150, y: 300, width: 40, height: 70, vx: 0, vy: 0, hp: 100, maxHp: 100, energy: 0, maxEnergy: 100, 
+                       facing: 1, onGround: true, attacking: false, attackTimer: 0, attackType: '', invincible: 0,
+                       comboCount: 0, lastHitTime: 0 };
+        let enemy = { x: 550, y: 300, width: 40, height: 70, vx: 0, vy: 0, hp: 100, maxHp: 100, energy: 0, maxEnergy: 100,
+                      facing: -1, onGround: true, attacking: false, attackTimer: 0, attackType: '', invincible: 0,
+                      aiTimer: 0, aiAction: 'idle', aiCooldown: 0 };
+        
+        let gameTimer = 60;
+        let roundNumber = 1;
+        let playerWins = 0;
+        let enemyWins = 0;
+        let gameActive = false;
+        let particles = [];
+        let screenShake = 0;
+        let hitEffects = [];
+        
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const GROUND_Y = 360;
+        const GRAVITY = 0.6;
+        
+        // ==================== INITIALIZATION ====================
+        function initSelectionScreen() {
+            const list = document.getElementById('characterList');
+            list.innerHTML = '';
+            
+            characters.forEach((char, index) => {
+                const card = document.createElement('div');
+                card.className = 'character-card';
+                card.innerHTML = `
+                    <div class="char-emoji">${char.emoji}</div>
+                    <div class="char-info">
+                        <div class="char-name">${char.name}</div>
+                        <div class="char-universe">${char.universe}</div>
+                        <div class="char-stats">HP:${char.stats.hp} | Tốc:${char.stats.speed} | Sức:${(char.stats.atkMult*100).toFixed(0)}%</div>
+                        <div class="skin-tabs">
+                            ${char.skins.map((s, si) => 
+                                `<span class="skin-tab" data-char="${index}" data-skin="${si}">${s.name}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                card.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('skin-tab')) {
+                        const si = parseInt(e.target.dataset.skin);
+                        selectSkin(index, si);
+                        return;
+                    }
+                    selectCharacter(index);
+                });
+                
+                list.appendChild(card);
+            });
+            
+            // Random enemy
+            pickRandomEnemy();
+        }
+        
+        function selectCharacter(index) {
+            selectedCharacter = index;
+            selectedSkin = 0;
+            document.getElementById('playerPick').textContent = characters[index].name;
+            document.getElementById('fightBtn').disabled = false;
+            
+            // Update UI
+            document.querySelectorAll('.character-card').forEach((card, i) => {
+                card.classList.toggle('selected', i === index);
+            });
+            
+            updateSkinTabs(index);
+            pickRandomEnemy();
+        }
+        
+        function selectSkin(charIndex, skinIndex) {
+            if (selectedCharacter === charIndex) {
+                selectedSkin = skinIndex;
+            }
+            updateSkinTabs(charIndex);
+        }
+        
+        function updateSkinTabs(charIndex) {
+            const cards = document.querySelectorAll('.character-card');
+            if (cards[charIndex]) {
+                const tabs = cards[charIndex].querySelectorAll('.skin-tab');
+                tabs.forEach((tab, i) => {
+                    tab.classList.toggle('active', charIndex === selectedCharacter && i === selectedSkin);
+                });
+            }
+        }
+        
+        function pickRandomEnemy() {
+            const available = characters.filter((_, i) => i !== selectedCharacter);
+            if (available.length > 0) {
+                const pick = available[Math.floor(Math.random() * available.length)];
+                enemyCharacter = characters.indexOf(pick);
+                enemySkin = Math.floor(Math.random() * pick.skins.length);
+                document.getElementById('enemyPick').textContent = 
+                    `${pick.name} (${pick.skins[enemySkin].name})`;
+            }
+        }
+        
+        function startFight() {
+            if (selectedCharacter === null) return;
+            if (enemyCharacter === null) pickRandomEnemy();
+            
+            document.getElementById('selectionScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('winScreen').classList.add('hidden');
+            
+            setupGame();
+            resizeCanvas();
+            gameActive = true;
+            gameTimer = 60;
+            roundNumber = 1;
+            playerWins = 0;
+            enemyWins = 0;
+            updateHUD();
+            gameLoop();
+        }
+        
+        function setupGame() {
+            const pChar = characters[selectedCharacter];
+            const eChar = characters[enemyCharacter];
+            
+            player.hp = pChar.stats.hp;
+            player.maxHp = pChar.stats.hp;
+            player.energy = 0;
+            player.x = 120;
+            player.y = GROUND_Y - 70;
+            player.vx = 0;
+            player.vy = 0;
+            player.facing = 1;
+            player.onGround = true;
+            player.attacking = false;
+            player.attackTimer = 0;
+            player.invincible = 0;
+            player.comboCount = 0;
+            
+            enemy.hp = eChar.stats.hp;
+            enemy.maxHp = eChar.stats.hp;
+            enemy.energy = 0;
+            enemy.x = canvas.width - 160;
+            enemy.y = GROUND_Y - 70;
+            enemy.vx = 0;
+            enemy.vy = 0;
+            enemy.facing = -1;
+            enemy.onGround = true;
+            enemy.attacking = false;
+            enemy.attackTimer = 0;
+            enemy.invincible = 0;
+            enemy.aiTimer = 0;
+            enemy.aiAction = 'idle';
+            
+            particles = [];
+            hitEffects = [];
+            screenShake = 0;
+            
+            document.getElementById('pName').textContent = pChar.name;
+            document.getElementById('eName').textContent = eChar.name;
+        }
+        
+        function resizeCanvas() {
+            const wrapper = document.getElementById('gameWrapper');
+            const width = Math.min(wrapper.clientWidth, 450);
+            canvas.width = width;
+            canvas.height = width * 0.65;
+            
+            // Adjust positions
+            player.x = Math.min(player.x, canvas.width - 60);
+            enemy.x = Math.max(enemy.x, 20);
+        }
+        
+        // ==================== INPUT HANDLING ====================
+        const keys = {};
+        let btnStates = { left: false, right: false, up: false, down: false, punch: false, kick: false, special: false, ultimate: false };
+        
+        // Keyboard input
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            e.preventDefault();
+        });
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+        
+        // Touch button handlers
+        function setupButton(id, action, stateKey) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                btnStates[stateKey] = true;
+                if (action) action(true);
+            });
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                btnStates[stateKey] = false;
+                if (action) action(false);
+            });
+            btn.addEventListener('touchcancel', (e) => {
+                btnStates[stateKey] = false;
+                if (action) action(false);
+            });
+            // Prevent mouse events on mobile
+            btn.addEventListener('mousedown', (e) => e.preventDefault());
+        }
+        
+        setupButton('btnLeft', null, 'left');
+        setupButton('btnRight', null, 'right');
+        setupButton('btnUp', null, 'up');
+        setupButton('btnDown', null, 'down');
+        setupButton('btnPunch', () => playerAttack('punch'), 'punch');
+        setupButton('btnKick', () => playerAttack('kick'), 'kick');
+        setupButton('btnSpecial', () => playerAttack('special'), 'special');
+        setupButton('btnUltimate', () => playerAttack('ultimate'), 'ultimate');
+        
+        function playerAttack(type) {
+            if (!gameActive) return;
+            if (player.attacking) return;
+            
+            const pChar = characters[selectedCharacter];
+            const costs = { punch: 0, kick: 0, special: 25, ultimate: 100 };
+            
+            if (player.energy < costs[type]) return;
+            
+            player.energy -= costs[type];
+            player.attacking = true;
+            player.attackType = type;
+            
+            switch(type) {
+                case 'punch': player.attackTimer = 10; break;
+                case 'kick': player.attackTimer = 14; break;
+                case 'special': player.attackTimer = 20; break;
+                case 'ultimate': player.attackTimer = 30; break;
+            }
+            
+            // Check hit after brief delay
+            setTimeout(() => {
+                if (gameActive && player.attacking && player.attackType === type) {
+                    checkPlayerHit(type);
+                }
+            }, type === 'ultimate' ? 400 : 200);
+        }
+        
+        function checkPlayerHit(type) {
+            const pChar = characters[selectedCharacter];
+            let baseDmg = 0;
+            switch(type) {
+                case 'punch': baseDmg = 15; break;
+                case 'kick': baseDmg = 22; break;
+                case 'special': baseDmg = 38; break;
+                case 'ultimate': baseDmg = 65; break;
+            }
+            const dmg = Math.floor(baseDmg * pChar.stats.atkMult);
+            
+            // Check if player is close enough to enemy
+            const dist = Math.abs(player.x - enemy.x);
+            const hitRange = type === 'special' || type === 'ultimate' ? 160 : 70;
+            
+            if (dist < hitRange && player.facing === (enemy.x > player.x ? 1 : -1)) {
+                hitEnemy(dmg, type);
+            }
+        }
+        
+        function hitEnemy(dmg, type) {
+            if (enemy.invincible > 0) return;
+            
+            enemy.hp -= dmg;
+            enemy.invincible = 15;
+            enemy.vy = -5;
+            enemy.vx = enemy.facing * -3;
+            screenShake = type === 'ultimate' ? 15 : (type === 'special' ? 8 : 4);
+            
+            // Particles
+            for (let i = 0; i < (type === 'ultimate' ? 30 : 10); i++) {
+                particles.push({
+                    x: enemy.x + enemy.width/2,
+                    y: enemy.y + enemy.height/2,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 20 + Math.random() * 20,
+                    color: type === 'ultimate' ? '#ffd700' : '#ff6600'
+                });
+            }
+            
+            // Show move name
+            const pChar = characters[selectedCharacter];
+            const moveNames = { punch: pChar.moves.punch, kick: pChar.moves.kick, 
+                               special: pChar.moves.special, ultimate: pChar.moves.ultimate };
+            hitEffects.push({
+                x: enemy.x, y: enemy.y - 20,
+                text: `${moveNames[type]}! -${dmg}`,
+                life: 40,
+                color: type === 'ultimate' ? '#ffd700' : '#ffffff'
+            });
+            
+            updateHUD();
+            
+            if (enemy.hp <= 0) {
+                enemy.hp = 0;
+                endRound('player');
+            }
+        }
+        
+        // ==================== AI SYSTEM ====================
+        function updateAI() {
+            if (!gameActive) return;
+            
+            enemy.aiTimer++;
+            enemy.aiCooldown--;
+            
+            const dist = player.x - enemy.x;
+            const absDist = Math.abs(dist);
+            
+            // AI behavior
+            if (enemy.aiCooldown <= 0) {
+                if (absDist > 200) {
+                    // Move toward player
+                    enemy.aiAction = 'approach';
+                } else if (absDist < 50) {
+                    // Attack or back off
+                    enemy.aiAction = Math.random() < 0.7 ? 'attack' : 'retreat';
+                } else {
+                    // In range - decide
+                    const r = Math.random();
+                    if (r < 0.4) enemy.aiAction = 'attack';
+                    else if (r < 0.7) enemy.aiAction = 'idle';
+                    else enemy.aiAction = 'approach';
+                }
+                enemy.aiCooldown = 20 + Math.random() * 40;
+            }
+            
+            // Execute AI action
+            switch(enemy.aiAction) {
+                case 'approach':
+                    enemy.vx = dist > 0 ? 2 : -2;
+                    break;
+                case 'retreat':
+                    enemy.vx = dist > 0 ? -2 : 2;
+                    break;
+                case 'attack':
+                    enemy.vx = 0;
+                    if (!enemy.attacking && enemy.aiTimer % 30 < 5) {
+                        enemyAttack();
+                    }
+                    break;
+                default:
+                    enemy.vx *= 0.8;
+            }
+            
+            // Jump if player is above
+            if (player.y < enemy.y - 40 && enemy.onGround && Math.random() < 0.02) {
+                enemy.vy = -10;
+                enemy.onGround = false;
+            }
+        }
+        
+        function enemyAttack() {
+            if (enemy.attacking) return;
+            
+            const eChar = characters[enemyCharacter];
+            let type = 'punch';
+            const r = Math.random();
+            if (enemy.
