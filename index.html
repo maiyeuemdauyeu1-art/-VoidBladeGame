@@ -1932,3 +1932,891 @@
             const isPlayer = attacker === 'player';
             const attackerObj = isPlayer ? player : enemy;
             const defenderObj = isPlayer
+            <!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Anime Fighter - Chọn Nhân Vật</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            background: #0a0a1a;
+            font-family: Arial, sans-serif;
+            touch-action: manipulation;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 420px;
+            min-height: 100vh;
+            background: #111;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ============ SCREEN 1: SELECTION ============ */
+        #selectScreen {
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a0a2e 0%, #0d1b3e 100%);
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        #selectScreen.hidden {
+            display: none;
+        }
+
+        .title {
+            text-align: center;
+            padding: 15px 0;
+        }
+
+        .title h1 {
+            color: #ff2d55;
+            font-size: 2em;
+            text-shadow: 0 0 20px #ff2d55;
+        }
+
+        .title p {
+            color: #888;
+            font-size: 0.8em;
+        }
+
+        .section-label {
+            color: #00ff88;
+            font-weight: bold;
+            padding: 10px;
+            text-align: center;
+            font-size: 1.1em;
+            border-bottom: 2px solid #00ff8833;
+            margin-bottom: 10px;
+        }
+
+        .char-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 5px;
+        }
+
+        .char-box {
+            background: #1a1a35;
+            border: 2px solid #2a2a55;
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+
+        .char-box:active {
+            transform: scale(0.96);
+        }
+
+        .char-box.selected {
+            border-color: #00ff88 !important;
+            background: #0a2a1a !important;
+            box-shadow: 0 0 20px #00ff8844;
+        }
+
+        .char-box .emoji {
+            font-size: 3em;
+            display: block;
+        }
+
+        .char-box .name {
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+
+        .char-box .from {
+            color: #888;
+            font-size: 0.7em;
+        }
+
+        .char-box .stats {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin: 5px 0;
+        }
+
+        .char-box .stats span {
+            background: #ffffff15;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.65em;
+            color: #ccc;
+        }
+
+        .skin-row {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .skin-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #555;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .skin-dot.active {
+            border-color: #fff;
+            box-shadow: 0 0 10px #ffffffaa;
+            transform: scale(1.3);
+        }
+
+        .skin-name {
+            font-size: 0.6em;
+            color: #aaa;
+            margin-top: 3px;
+            text-align: center;
+        }
+
+        .info-panel {
+            background: #00000055;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #333;
+            color: #fff;
+        }
+
+        .info-panel .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 0.85em;
+        }
+
+        .info-panel .val-green {
+            color: #00ff88;
+            font-weight: bold;
+        }
+        .info-panel .val-red {
+            color: #ff2d55;
+            font-weight: bold;
+        }
+
+        .btn-random {
+            display: block;
+            margin: 5px auto;
+            background: #ff2d5533;
+            border: 1px solid #ff2d55;
+            color: #ff2d55;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            cursor: pointer;
+        }
+
+        .btn-fight {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, #ff2d55, #c0392b);
+            color: #fff;
+            border: none;
+            padding: 16px;
+            font-size: 1.4em;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 10px;
+            letter-spacing: 2px;
+        }
+
+        .btn-fight:disabled {
+            background: #444;
+            color: #888;
+        }
+
+        .btn-fight:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+
+        /* ============ SCREEN 2: GAME ============ */
+        #gameScreen {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+        }
+
+        #gameScreen.hidden {
+            display: none;
+        }
+
+        #gameHud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: #000000cc;
+            color: #fff;
+            gap: 5px;
+        }
+
+        #gameHud .side {
+            flex: 1;
+        }
+
+        #gameHud .hname {
+            font-size: 0.7em;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .hp-outer {
+            height: 14px;
+            background: #333;
+            border-radius: 7px;
+            overflow: hidden;
+            margin-bottom: 2px;
+        }
+
+        .hp-inner {
+            height: 100%;
+            border-radius: 7px;
+            transition: width 0.3s;
+        }
+        .hp-inner.g { background: #00ff88; }
+        .hp-inner.r { background: #ff2d55; }
+
+        .en-outer {
+            height: 7px;
+            background: #222;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .en-inner {
+            height: 100%;
+            background: #ffaa00;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        #gameHud .mid {
+            text-align: center;
+            min-width: 45px;
+        }
+        #gameHud .timer {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ffaa00;
+        }
+        #gameHud .round {
+            font-size: 0.6em;
+            color: #aaa;
+        }
+
+        canvas {
+            flex: 1;
+            width: 100%;
+            display: block;
+        }
+
+        #controls {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 5px;
+            padding: 8px;
+            background: #111;
+        }
+
+        #controls .move-pad {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 3px;
+        }
+
+        #controls button {
+            padding: 12px 4px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background: #222;
+            color: #fff;
+            font-size: 0.75em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        #controls button:active {
+            background: #444;
+            border-color: #fff;
+            transform: scale(0.95);
+        }
+
+        #controls .red-btn {
+            border-color: #ff2d55;
+            background: #ff2d5522;
+        }
+        #controls .gold-btn {
+            border-color: #ffaa00;
+            background: #ffaa0022;
+        }
+
+        /* ============ WIN OVERLAY ============ */
+        #winOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000dd;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        #winOverlay.hidden {
+            display: none;
+        }
+        #winOverlay .big-text {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        #winOverlay .msg {
+            color: #ccc;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #winOverlay button {
+            background: #667eea;
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1em;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        
+        <!-- ============ SELECTION SCREEN ============ -->
+        <div id="selectScreen">
+            <div class="title">
+                <h1>⚔️ ANIME FIGHTER</h1>
+                <p>Chọn nhân vật của bạn và đối thủ</p>
+            </div>
+
+            <div class="section-label">👤 CHỌN NHÂN VẬT CỦA BẠN</div>
+            <div class="char-grid" id="playerGrid"></div>
+
+            <div class="section-label">🤖 CHỌN ĐỐI THỦ</div>
+            <div class="char-grid" id="enemyGrid"></div>
+            <button class="btn-random" onclick="pickRandomEnemy()">🎲 Đối thủ ngẫu nhiên</button>
+
+            <div class="info-panel" id="infoPanel">
+                <div class="row">
+                    <span>Bạn:</span>
+                    <span class="val-green" id="infoPlayer">Chưa chọn</span>
+                </div>
+                <div class="row">
+                    <span>Skin:</span>
+                    <span class="val-green" id="infoPlayerSkin">-</span>
+                </div>
+                <div class="row">
+                    <span>Đối thủ:</span>
+                    <span class="val-red" id="infoEnemy">Chưa chọn</span>
+                </div>
+                <div class="row">
+                    <span>Skin đối thủ:</span>
+                    <span class="val-red" id="infoEnemySkin">-</span>
+                </div>
+            </div>
+
+            <button class="btn-fight" id="fightBtn" disabled onclick="startGame()">⚡ CHIẾN ĐẤU ⚡</button>
+        </div>
+
+        <!-- ============ GAME SCREEN ============ -->
+        <div id="gameScreen" class="hidden">
+            <div id="gameHud">
+                <div class="side">
+                    <div class="hname" id="hudP1">P1</div>
+                    <div class="hp-outer"><div class="hp-inner g" id="hpP1" style="width:100%"></div></div>
+                    <div class="en-outer"><div class="en-inner" id="enP1" style="width:0%"></div></div>
+                </div>
+                <div class="mid">
+                    <div class="timer" id="hudTimer">60</div>
+                    <div class="round" id="hudRound">Round 1</div>
+                </div>
+                <div class="side" style="text-align:right">
+                    <div class="hname" id="hudP2">P2</div>
+                    <div class="hp-outer"><div class="hp-inner r" id="hpP2" style="width:100%"></div></div>
+                    <div class="en-outer"><div class="en-inner" id="enP2" style="width:0%"></div></div>
+                </div>
+            </div>
+            <canvas id="gc"></canvas>
+            <div id="controls">
+                <div class="move-pad">
+                    <div></div>
+                    <button id="bUp">▲</button>
+                    <div></div>
+                    <button id="bLeft">◄</button>
+                    <div></div>
+                    <button id="bRight">►</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                    <button class="red-btn" id="bPunch">👊 Đấm</button>
+                    <button class="red-btn" id="bKick">🦶 Đá</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                    <button class="gold-btn" id="bSpecial">💥 Chiêu</button>
+                    <button class="gold-btn" id="bUltimate">⭐ Tuyệt</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ WIN OVERLAY ============ -->
+        <div id="winOverlay" class="hidden">
+            <div class="big-text" id="winText"></div>
+            <div class="msg" id="winMsg"></div>
+            <button onclick="rematch()">🔄 Đấu lại</button>
+            <button onclick="goBack()">👥 Chọn lại</button>
+        </div>
+    </div>
+
+    <script>
+    // ==================== DATA ====================
+    const chars = [
+        {
+            id: 'rick', name: 'Rick Sanchez', from: 'Rick & Morty', emoji: '🧪',
+            skins: [
+                { n: 'Blue Trắng', c: '#87CEEB', h: '#B0C4DE' },
+                { n: 'Pickle Rick', c: '#4CAF50', h: '#2E7D32' },
+                { n: 'Evil Rick', c: '#FF4444', h: '#880000' }
+            ],
+            s: { hp: 100, spd: 3.5, atk: 110 },
+            m: { pu: 'Portal Punch', ki: 'Gravity Kick', sp: 'Portal Gun', ul: 'MULTIVERSE' }
+        },
+        {
+            id: 'morty', name: 'Morty Smith', from: 'Rick & Morty', emoji: '😰',
+            skins: [
+                { n: 'Classic', c: '#FFD700', h: '#8B4513' },
+                { n: 'Evil', c: '#FF0000', h: '#8B0000' },
+                { n: 'Mecha', c: '#808080', h: '#C0C0C0' }
+            ],
+            s: { hp: 90, spd: 3.8, atk: 90 },
+            m: { pu: 'Nervous Punch', ki: 'Panic Kick', sp: 'Laser Gun', ul: 'PURGE SUIT' }
+        },
+        {
+            id: 'naruto', name: 'Naruto', from: 'Naruto', emoji: '🍥',
+            skins: [
+                { n: 'Classic', c: '#FF8C00', h: '#FFD700' },
+                { n: 'Sage', c: '#FF4500', h: '#FFD700' },
+                { n: 'Hokage', c: '#FFF', h: '#FFD700' }
+            ],
+            s: { hp: 110, spd: 4, atk: 105 },
+            m: { pu: 'Uppercut', ki: 'Konoha Kick', sp: 'RASENGAN!', ul: 'RASENSHURIKEN' }
+        },
+        {
+            id: 'goku', name: 'Goku', from: 'Dragon Ball', emoji: '⚡',
+            skins: [
+                { n: 'Classic', c: '#FF6600', h: '#000' },
+                { n: 'SSJ', c: '#FF6600', h: '#FFD700' },
+                { n: 'Ultra', c: '#FF6600', h: '#C0C0C0' }
+            ],
+            s: { hp: 120, spd: 4.5, atk: 120 },
+            m: { pu: 'Dragon Fist', ki: 'Super Kick', sp: 'KAMEHAMEHA!', ul: 'ULTRA INSTINCT' }
+        },
+        {
+            id: 'tanjiro', name: 'Tanjiro', from: 'Demon Slayer', emoji: '⚔️',
+            skins: [
+                { n: 'Slayer', c: '#2F4F4F', h: '#8B0000' },
+                { n: 'Hinokami', c: '#2F4F4F', h: '#FF4500' },
+                { n: 'Demon', c: '#4A0000', h: '#FF0000' }
+            ],
+            s: { hp: 100, spd: 3.5, atk: 100 },
+            m: { pu: 'Water Slash', ki: 'Whirlpool', sp: 'HINOKAMI', ul: 'SUN BREATHING' }
+        },
+        {
+            id: 'saitama', name: 'Saitama', from: 'One Punch Man', emoji: '👊',
+            skins: [
+                { n: 'Hero', c: '#FFD700', h: '#FFD700' },
+                { n: 'Casual', c: '#FFF', h: '#FFD700' },
+                { n: 'Serious', c: '#FF0000', h: '#FFD700' }
+            ],
+            s: { hp: 150, spd: 5, atk: 150 },
+            m: { pu: 'Normal Punch', ki: 'Normal Kick', sp: 'SERIOUS PUNCH', ul: 'ONE PUNCH' }
+        }
+    ];
+
+    // ==================== STATE ====================
+    let pIdx = null, pSkin = 0;
+    let eIdx = null, eSkin = 0;
+    
+    let p1 = {}, p2 = {};
+    let timer = 60, round = 1, pWins = 0, eWins = 0;
+    let active = false, particles = [], texts = [], shake = 0;
+    let timerID = null;
+    
+    const canvas = document.getElementById('gc');
+    const ctx = canvas.getContext('2d');
+    const GND = 340;
+    const GRV = 0.5;
+    
+    // ==================== INIT SELECT ====================
+    function buildGrid(containerId, type) {
+        const grid = document.getElementById(containerId);
+        grid.innerHTML = '';
+        chars.forEach((c, i) => {
+            const box = document.createElement('div');
+            box.className = 'char-box';
+            box.id = `${type}-${i}`;
+            box.innerHTML = `
+                <span class="emoji">${c.emoji}</span>
+                <div class="name">${c.name}</div>
+                <div class="from">${c.from}</div>
+                <div class="stats">
+                    <span>❤️${c.s.hp}</span>
+                    <span>💨${c.s.spd}</span>
+                    <span>⚔️${c.s.atk}%</span>
+                </div>
+                <div class="skin-row">
+                    ${c.skins.map((s,si) => `<div class="skin-dot" style="background:${s.c}" onclick="event.stopPropagation();pickSkin('${type}',${i},${si})" id="skin-${type}-${i}-${si}"></div>`).join('')}
+                </div>
+                <div class="skin-name" id="skname-${type}-${i}">${c.skins[0].n}</div>
+            `;
+            box.addEventListener('click', () => pickChar(type, i));
+            grid.appendChild(box);
+        });
+    }
+
+    function pickChar(type, idx) {
+        if (type === 'player') {
+            pIdx = idx; pSkin = 0;
+        } else {
+            eIdx = idx; eSkin = 0;
+        }
+        refreshUI();
+    }
+
+    function pickSkin(type, ci, si) {
+        if (type === 'player' && pIdx === ci) pSkin = si;
+        if (type === 'enemy' && eIdx === ci) eSkin = si;
+        refreshUI();
+    }
+
+    function refreshUI() {
+        // Clear selections
+        document.querySelectorAll('#playerGrid .char-box').forEach((b,i) => b.classList.toggle('selected', i === pIdx));
+        document.querySelectorAll('#enemyGrid .char-box').forEach((b,i) => b.classList.toggle('selected', i === eIdx));
+        
+        // Update skin dots
+        document.querySelectorAll('.skin-dot').forEach(d => d.classList.remove('active'));
+        if (pIdx !== null) {
+            const dp = document.getElementById(`skin-player-${pIdx}-${pSkin}`);
+            if (dp) dp.classList.add('active');
+            document.getElementById(`skname-player-${pIdx}`).textContent = chars[pIdx].skins[pSkin].n;
+        }
+        if (eIdx !== null) {
+            const de = document.getElementById(`skin-enemy-${eIdx}-${eSkin}`);
+            if (de) de.classList.add('active');
+            document.getElementById(`skname-enemy-${eIdx}`).textContent = chars[eIdx].skins[eSkin].n;
+        }
+        
+        // Info panel
+        document.getElementById('infoPlayer').textContent = pIdx !== null ? chars[pIdx].name : 'Chưa chọn';
+        document.getElementById('infoPlayerSkin').textContent = pIdx !== null ? chars[pIdx].skins[pSkin].n : '-';
+        document.getElementById('infoEnemy').textContent = eIdx !== null ? chars[eIdx].name : 'Chưa chọn';
+        document.getElementById('infoEnemySkin').textContent = eIdx !== null ? chars[eIdx].skins[eSkin].n : '-';
+        
+        document.getElementById('fightBtn').disabled = (pIdx === null || eIdx === null);
+    }
+
+    function pickRandomEnemy() {
+        const avail = chars.map((_,i) => i).filter(i => i !== pIdx);
+        if (avail.length > 0) {
+            const pick = avail[Math.floor(Math.random() * avail.length)];
+            eIdx = pick;
+            eSkin = Math.floor(Math.random() * chars[pick].skins.length);
+            refreshUI();
+        }
+    }
+
+    // ==================== GAME ====================
+    function startGame() {
+        if (pIdx === null || eIdx === null) return;
+        
+        document.getElementById('selectScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.remove('hidden');
+        document.getElementById('winOverlay').classList.add('hidden');
+        
+        resizeCanvas();
+        resetPlayers();
+        active = true;
+        timer = 60;
+        round = 1;
+        pWins = 0;
+        eWins = 0;
+        
+        updateHUD();
+        if (timerID) clearInterval(timerID);
+        timerID = setInterval(tick, 1000);
+        loop();
+    }
+
+    function resizeCanvas() {
+        const w = Math.min(window.innerWidth, 420);
+        canvas.width = w;
+        canvas.height = w * 0.65;
+    }
+
+    function resetPlayers() {
+        const pc = chars[pIdx], ec = chars[eIdx];
+        p1 = { x: 70, y: GND-70, w: 35, h: 65, vx: 0, vy: 0, hp: pc.s.hp, maxHp: pc.s.hp, en: 0,
+               face: 1, ground: true, atk: false, atkTimer: 0, atkType: '', inv: 0 };
+        p2 = { x: canvas.width-105, y: GND-70, w: 35, h: 65, vx: 0, vy: 0, hp: ec.s.hp, maxHp: ec.s.hp, en: 0,
+               face: -1, ground: true, atk: false, atkTimer: 0, atkType: '', inv: 0, aiT: 0, aiCD: 0 };
+        particles = [];
+        texts = [];
+        shake = 0;
+        
+        document.getElementById('hudP1').textContent = pc.name;
+        document.getElementById('hudP2').textContent = ec.name;
+        document.getElementById('hudRound').textContent = `Round ${round}`;
+        document.getElementById('hudTimer').textContent = timer;
+    }
+
+    function updateHUD() {
+        document.getElementById('hpP1').style.width = Math.max(0, p1.hp/p1.maxHp*100) + '%';
+        document.getElementById('hpP2').style.width = Math.max(0, p2.hp/p2.maxHp*100) + '%';
+        document.getElementById('enP1').style.width = Math.min(100, p1.en) + '%';
+        document.getElementById('enP2').style.width = Math.min(100, p2.en) + '%';
+    }
+
+    function tick() {
+        if (!active) return;
+        timer--;
+        document.getElementById('hudTimer').textContent = timer;
+        if (timer <= 0) endRound('timeout');
+    }
+
+    function endRound(winner) {
+        active = false;
+        if (winner === 'player' || winner === 'p2dead') {
+            pWins++;
+        } else if (winner === 'enemy' || winner === 'p1dead') {
+            eWins++;
+        }
+        
+        document.getElementById('hudRound').textContent = `P1: ${pWins} - P2: ${eWins}`;
+        
+        if (pWins >= 2 || eWins >= 2) {
+            // Match over
+            const overlay = document.getElementById('winOverlay');
+            overlay.classList.remove('hidden');
+            const wt = document.getElementById('winText');
+            const wm = document.getElementById('winMsg');
+            
+            if (pWins >= 2) {
+                wt.textContent = '🏆 CHIẾN THẮNG!';
+                wt.style.color = '#00ff88';
+                wm.textContent = `${chars[pIdx].name} đánh bại ${chars[eIdx].name}!`;
+            } else {
+                wt.textContent = '💀 THẤT BẠI';
+                wt.style.color = '#ff2d55';
+                wm.textContent = `${chars[eIdx].name} đã thắng!`;
+            }
+            if (timerID) clearInterval(timerID);
+        } else {
+            // Next round
+            setTimeout(() => {
+                timer = 60;
+                resetPlayers();
+                active = true;
+                document.getElementById('hudRound').textContent = `Round ${round+1}`;
+                round++;
+                updateHUD();
+                document.getElementById('hudTimer').textContent = timer;
+            }, 1500);
+        }
+    }
+
+    function rematch() {
+        document.getElementById('winOverlay').classList.add('hidden');
+        timer = 60; round = 1; pWins = 0; eWins = 0;
+        resetPlayers();
+        active = true;
+        updateHUD();
+        document.getElementById('hudRound').textContent = 'Round 1';
+        document.getElementById('hudTimer').textContent = timer;
+        if (timerID) clearInterval(timerID);
+        timerID = setInterval(tick, 1000);
+        loop();
+    }
+
+    function goBack() {
+        document.getElementById('winOverlay').classList.add('hidden');
+        document.getElementById('gameScreen').classList.add('hidden');
+        document.getElementById('selectScreen').classList.remove('hidden');
+        if (timerID) clearInterval(timerID);
+        active = false;
+    }
+
+    // ==================== INPUT ====================
+    const keys = {};
+    const btns = {};
+    
+    function setupBtn(id, key) {
+        const b = document.getElementById(id);
+        if (!b) return;
+        btns[key] = false;
+        
+        const down = (e) => { e.preventDefault(); btns[key] = true; if (key === 'up' && p1.ground) { p1.vy = -11; p1.ground = false; } if (key === 'punch') doAtk('punch'); if (key === 'kick') doAtk('kick'); if (key === 'special') doAtk('special'); if (key === 'ultimate') doAtk('ultimate'); };
+        const up = (e) => { e.preventDefault(); btns[key] = false; };
+        
+        b.addEventListener('touchstart', down, {passive: false});
+        b.addEventListener('touchend', up, {passive: false});
+        b.addEventListener('touchcancel', up, {passive: false});
+        b.addEventListener('mousedown', down);
+        b.addEventListener('mouseup', up);
+        b.addEventListener('mouseleave', up);
+    }
+    
+    setupBtn('bLeft', 'left');
+    setupBtn('bRight', 'right');
+    setupBtn('bUp', 'up');
+    setupBtn('bPunch', 'punch');
+    setupBtn('bKick', 'kick');
+    setupBtn('bSpecial', 'special');
+    setupBtn('bUltimate', 'ultimate');
+    
+    // Keyboard fallback
+    document.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
+    document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+    
+    function isDown(k) { return btns[k] || keys[k]; }
+    
+    function doAtk(type) {
+        if (!active || p1.atk) return;
+        const costs = { punch: 0, kick: 0, special: 25, ultimate: 100 };
+        if (p1.en < costs[type]) return;
+        p1.en -= costs[type];
+        p1.atk = true;
+        p1.atkType = type;
+        const dur = { punch: 8, kick: 12, special: 18, ultimate: 28 };
+        p1.atkTimer = dur[type];
+        
+        setTimeout(() => {
+            if (active && p1.atk && p1.atkType === type) {
+                checkHit(p1, p2, type, 'p1');
+            }
+        }, type === 'ultimate' ? 400 : 180);
+    }
+    
+    function checkHit(attacker, defender, type, who) {
+        const dist = Math.abs(attacker.x - defender.x);
+        const range = (type === 'special' || type === 'ultimate') ? 150 : 60;
+        const correctDir = attacker.face === (defender.x > attacker.x ? 1 : -1);
+        
+        if (dist < range && correctDir && defender.inv <= 0) {
+            const baseDmg = { punch: 15, kick: 22, special: 38, ultimate: 65 };
+            const mult = who === 'p1' ? chars[pIdx].s.atk/100 : chars[eIdx].s.atk/100;
+            const dmg = Math.floor(baseDmg[type] * mult);
+            defender.hp -= dmg;
+            defender.inv = 15;
+            defender.vy = -5;
+            defender.vx = defender.face * -3;
+            shake = type === 'ultimate' ? 14 : 6;
+            
+            for (let i=0; i<(type==='ultimate'?25:8); i++) {
+                particles.push({
+                    x: defender.x+defender.w/2, y: defender.y+defender.h/2,
+                    vx: (Math.random()-0.5)*7, vy: (Math.random()-0.5)*7,
+                    life: 15+Math.random()*20, color: type==='ultimate'?'#ffd700':'#ff6600'
+                });
+            }
+            
+            const moveNames = who === 'p1' ? chars[pIdx].m : chars[eIdx].m;
+            const mn = { punch: moveNames.pu, kick: moveNames.ki, special: moveNames.sp, ultimate: moveNames.ul };
+            texts.push({
+                x: defender.x, y: defender.y-15,
+                text: `${mn[type]}! -${dmg}`, life: 35,
+                color: type==='ultimate'?'#ffd700':'#fff'
+            });
+            
+            updateHUD();
+            if (defender.hp <= 0) {
+                defender.hp = 0;
+                updateHUD();
+                endRound(who === 'p1' ? 'player' : 'enemy');
+            }
+        }
+    }
+    
+    // ==================== AI ====================
+    function updateAI() {
+        if (!active || p2.atk) return;
+        p2.aiT++;
+        if (p2.aiCD > 0) { p2.aiCD--; return; }
+        
+        const dist = p1.x - p2.x;
+        const adist = Math.abs(dist);
+        
+        if (adist > 180) {
+            p2.vx = dist > 0 ? 2.5 : -2.5;
+        } else if (adist < 55) {
+            if (Math.random() < 0.6) {
+                // Attack
+                const types = ['punch','kick'];
+                if (p2.en >= 25) types.push('special');
+                if (p2.en >= 100) types.push('ultimate');
+                const t = types[Math.floor(Math.random()*types.length)];
+                doEnemyAtk(t);
+            } else {
+                p2.vx = dist > 0 ? -3 : 3;
+            }
+        } else {
+            if (Math.random() < 0.03 && p2.en >= 20) {
+                const types = ['punch','kick','special'];
+                if (p2.en >= 100) types.push('ultimate');
+                doEnemyAtk(types[Math.floor(Math.random()*types.length)]);
+            }
+            p2.vx *= 0.9;
+        }
+        
+        if (p1.y < p2.y-30 && p2.ground && Math.random() < 0.02) {
+            p2.vy = -10; p2.ground = false;
+        }
+        
+        p2.aiCD = 15 + Math.random()*30;
+    }
+    
+    function doEnemyAtk(type) {
+        if (p2.atk) return;
+        const costs = { punch: 0, kick: 0, special: 25, ultimate: 100 };
+        if (p2.en < costs[type]) return;
+        p2.en -= costs[type];
+        p2.atk = true;
+        p2.atkType = type;
+        const dur = { punch: 8, kick: 12, special: 18, ultimate: 28 };
+        p2.atkTimer
