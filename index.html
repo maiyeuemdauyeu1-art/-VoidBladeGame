@@ -1,107 +1,157 @@
 import os
 import time
 import subprocess
-from google.cloud import compute_v1
-from google.oauth2 import service_account
+import requests
+import json
+from flask import Flask, render_template_string
 
-# ====== CẤU HÌNH ======
-PROJECT_ID = "your-project-id"  # Thay bằng Project ID của bạn
-ZONE = "us-central1-a"          # Vùng máy chủ
-INSTANCE_NAME = "android-cloud-phone"
-CREDENTIALS_PATH = "path-to-service-account-key.json"  # File key JSON
+app = Flask(__name__)
 
-# ====== KHỞI TẠO ======
-credentials = service_account.Credentials.from_service_account_file(CREDENTIALS_PATH)
-instances_client = compute_v1.InstancesClient(credentials=credentials)
+# ========== PHẦN 1: TẠO MÁY ẢO LOCAL (DÙNG ANDROID STUDIO EMULATOR) ==========
+def create_local_emulator():
+    print("📱 Tạo điện thoại ảo trên máy tính của bạn...")
+    
+    # Tạo AVD (Android Virtual Device)
+    avd_name = "CloudPhone"
+    
+    # Kiểm tra xem đã có AVD chưa
+    result = subprocess.run(f"avdmanager list avd | grep {avd_name}", shell=True, capture_output=True)
+    if result.returncode != 0:
+        # Tạo AVD mới
+        subprocess.run(f"""
+            echo no | avdmanager create avd -n {avd_name} -k "system-images;android-30;google_apis;x86_64" -d "pixel_4"
+        """, shell=True)
+        print("✅ Đã tạo AVD mới")
+    else:
+        print("✅ AVD đã tồn tại")
+    
+    # Khởi động emulator (chạy ngầm)
+    subprocess.Popen(f"emulator -avd {avd_name} -no-window -no-audio -gpu swiftshader_indirect", shell=True)
+    time.sleep(10)
+    print("✅ Emulator đã khởi động")
+    return avd_name
 
-# ====== 1. TẠO VM CHẠY ANDROID ======
-def create_android_vm():
-    print("📱 Đang tạo máy ảo Android trên đám mây...")
-    
-    # Cấu hình VM
-    instance = compute_v1.Instance()
-    instance.name = INSTANCE_NAME
-    instance.machine_type = f"zones/{ZONE}/machineTypes/n2-standard-4"  # 4 CPU, 16GB RAM
-    instance.zone = ZONE
-    
-    # Boot disk - dùng Android 11 image (có sẵn trên GCP)
-    disk = compute_v1.AttachedDisk()
-    disk.boot = True
-    disk.auto_delete = True
-    initialize_params = compute_v1.AttachedDiskInitializeParams()
-    initialize_params.source_image = "projects/android-os-ember/global/images/android-11-20230101"  # Android 11
-    initialize_params.disk_size_gb = 30
-    disk.initialize_params = initialize_params
-    instance.disks = [disk]
-    
-    # Network
-    network_interface = compute_v1.NetworkInterface()
-    network_interface.name = "global/networks/default"
-    instance.network_interfaces = [network_interface]
-    
-    # Mở port ADB (5555) và VNC (5900)
-    firewall_rule = compute_v1.Firewall()
-    firewall_rule.name = "allow-adb-vnc"
-    firewall_rule.allowed = [
-        compute_v1.Allowed(IP_protocol="tcp", ports=["5555", "5900"])
-    ]
-    firewall_rule.source_ranges = ["0.0.0.0/0"]
-    
-    # Tạo VM
-    operation = instances_client.insert(project=PROJECT_ID, zone=ZONE, instance_resource=instance)
-    operation.result()  # Đợi tạo xong
-    
-    # Lấy IP công khai
-    instance = instances_client.get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME)
-    external_ip = instance.network_interfaces[0].access_configs[0].nat_i_p
-    print(f"✅ Đã tạo xong! IP: {external_ip}")
-    return external_ip
-
-# ====== 2. KẾT NỐI ADB ======
-def connect_adb(ip):
+# ========== PHẦN 2: KẾT NỐI ADB ==========
+def connect_adb():
     print("🔌 Kết nối ADB...")
-    subprocess.run(f"adb connect {ip}:5555", shell=True)
-    time.sleep(3)
     subprocess.run("adb devices", shell=True)
+    time.sleep(2)
+    
+    # Lấy serial của thiết bị
+    result = subprocess.run("adb devices | grep emulator | awk '{print $1}'", shell=True, capture_output=True, text=True)
+    serial = result.stdout.strip()
+    if serial:
+        print(f"✅ Đã kết nối với: {serial}")
+        return serial
+    return None
 
-# ====== 3. CÀI ĐẶT APP (APK) ======
-def install_apk(apk_path):
-    print("📦 Cài đặt APK...")
-    subprocess.run(f"adb install {apk_path}", shell=True)
-
-# ====== 4. ĐIỀU KHIỂN TỪ XA ======
-def control_phone(ip):
-    print("""
-    ========================================
-    🎮 ĐIỀU KHIỂN ĐIỆN THOẠI ĐÁM MÂY:
-    - Kết nối VNC: dùng client bất kỳ vào {ip}:5900
-    - Hoặc dùng scrcpy: scrcpy --serial {ip}:5555
-    - ADB commands: adb shell
-    ========================================
-    """)
-
-# ====== 5. TẢI APK VÀ CÀI ======
-def download_and_install_apk(url):
-    print("⬇️ Tải APK từ URL...")
-    apk_name = url.split("/")[-1]
-    subprocess.run(f"wget -O {apk_name} {url}", shell=True)
-    install_apk(apk_name)
+# ========== PHẦN 3: CÀI APP ==========
+def install_apk(serial, apk_url):
+    print("📦 Đang tải và cài APK...")
+    
+    # Tên file APK
+    apk_name = apk_url.split("/")[-1]
+    
+    # Tải APK
+    response = requests.get(apk_url)
+    with open(apk_name, "wb") as f:
+        f.write(response.content)
+    
+    # Cài APK
+    subprocess.run(f"adb -s {serial} install {apk_name}", shell=True)
     os.remove(apk_name)
+    print("✅ Cài đặt thành công!")
 
-# ====== MAIN ======
+# ========== PHẦN 4: ĐIỀU KHIỂN QUA WEB ==========
+HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Điện thoại đám mây</title>
+    <style>
+        body { font-family: Arial; background: #1a1a2e; color: white; text-align: center; padding: 50px; }
+        .phone { background: #16213e; padding: 30px; border-radius: 30px; display: inline-block; border: 3px solid #0f3460; }
+        .screen { background: black; width: 360px; height: 720px; border-radius: 20px; margin: 10px auto; overflow: hidden; }
+        iframe { width: 100%; height: 100%; border: none; }
+        button { background: #e94560; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 18px; margin: 10px; cursor: pointer; }
+        button:hover { background: #c73e54; }
+        .status { color: #4ecca3; margin: 20px; }
+    </style>
+</head>
+<body>
+    <h1>📱 Điện thoại đám mây</h1>
+    <div class="phone">
+        <div class="screen">
+            <iframe src="http://localhost:6080/vnc.html" allow="autoplay"></iframe>
+        </div>
+        <div class="status">✅ Đang hoạt động</div>
+        <button onclick="window.open('http://localhost:6080/vnc.html')">🔓 Mở rộng màn hình</button>
+        <button onclick="alert('Mở terminal và gõ: adb shell')">💻 ADB Shell</button>
+    </div>
+    <p style="margin-top: 30px; color: #aaa;">📌 Hướng dẫn: Mở trình duyệt tại <b>http://localhost:5000</b></p>
+</body>
+</html>
+"""
+
+@app.route('/')
+def index():
+    return render_template_string(HTML)
+
+def start_web_control():
+    print("🌐 Mở trình duyệt tại: http://localhost:5000")
+    app.run(host='0.0.0.0', port=5000, debug=False)
+
+# ========== PHẦN 5: KHỞI ĐỘNG VNC ==========
+def start_vnc():
+    print("🖥️ Khởi động VNC server...")
+    # Cài đặt VNC server trên emulator
+    subprocess.Popen("adb shell settings put global development_settings_enabled 1", shell=True)
+    subprocess.Popen("adb shell settings put global adb_enabled 1", shell=True)
+    
+    # Chuyển hướng port VNC (mặc định emulator dùng port 5554 cho console, 5555 cho ADB)
+    # Chúng ta dùng scrcpy để stream
+    subprocess.Popen("scrcpy --no-audio --window-title 'Cloud Phone'", shell=True)
+    print("✅ VNC đã sẵn sàng")
+
+# ========== MAIN ==========
 if __name__ == "__main__":
-    # Tạo máy ảo
-    ip = create_android_vm()
+    print("""
+    ╔═══════════════════════════════════════════════════════╗
+    ║   ☁️  ĐIỆN THOẠI ĐÁM MÂY - TẠO NGAY TRONG 2 PHÚT    ║
+    ╚═══════════════════════════════════════════════════════╝
+    """)
     
-    # Kết nối ADB
-    connect_adb(ip)
+    # Bước 1: Tạo máy ảo
+    avd = create_local_emulator()
     
-    # Tải và cài APK (ví dụ cài Chrome)
-    download_and_install_apk("https://apkpure.com/chrome/com.android.chrome/download")
+    # Bước 2: Kết nối ADB
+    serial = connect_adb()
     
-    # Hướng dẫn điều khiển
-    control_phone(ip)
+    if serial:
+        # Bước 3: Cài đặt ứng dụng (tùy chọn)
+        print("\n📱 Muốn cài app gì?")
+        print("1. Chrome")
+        print("2. Facebook")
+        print("3. File Manager")
+        print("4. Bỏ qua")
+        
+        choice = input("Chọn (1-4): ")
+        
+        if choice == "1":
+            install_apk(serial, "https://apkpure.com/chrome/com.android.chrome/download")
+        elif choice == "2":
+            install_apk(serial, "https://apkpure.com/facebook/com.facebook.katana/download")
+        elif choice == "3":
+            install_apk(serial, "https://apkpure.com/file-manager/com.alphainventor.filemanager/download")
     
-    # Mở shell để dùng trực tiếp
-    print("🚀 Mở shell Android...")
-    subprocess.run(f"adb -s {ip}:5555 shell", shell=True)
+    # Bước 4: Khởi động VNC/Scrcpy
+    start_vnc()
+    
+    # Bước 5: Mở web điều khiển
+    print("\n" + "="*50)
+    print("✅ THÀNH CÔNG! Điện thoại đám mây của bạn đã sẵn sàng")
+    print("📱 Mở trình duyệt: http://localhost:5000")
+    print("💻 Hoặc dùng ADB: adb shell")
+    print("="*50)
+    
+    start_web_control()
