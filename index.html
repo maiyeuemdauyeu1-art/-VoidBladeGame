@@ -1142,34 +1142,623 @@ setInterval(
 
 /* Mở ứng dụng */
 
-function openApp(name,color){
+function openApp(name, color){
 
-    currentApp=true;
+    currentApp = true;
 
-    document.getElementById(
-        "application"
-    ).style.display="block";
+    document.getElementById("application").style.display = "block";
 
-    document.getElementById(
-        "headerTitle"
-    ).textContent=name;
+    if(name !== "Trình duyệt"){
+        document.getElementById("headerTitle").textContent = name;
+        document.getElementById("headerIcon").style.background = color;
 
-    document.getElementById(
-        "contentTitle"
-    ).textContent=name;
+        document.getElementById("appContent").innerHTML = `
+            <div class="card">
+                <h2>${name}</h2>
+                <p>Ứng dụng đang chạy.</p>
+            </div>
+        `;
 
-    document.getElementById(
-        "headerIcon"
-    ).style.background=color;
+        return;
+    }
 
-    document.getElementById(
-        "headerIcon"
-    ).style.borderRadius="10px";
+    document.getElementById("application").innerHTML = `
 
-    document.getElementById(
-        "bigIcon"
-    ).innerHTML=
-    "<div style='font-size:60px'>▣</div>";
+        <div class="browser">
+
+            <!-- Thanh tab -->
+
+            <div class="browserTabs">
+
+                <div class="tab active">
+                    <span class="globe">🌐</span>
+                    <span>Thẻ mới</span>
+                    <span class="close">×</span>
+                </div>
+
+                <button class="newTab">+</button>
+
+            </div>
+
+
+            <!-- Thanh công cụ -->
+
+            <div class="browserToolbar">
+
+                <button onclick="showToast('Quay lại')">
+                    ‹
+                </button>
+
+                <button onclick="showToast('Chưa có trang trước')">
+                    ›
+                </button>
+
+                <button onclick="location.reload()">
+                    ↻
+                </button>
+
+                <div class="address">
+                    <span>🔒</span>
+                    <span>Tìm trên Google hoặc nhập URL</span>
+                    <span class="micro">🎙</span>
+                </div>
+
+                <button>⇧</button>
+
+                <button>▢</button>
+
+                <button>•••</button>
+
+            </div>
+
+
+            <!-- Trang chủ -->
+
+            <div class="browserHome">
+
+                <div class="browserTop">
+
+                    <button class="editButton">
+                        ✎
+                    </button>
+
+                    <div class="account">
+                        L
+                    </div>
+
+                </div>
+
+
+                <div class="googleLogo">
+
+                    <span class="blue">G</span>
+                    <span class="red">o</span>
+                    <span class="yellow">o</span>
+                    <span class="blue">g</span>
+                    <span class="green">l</span>
+                    <span class="red">e</span>
+
+                </div>
+
+
+                <div class="googleSearch">
+
+                    <span class="smallG">G</span>
+
+                    <input
+                        id="googleInput"
+                        placeholder="Tìm trên Google hoặc nhập URL"
+                        onkeydown="browserSearch(event)"
+                    >
+
+                    <span>🎙</span>
+
+                </div>
+
+
+                <!-- Trang thường dùng -->
+
+                <div class="shortcuts">
+
+                    <div class="shortcut">
+
+                        <div class="shortcutIcon gray">
+                            U
+                        </div>
+
+                        <span>FF Beta</span>
+
+                    </div>
+
+
+                    <div class="shortcut">
+
+                        <div class="shortcutIcon green">
+                            ✤
+                        </div>
+
+                        <span>Đăng nhập</span>
+
+                    </div>
+
+
+                    <div class="shortcut">
+
+                        <div class="shortcutIcon roearn">
+                            ◉
+                        </div>
+
+                        <span>RoEarn</span>
+
+                    </div>
+
+
+                    <div class="shortcut">
+
+                        <div class="shortcutIcon roblox">
+                            ◇
+                        </div>
+
+                        <span>Đăng nhập<br>vào Roblox</span>
+
+                    </div>
+
+
+                    <div class="shortcut add">
+
+                        <div class="shortcutIcon addIcon">
+                            +
+                        </div>
+
+                        <span>Thêm trang</span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Lối tắt -->
+
+                <div class="section">
+
+                    <h3>Lối tắt</h3>
+
+                    <div class="shortcutGrid">
+
+                        <div class="quick">
+
+                            <div class="quickIcon">
+                                ☆
+                            </div>
+
+                            <span>Dấu trang</span>
+
+                        </div>
+
+
+                        <div class="quick">
+
+                            <div class="quickIcon">
+                                ▤
+                            </div>
+
+                            <span>Danh sách...</span>
+
+                        </div>
+
+
+                        <div class="quick">
+
+                            <div class="quickIcon">
+                                ▣
+                            </div>
+
+                            <span>Thẻ gần đây</span>
+
+                        </div>
+
+
+                        <div class="quick">
+
+                            <div class="quickIcon">
+                                ◴
+                            </div>
+
+                            <span>Nhật ký</span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="discover">
+
+                    <h3>Khám phá</h3>
+
+                    <div class="newsCard">
+                        <div class="newsImage"></div>
+
+                        <div>
+                            <b>Khám phá nội dung mới</b>
+                            <p>Tin tức và nội dung đề xuất</p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    addBrowserStyle();
+}
+
+
+/* Tìm kiếm */
+
+function browserSearch(event){
+
+    if(event.key !== "Enter"){
+        return;
+    }
+
+    const value =
+        document.getElementById("googleInput").value.trim();
+
+    if(!value){
+        return;
+    }
+
+    showToast("Đang tìm: " + value);
+}
+
+
+/* CSS riêng cho trình duyệt */
+
+function addBrowserStyle(){
+
+    if(document.getElementById("browserStyle")){
+        return;
+    }
+
+    const style = document.createElement("style");
+
+    style.id = "browserStyle";
+
+    style.textContent = `
+
+        .browser{
+            position:absolute;
+            inset:0;
+            background:#edf4ff;
+            color:#333;
+            overflow:hidden;
+        }
+
+        .browserTabs{
+            height:58px;
+            background:#dfe2e7;
+            display:flex;
+            align-items:center;
+            padding:7px 12px;
+            gap:8px;
+        }
+
+        .tab{
+            height:48px;
+            min-width:220px;
+            max-width:310px;
+            padding:0 15px;
+            border-radius:17px 17px 0 0;
+            background:#fff;
+            display:flex;
+            align-items:center;
+            gap:12px;
+            font-size:14px;
+        }
+
+        .tab.active{
+            box-shadow:0 -1px 4px rgba(0,0,0,.08);
+        }
+
+        .globe{
+            font-size:16px;
+        }
+
+        .close{
+            margin-left:auto;
+            font-size:25px;
+            color:#555;
+        }
+
+        .newTab{
+            width:45px;
+            height:45px;
+            border:0;
+            border-radius:50%;
+            background:#fff;
+            font-size:30px;
+            color:#666;
+        }
+
+        .browserToolbar{
+            height:68px;
+            background:#fff;
+            display:flex;
+            align-items:center;
+            gap:8px;
+            padding:7px 18px;
+            border-bottom:1px solid #ddd;
+        }
+
+        .browserToolbar button{
+            border:0;
+            background:transparent;
+            color:#777;
+            font-size:28px;
+            min-width:35px;
+        }
+
+        .address{
+            flex:1;
+            height:48px;
+            border-radius:25px;
+            background:#edf2f8;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            padding:0 15px;
+            color:#555;
+            font-size:13px;
+        }
+
+        .address .micro{
+            margin-left:auto;
+        }
+
+        .browserHome{
+            position:absolute;
+            top:126px;
+            bottom:0;
+            left:0;
+            right:0;
+            overflow:auto;
+            padding:18px 22px 80px;
+        }
+
+        .browserTop{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        .editButton{
+            width:45px;
+            height:45px;
+            border:0;
+            border-radius:14px;
+            background:#fff;
+            color:#1683ff;
+            font-size:23px;
+        }
+
+        .account{
+            width:43px;
+            height:43px;
+            border-radius:50%;
+            background:#078bd1;
+            color:white;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:bold;
+            font-size:18px;
+        }
+
+        .googleLogo{
+            text-align:center;
+            margin-top:105px;
+            margin-bottom:35px;
+            font-size:65px;
+            font-weight:500;
+            letter-spacing:-5px;
+        }
+
+        .blue{color:#4285f4}
+        .red{color:#ea4335}
+        .yellow{color:#fbbc05}
+        .green{color:#34a853}
+
+        .googleSearch{
+            width:min(100%,580px);
+            height:62px;
+            margin:auto;
+            padding:0 20px;
+            border-radius:32px;
+            background:#d9e4f7;
+            display:flex;
+            align-items:center;
+            gap:13px;
+            color:#555;
+        }
+
+        .googleSearch input{
+            flex:1;
+            border:0;
+            outline:0;
+            background:transparent;
+            font-size:17px;
+            color:#333;
+        }
+
+        .smallG{
+            font-size:24px;
+            font-weight:bold;
+            color:#4285f4;
+        }
+
+        .shortcuts{
+            width:min(100%,680px);
+            margin:48px auto 20px;
+            padding:22px;
+            border-radius:25px;
+            background:rgba(255,255,255,.92);
+            display:flex;
+            gap:25px;
+            overflow-x:auto;
+        }
+
+        .shortcut{
+            min-width:80px;
+            text-align:center;
+            color:#666;
+            font-size:13px;
+        }
+
+        .shortcutIcon{
+            width:52px;
+            height:52px;
+            margin:auto auto 9px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:23px;
+            font-weight:bold;
+        }
+
+        .gray{
+            background:#888;
+            color:white;
+        }
+
+        .green{
+            background:#fff;
+            color:#22a861;
+            border:1px solid #eee;
+        }
+
+        .roearn{
+            background:#f1f1f1;
+            color:#e33;
+        }
+
+        .roblox{
+            background:#326af4;
+            color:white;
+        }
+
+        .addIcon{
+            background:#e4efff;
+            color:#087ff5;
+            font-size:30px;
+        }
+
+        .section{
+            width:min(100%,680px);
+            margin:auto;
+            padding:22px;
+            border-radius:25px;
+            background:#fff;
+        }
+
+        .section h3{
+            margin:0 0 20px;
+            font-size:17px;
+        }
+
+        .shortcutGrid{
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            gap:15px;
+        }
+
+        .quick{
+            text-align:center;
+            color:#666;
+            font-size:12px;
+        }
+
+        .quickIcon{
+            width:58px;
+            height:58px;
+            margin:auto auto 10px;
+            border-radius:17px;
+            background:#e5efff;
+            color:#087ff5;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:32px;
+        }
+
+        .discover{
+            width:min(100%,680px);
+            margin:20px auto;
+            padding:22px;
+            border-radius:25px;
+            background:#fff;
+        }
+
+        .discover h3{
+            margin-top:0;
+        }
+
+        .newsCard{
+            display:flex;
+            gap:15px;
+            align-items:center;
+        }
+
+        .newsImage{
+            width:100px;
+            height:70px;
+            border-radius:12px;
+            background:
+                linear-gradient(
+                    135deg,
+                    #4285f4,
+                    #34a853
+                );
+        }
+
+        .newsCard p{
+            color:#777;
+            margin-bottom:0;
+        }
+
+        @media(max-width:600px){
+
+            .browserToolbar{
+                gap:2px;
+                padding:5px;
+            }
+
+            .browserToolbar button{
+                font-size:23px;
+                min-width:30px;
+            }
+
+            .address{
+                font-size:11px;
+                padding:0 9px;
+            }
+
+            .googleLogo{
+                margin-top:75px;
+                font-size:55px;
+            }
+
+            .shortcutGrid{
+                grid-template-columns:repeat(4,1fr);
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
 }
 
 
