@@ -2,704 +2,657 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-
-<title>AndzOS Browser</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Multiverse Battle 2D</title>
 <style>
-*{
-    box-sizing:border-box;
-    -webkit-tap-highlight-color:transparent;
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#050509;color:#fff;font-family:Arial,sans-serif;overflow:hidden}
+button{border:0;color:#fff;font-weight:700;cursor:pointer}
+
+#startScreen,#menu,#battle{
+ position:fixed;inset:0;
+ display:flex;flex-direction:column;align-items:center;justify-content:center
 }
+#startScreen{background:radial-gradient(circle,#18284a,#050509)}
+#startScreen h1{font-size:clamp(32px,8vw,76px);text-align:center;margin:0 0 15px;text-shadow:0 0 25px #38bdf8}
+#startScreen p{color:#b9c7da}
+.mainBtn{padding:16px 55px;border-radius:14px;background:linear-gradient(135deg,#2563eb,#9333ea);font-size:22px;box-shadow:0 0 25px #2563eb80}
 
-html,body{
-    margin:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial;
-    background:#eef4ff;
+#menu{display:none;justify-content:flex-start;overflow:auto;padding:25px;background:linear-gradient(#090b16,#111827)}
+#menu h2{margin:5px 0 20px;font-size:34px}
+.team{width:min(900px,95vw);display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.slot{background:#151b2d;border:2px solid #334155;border-radius:14px;padding:12px;text-align:center}
+.slot b{display:block;margin-bottom:7px}
+.slot span{font-size:20px}
+.characterGrid{width:min(1000px,95vw);display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.char{padding:14px 8px;border-radius:12px;background:#20283d;border:1px solid #475569}
+.char:active{transform:scale(.96)}
+.char strong{display:block;font-size:18px}
+.char small{color:#94a3b8}
+.modes{display:flex;gap:8px;margin:15px 0}
+.mode{padding:10px 18px;border-radius:10px;background:#334155}
+.mode.active{background:#7c3aed}
+
+#battle{display:none;background:#000;justify-content:flex-start}
+#gameCanvas{width:100vw;height:100vh;display:block}
+#battleUI{position:absolute;top:15px;left:0;width:100%;display:flex;justify-content:space-between;padding:0 18px;pointer-events:none}
+.hpbox{width:min(35vw,380px)}
+.label{font-weight:bold;text-shadow:0 2px 5px #000}
+.hp{height:22px;background:#202020;border:2px solid #fff;border-radius:8px;overflow:hidden}
+.hp i{display:block;height:100%;width:100%;background:#22c55e}
+#bossHP{background:#ef4444}
+#rageUI{position:absolute;top:68px;left:50%;transform:translateX(-50%);width:min(300px,40vw)}
+.rage{height:13px;background:#202020;border:1px solid #fff;border-radius:8px;overflow:hidden}
+#rageBar{height:100%;width:0;background:#facc15}
+
+#mobile{
+position:absolute;bottom:18px;left:0;width:100%;display:flex;justify-content:space-between;padding:0 25px;pointer-events:none
 }
+#mobile>*{pointer-events:auto}
+#stickBase{width:125px;height:125px;border-radius:50%;background:#ffffff22;border:2px solid #ffffff55;position:relative}
+#stick{position:absolute;width:52px;height:52px;left:34px;top:34px;border-radius:50%;background:#ffffff99}
+.actions{display:grid;grid-template-columns:repeat(2,65px);gap:10px}
+.actions button{width:65px;height:65px;border-radius:50%;background:#334155cc;font-size:24px}
+.actions button:active{transform:scale(.9);background:#7c3aed}
 
-.browser{
-    width:100%;
-    height:100%;
-    display:flex;
-    flex-direction:column;
-    background:#fff;
-}
+#result{display:none;position:absolute;inset:0;background:#000b;align-items:center;justify-content:center;flex-direction:column;z-index:20}
+#result h2{font-size:48px}
+#result button{padding:14px 35px;border-radius:12px;background:#2563eb}
 
-/* THANH TRÊN */
-
-.top{
-    height:72px;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:10px 18px;
-    background:#f5f5f7;
-    border-bottom:1px solid #ddd;
-}
-
-.navBtn{
-    width:42px;
-    height:42px;
-    border:0;
-    border-radius:50%;
-    background:transparent;
-    font-size:27px;
-    color:#777;
-}
-
-.navBtn:active{
-    background:#ddd;
-}
-
-.address{
-    flex:1;
-    height:48px;
-    border:0;
-    outline:none;
-    border-radius:25px;
-    background:#e8e8ed;
-    padding:0 20px;
-    font-size:17px;
-    text-align:center;
-}
-
-.go{
-    width:48px;
-    height:48px;
-    border:0;
-    border-radius:50%;
-    background:#007aff;
-    color:white;
-    font-size:20px;
-}
-
-/* TRANG CHỦ */
-
-.home{
-    flex:1;
-    overflow:auto;
-    background:#edf4ff;
-    text-align:center;
-    padding-top:80px;
-}
-
-.googleLogo{
-    font-size:58px;
-    font-weight:700;
-    letter-spacing:-4px;
-    margin-bottom:35px;
-}
-
-.searchBox{
-    width:min(720px,85%);
-    height:62px;
-    margin:auto;
-    display:flex;
-    align-items:center;
-    background:white;
-    border-radius:32px;
-    padding:0 22px;
-    box-shadow:0 3px 15px #0001;
-}
-
-.searchIcon{
-    font-size:25px;
-    margin-right:14px;
-}
-
-.homeSearch{
-    flex:1;
-    border:0;
-    outline:none;
-    font-size:20px;
-    background:transparent;
-}
-
-.homeSearchBtn{
-    border:0;
-    background:transparent;
-    font-size:25px;
-}
-
-/* TRANG WEB */
-
-.webPage{
-    flex:1;
-    display:none;
-    background:white;
-    position:relative;
-}
-
-.webFrame{
-    width:100%;
-    height:100%;
-    border:0;
-    background:white;
-}
-
-/* MÀN HÌNH LỖI */
-
-.error{
-    display:none;
-    position:absolute;
-    inset:0;
-    background:white;
-    text-align:center;
-    padding:80px 25px;
-}
-
-.error h2{
-    font-size:28px;
-}
-
-.error p{
-    color:#777;
-}
-
-.openReal{
-    border:0;
-    background:#007aff;
-    color:white;
-    padding:14px 22px;
-    border-radius:14px;
-    font-size:17px;
-}
-
-/* TẢI FILE */
-
-.downloadArea{
-    display:none;
-    position:absolute;
-    left:20px;
-    right:20px;
-    bottom:25px;
-    background:white;
-    border-radius:20px;
-    padding:18px;
-    box-shadow:0 5px 30px #0003;
-}
-
-.downloadArea button{
-    width:100%;
-    border:0;
-    background:#007aff;
-    color:white;
-    padding:14px;
-    border-radius:13px;
-    font-size:17px;
-}
-
-/* MOBILE */
-
-@media(max-width:700px){
-
-    .top{
-        height:62px;
-        padding:7px;
-    }
-
-    .navBtn{
-        width:38px;
-        height:38px;
-        font-size:22px;
-    }
-
-    .address{
-        height:42px;
-        font-size:14px;
-    }
-
-    .go{
-        width:42px;
-        height:42px;
-    }
-
-    .home{
-        padding-top:60px;
-    }
-
-    .googleLogo{
-        font-size:45px;
-    }
-
-    .searchBox{
-        height:55px;
-    }
-
-    .homeSearch{
-        font-size:16px;
-    }
+@media(max-width:600px){
+ .team{grid-template-columns:1fr}
+ #menu h2{font-size:26px}
 }
 </style>
 </head>
 
 <body>
 
-<div class="browser">
-
-    <!-- THANH ĐỊA CHỈ -->
-
-    <div class="top">
-
-        <button class="navBtn" onclick="goBack()">‹</button>
-
-        <button class="navBtn" onclick="goForward()">›</button>
-
-        <button class="navBtn" onclick="reloadPage()">↻</button>
-
-        <input
-            id="address"
-            class="address"
-            type="text"
-            placeholder="Tìm trên Google hoặc nhập URL"
-            autocomplete="off"
-            spellcheck="false"
-            onkeydown="addressEnter(event)"
-        >
-
-        <button class="go" onclick="navigate()">➜</button>
-
-    </div>
-
-
-    <!-- TRANG CHỦ -->
-
-    <div id="home" class="home">
-
-        <div class="googleLogo">
-            <span style="color:#4285f4">G</span>
-            <span style="color:#ea4335">o</span>
-            <span style="color:#fbbc05">o</span>
-            <span style="color:#4285f4">g</span>
-            <span style="color:#34a853">l</span>
-            <span style="color:#ea4335">e</span>
-        </div>
-
-        <div class="searchBox">
-
-            <span class="searchIcon">⌕</span>
-
-            <input
-                id="homeSearch"
-                class="homeSearch"
-                type="search"
-                placeholder="Tìm trên Google hoặc nhập URL"
-                onkeydown="homeEnter(event)"
-            >
-
-            <button
-                class="homeSearchBtn"
-                onclick="homeSearch()">
-                🔍
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- TRANG WEB -->
-
-    <div id="webPage" class="webPage">
-
-        <iframe
-            id="webFrame"
-            class="webFrame"
-            allow="fullscreen; autoplay"
-        ></iframe>
-
-
-        <div id="error" class="error">
-
-            <h2>Không thể hiển thị trang này</h2>
-
-            <p>
-                Website có thể chặn việc nhúng trong iframe.
-            </p>
-
-            <button
-                class="openReal"
-                onclick="openRealWebsite()">
-                Mở website thật
-            </button>
-
-        </div>
-
-
-        <div id="downloadArea" class="downloadArea">
-
-            <b>📦 File có thể tải xuống</b>
-
-            <br><br>
-
-            <button onclick="downloadCurrent()">
-                ⬇️ Tải file
-            </button>
-
-        </div>
-
-    </div>
-
+<div id="startScreen">
+ <h1>⚔️ MULTIVERSE BATTLE 2D</h1>
+ <p>2 VS 1 • NHIỀU VŨ TRỤ • ĐỐI KHÁNG 2D</p>
+ <button class="mainBtn" onclick="openMenu()">▶ BẮT ĐẦU</button>
 </div>
 
+<div id="menu">
+ <h2>CHỌN ĐỘI HÌNH</h2>
+
+ <div class="team">
+  <div class="slot"><b>PLAYER</b><span id="playerName">Rick</span></div>
+  <div class="slot"><b>ALLY AI</b><span id="allyName">Morty</span></div>
+  <div class="slot"><b>BOSS AI</b><span id="bossName">Madara</span></div>
+ </div>
+
+ <div class="modes">
+  <button class="mode" onclick="setDifficulty('Easy',this)">Dễ</button>
+  <button class="mode active" onclick="setDifficulty('Normal',this)">Thường</button>
+  <button class="mode" onclick="setDifficulty('Hard',this)">Khó</button>
+ </div>
+
+ <div class="characterGrid" id="characters"></div>
+
+ <button class="mainBtn" style="margin-top:20px" onclick="startBattle()">⚔️ VÀO TRẬN</button>
+</div>
+
+<div id="battle">
+ <canvas id="gameCanvas"></canvas>
+
+ <div id="battleUI">
+  <div class="hpbox">
+   <div class="label" id="playerLabel">PLAYER</div>
+   <div class="hp"><i id="playerHP"></i></div>
+  </div>
+  <div class="hpbox">
+   <div class="label" id="bossLabel">BOSS</div>
+   <div class="hp"><i id="bossHP"></i></div>
+  </div>
+ </div>
+
+ <div id="rageUI">
+  <div style="text-align:center;font-size:12px">NỘ</div>
+  <div class="rage"><i id="rageBar"></i></div>
+ </div>
+
+ <div id="mobile">
+  <div id="stickBase"><div id="stick"></div></div>
+
+  <div class="actions">
+   <button onclick="attack()">👊</button>
+   <button onclick="useSkill()">⚡</button>
+   <button onclick="guard()">🛡️</button>
+   <button onclick="awaken()">🔥</button>
+  </div>
+ </div>
+
+ <div id="result">
+  <h2 id="resultText"></h2>
+  <button onclick="backMenu()">MENU</button>
+ </div>
+</div>
 
 <script>
-
 /* =========================
-   BIẾN
+   DỮ LIỆU NHÂN VẬT
 ========================= */
 
-let currentURL = "";
-let historyList = [];
-let historyIndex = -1;
-
-
-/* =========================
-   CHUẨN HÓA URL
-========================= */
-
-function makeURL(text){
-
-    text = text.trim();
-
-    if(!text){
-        return null;
-    }
-
-    /*
-       Nếu người dùng nhập URL
-       thì mở trực tiếp.
-    */
-
-    if(
-        text.startsWith("http://") ||
-        text.startsWith("https://")
-    ){
-        return text;
-    }
-
-    /*
-       Nếu giống domain
-       */
-
-    if(
-        text.includes(".") &&
-        !text.includes(" ")
-    ){
-        return "https://" + text;
-    }
-
-    /*
-       Còn lại -> Google
-       */
-
-    return "https://www.google.com/search?q="
-        + encodeURIComponent(text);
-}
-
+const characters={
+ Rick:{hp:100,atk:10,speed:6,map:"Citadel",emoji:"🧪"},
+ Morty:{hp:100,atk:8,speed:7,map:"Citadel",emoji:"👦"},
+ Gojo:{hp:120,atk:12,speed:6,map:"Shibuya",emoji:"🔵"},
+ Goku:{hp:140,atk:14,speed:7,map:"Kame",emoji:"🟠"},
+ Naruto:{hp:130,atk:12,speed:7,map:"HiddenLeaf",emoji:"🍥"},
+ Sasuke:{hp:130,atk:13,speed:7,map:"HiddenLeaf",emoji:"⚡"},
+ Luffy:{hp:135,atk:13,speed:8,map:"Wano",emoji:"🏴‍☠️"},
+ Ichigo:{hp:140,atk:14,speed:7,map:"SoulSociety",emoji:"⚔️"},
+ Vegeta:{hp:145,atk:15,speed:7,map:"Kame",emoji:"💙"},
+ Madara:{hp:160,atk:16,speed:5,map:"HiddenLeaf",emoji:"👁️"},
+ Sukuna:{hp:170,atk:17,speed:5,map:"Shibuya",emoji:"👹"},
+ Tanjiro:{hp:120,atk:11,speed:7,map:"Forest",emoji:"🔥"},
+ Levi:{hp:110,atk:10,speed:9,map:"Shiganshina",emoji:"⚔️"},
+ Yuta:{hp:150,atk:15,speed:6,map:"Shibuya",emoji:"👻"}
+};
 
 /* =========================
-   TÌM KIẾM
+   DỮ LIỆU MAP
 ========================= */
 
-function homeSearch(){
-
-    let text =
-        document.getElementById("homeSearch").value;
-
-    navigateTo(text);
-}
-
-
-function homeEnter(event){
-
-    if(event.key === "Enter"){
-        homeSearch();
-    }
-}
-
-
-function addressEnter(event){
-
-    if(event.key === "Enter"){
-        navigate();
-    }
-}
-
+const maps={
+ HiddenLeaf:{name:"Làng Lá",bg:"linear-gradient(#4b8f55,#172b1c)"},
+ Shibuya:{name:"Shibuya",bg:"linear-gradient(#30205f,#090914)"},
+ Kame:{name:"Đảo Kame",bg:"linear-gradient(#4aa9d8,#17633f)"},
+ SoulSociety:{name:"Soul Society",bg:"linear-gradient(#252525,#080808)"},
+ Wano:{name:"Wano",bg:"linear-gradient(#8f4d38,#211018)"},
+ Citadel:{name:"Citadel",bg:"linear-gradient(#172b55,#050712)"},
+ Shiganshina:{name:"Shiganshina",bg:"linear-gradient(#92765a,#292218)"},
+ Forest:{name:"Rừng núi",bg:"linear-gradient(#3f7444,#0c2111)"}
+};
 
 /* =========================
-   THANH ĐỊA CHỈ
+   TRẠNG THÁI GAME
 ========================= */
 
-function navigate(){
+const game={
+ player:"Rick",
+ ally:"Morty",
+ boss:"Madara",
+ difficulty:"Normal",
+ running:false
+};
 
-    let text =
-        document.getElementById("address").value;
-
-    navigateTo(text);
-}
-
+let playerHP,allyHP,bossHP;
+let rage=0;
+let awakened=false;
+let attacking=false;
+let guarding=false;
+let playerX=170;
+let allyX=340;
+let bossX=1000;
+let keys={left:false,right:false};
+let lastTime=0;
+let bossTimer=0;
+let allyTimer=0;
+let attackTimer=0;
 
 /* =========================
-   MỞ WEB
+   GIAO DIỆN MENU
 ========================= */
 
-function navigateTo(text){
-
-    let url = makeURL(text);
-
-    if(!url){
-        return;
-    }
-
-    currentURL = url;
-
-    /*
-       Lưu lịch sử
-    */
-
-    historyList =
-        historyList.slice(0,historyIndex + 1);
-
-    historyList.push(url);
-
-    historyIndex =
-        historyList.length - 1;
-
-    document.getElementById("address").value = url;
-
-    document.getElementById("home").style.display =
-        "none";
-
-    document.getElementById("webPage").style.display =
-        "block";
-
-    document.getElementById("error").style.display =
-        "none";
-
-    document.getElementById("downloadArea").style.display =
-        "none";
-
-    let frame =
-        document.getElementById("webFrame");
-
-    frame.src = url;
-
-    /*
-       Một số trang chặn iframe.
-       Sau thời gian chờ sẽ hiện nút
-       mở website thật.
-    */
-
-    setTimeout(function(){
-
-        document.getElementById("error").style.display =
-            "block";
-
-    },3500);
+function openMenu(){
+ document.getElementById("startScreen").style.display="none";
+ document.getElementById("menu").style.display="flex";
+ renderCharacters();
 }
 
+function renderCharacters(){
+ const box=document.getElementById("characters");
+ box.innerHTML="";
+
+ Object.keys(characters).forEach(name=>{
+  const c=characters[name];
+  const b=document.createElement("button");
+  b.className="char";
+  b.innerHTML=`<strong>${c.emoji} ${name}</strong><small>HP ${c.hp} • ATK ${c.atk}</small>`;
+  b.onclick=()=>selectCharacter(name);
+  box.appendChild(b);
+ });
+}
+
+function selectModeSlot(mode){
+ game.selectMode=mode;
+}
+
+function selectCharacter(name){
+ if(game.selectMode==="ally") game.ally=name;
+ else if(game.selectMode==="boss") game.boss=name;
+ else game.player=name;
+
+ updateTeamUI();
+}
+
+function chooseCharacter(name){
+ selectCharacter(name);
+}
+
+function updateTeamUI(){
+ document.getElementById("playerName").textContent=game.player;
+ document.getElementById("allyName").textContent=game.ally;
+ document.getElementById("bossName").textContent=game.boss;
+}
+
+document.addEventListener("keydown",e=>{
+ if(e.key==="1")game.selectMode="player";
+ if(e.key==="2")game.selectMode="ally";
+ if(e.key==="3")game.selectMode="boss";
+ if(e.key==="ArrowLeft")keys.left=true;
+ if(e.key==="ArrowRight")keys.right=true;
+ if(e.key===" "){e.preventDefault();attack()}
+});
+
+document.addEventListener("keyup",e=>{
+ if(e.key==="ArrowLeft")keys.left=false;
+ if(e.key==="ArrowRight")keys.right=false;
+});
+
+function setDifficulty(value,button){
+ game.difficulty=value;
+ document.querySelectorAll(".mode").forEach(x=>x.classList.remove("active"));
+ button.classList.add("active");
+}
 
 /* =========================
-   MỞ WEBSITE THẬT
+   KHỞI ĐỘNG TRẬN
 ========================= */
 
-function openRealWebsite(){
+function startBattle(){
 
-    if(!currentURL){
-        return;
-    }
+ const p=characters[game.player];
+ const a=characters[game.ally];
+ const b=characters[game.boss];
 
-    window.open(
-        currentURL,
-        "_blank"
-    );
+ playerHP=p.hp;
+ allyHP=a.hp;
+ bossHP=b.hp;
+
+ if(game.difficulty==="Easy")bossHP*=.85;
+ if(game.difficulty==="Hard")bossHP*=1.2;
+
+ rage=0;
+ awakened=false;
+ attacking=false;
+ guarding=false;
+
+ playerX=170;
+ allyX=340;
+ bossX=1000;
+
+ document.getElementById("menu").style.display="none";
+ document.getElementById("battle").style.display="flex";
+ document.getElementById("result").style.display="none";
+
+ game.running=true;
+
+ updateUI();
+
+ requestAnimationFrame(gameLoop);
 }
-
 
 /* =========================
-   QUAY LẠI
+   VẼ GAME
 ========================= */
 
-function goBack(){
+const canvas=document.getElementById("gameCanvas");
+const ctx=canvas.getContext("2d");
 
-    if(historyIndex > 0){
+function resizeCanvas(){
+ canvas.width=1280;
+ canvas.height=720;
+}
+resizeCanvas();
 
-        historyIndex--;
+function drawBackground(){
 
-        let url =
-            historyList[historyIndex];
+ const map=maps[characters[game.boss].map]||maps.HiddenLeaf;
 
-        currentURL = url;
+ ctx.fillStyle="#111";
+ ctx.fillRect(0,0,canvas.width,canvas.height);
 
-        document.getElementById("address").value =
-            url;
+ const g=ctx.createLinearGradient(0,0,0,canvas.height);
+ g.addColorStop(0,map.bg.includes("linear-gradient")?"#243b53":"#243b53");
+ g.addColorStop(1,"#090b10");
+ ctx.fillStyle=g;
+ ctx.fillRect(0,0,canvas.width,canvas.height);
 
-        document.getElementById("webFrame").src =
-            url;
-    }
+ /* nền đơn giản đại diện cho map */
+ ctx.fillStyle="#ffffff18";
+ for(let i=0;i<12;i++){
+  const x=i*120+30;
+  const h=80+(i%4)*35;
+  ctx.fillRect(x,canvas.height-170-h,70,h);
+ }
+
+ ctx.fillStyle="#151515";
+ ctx.fillRect(0,canvas.height-150,canvas.width,150);
+
+ ctx.fillStyle="#ffffff";
+ ctx.font="bold 28px Arial";
+ ctx.textAlign="center";
+ ctx.fillText(map.name,canvas.width/2,75);
+
+ ctx.font="18px Arial";
+ ctx.fillStyle="#ffffff99";
+ ctx.fillText("2 VS 1",canvas.width/2,105);
 }
 
+function drawFighter(x,y,name,flip=false,hp=100,isBoss=false){
+
+ const c=characters[name];
+
+ ctx.save();
+
+ ctx.translate(x,y);
+
+ if(flip)ctx.scale(-1,1);
+
+ /* bóng */
+ ctx.fillStyle="#0008";
+ ctx.beginPath();
+ ctx.ellipse(0,8,55,15,0,0,Math.PI*2);
+ ctx.fill();
+
+ /* nhân vật dạng hình đại diện */
+ ctx.fillStyle=isBoss?"#ef4444":"#3b82f6";
+ ctx.beginPath();
+ ctx.arc(0,-95,34,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#111";
+ ctx.fillRect(-38,-60,76,80);
+
+ ctx.font="46px Arial";
+ ctx.textAlign="center";
+ ctx.fillText(c.emoji,0,-82);
+
+ /* tên */
+ ctx.fillStyle="#fff";
+ ctx.font="bold 18px Arial";
+ ctx.fillText(name,0,45);
+
+ /* thanh máu */
+ ctx.fillStyle="#222";
+ ctx.fillRect(-55,55,110,10);
+ ctx.fillStyle=isBoss?"#ef4444":"#22c55e";
+ ctx.fillRect(-55,55,110*Math.max(0,hp/c.hp),10);
+
+ if(awakened && name===game.player){
+  ctx.strokeStyle="#facc15";
+  ctx.lineWidth=5;
+  ctx.beginPath();
+  ctx.arc(0,-60,70,0,Math.PI*2);
+  ctx.stroke();
+ }
+
+ ctx.restore();
+}
+
+function drawCharacters(){
+
+ drawFighter(playerX,570,game.player,false,playerHP,false);
+ drawFighter(allyX,570,game.ally,false,allyHP,false);
+ drawFighter(bossX,570,game.boss,true,bossHP,true);
+
+ if(attacking){
+  ctx.fillStyle="#facc15";
+  ctx.fillRect(playerX+40,490,90,12);
+ }
+
+}
 
 /* =========================
-   TIẾN
+   CHIẾN ĐẤU
 ========================= */
 
-function goForward(){
+function attack(){
 
-    if(
-        historyIndex <
-        historyList.length - 1
-    ){
+ if(!game.running||attacking)return;
 
-        historyIndex++;
+ attacking=true;
+ attackTimer=12;
 
-        let url =
-            historyList[historyIndex];
+ const distance=Math.abs(playerX-bossX);
 
-        currentURL = url;
+ if(distance<190){
+  let damage=characters[game.player].atk;
+  if(awakened)damage*=1.8;
 
-        document.getElementById("address").value =
-            url;
+  bossHP=Math.max(0,bossHP-damage);
+  rage=Math.min(100,rage+12);
+ }
 
-        document.getElementById("webFrame").src =
-            url;
-    }
+ setTimeout(()=>attacking=false,180);
 }
 
+function allyAttack(){
+
+ const distance=Math.abs(allyX-bossX);
+
+ if(distance<180){
+  bossHP=Math.max(0,bossHP-characters[game.ally].atk*.5);
+  rage=Math.min(100,rage+4);
+ }
+}
+
+function bossAttack(){
+
+ const distance=Math.abs(bossX-playerX);
+
+ if(distance<185&&!guarding){
+
+  let damage=characters[game.boss].atk*.45;
+
+  if(game.difficulty==="Hard")damage*=1.25;
+
+  playerHP=Math.max(0,playerHP-damage);
+ }
+}
+
+function useSkill(){
+
+ if(!game.running)return;
+
+ const distance=Math.abs(playerX-bossX);
+
+ if(distance<330){
+  bossHP=Math.max(0,bossHP-characters[game.player].atk*2);
+  rage=Math.min(100,rage+20);
+ }
+}
+
+function guard(){
+ guarding=true;
+ setTimeout(()=>guarding=false,450);
+}
+
+function awaken(){
+
+ if(rage>=100&&!awakened){
+  awakened=true;
+  rage=0;
+  playerHP=Math.min(characters[game.player].hp,playerHP+30);
+ }
+}
 
 /* =========================
-   RELOAD
+   AI
 ========================= */
 
-function reloadPage(){
+function updateAllyAI(){
 
-    if(!currentURL){
-        return;
-    }
+ if(allyX<bossX-150)allyX+=1.4;
 
-    document.getElementById("webFrame").src =
-        currentURL;
+ allyTimer--;
+
+ if(allyTimer<=0){
+  allyAttack();
+  allyTimer=70;
+ }
 }
 
+function updateBossAI(){
+
+ if(bossX>playerX+150)bossX-=.9;
+ else if(bossX<playerX+100)bossX+=.5;
+
+ bossTimer--;
+
+ if(bossTimer<=0){
+  bossAttack();
+  bossTimer=55;
+ }
+}
 
 /* =========================
-   TẢI FILE
+   PLAYER
 ========================= */
 
-function downloadFile(url,filename){
+function updatePlayer(){
 
-    const a =
-        document.createElement("a");
+ const speed=characters[game.player].speed;
 
-    a.href = url;
+ if(keys.left)playerX-=speed;
+ if(keys.right)playerX+=speed;
 
-    a.download = filename || "";
-
-    document.body.appendChild(a);
-
-    a.click();
-
-    a.remove();
+ playerX=Math.max(70,Math.min(1150,playerX));
 }
-
-
-/*
-   Nếu đang mở trực tiếp file APK,
-   trình duyệt sẽ yêu cầu tải file
-   thay vì chạy nó.
-*/
-
-function downloadCurrent(){
-
-    if(!currentURL){
-        return;
-    }
-
-    let filename =
-        currentURL.split("/").pop();
-
-    if(!filename){
-        filename = "download";
-    }
-
-    downloadFile(
-        currentURL,
-        filename
-    );
-}
-
 
 /* =========================
-   NHẬN FILE APK TỪ URL
+   UI
 ========================= */
 
-function downloadAPK(url){
+function updateUI(){
 
-    if(!url){
-        return;
-    }
+ const p=characters[game.player];
+ const b=characters[game.boss];
 
-    if(
-        !url.toLowerCase().includes(".apk")
-    ){
+ document.getElementById("playerHP").style.width=
+ Math.max(0,playerHP/p.hp*100)+"%";
 
-        alert(
-            "URL này không phải file APK trực tiếp."
-        );
+ document.getElementById("bossHP").style.width=
+ Math.max(0,bossHP/b.hp*100)+"%";
 
-        return;
-    }
+ document.getElementById("rageBar").style.width=rage+"%";
 
-    downloadFile(
-        url,
-        "application.apk"
-    );
+ document.getElementById("playerLabel").textContent=
+ "PLAYER • "+game.player;
+
+ document.getElementById("bossLabel").textContent=
+ "BOSS • "+game.boss;
 }
 
-
 /* =========================
-   PHÍM TẮT
+   THẮNG THUA
 ========================= */
 
-document.addEventListener(
-    "keydown",
-    function(event){
+function checkResult(){
 
-        if(
-            event.key === "/" &&
-            document.activeElement.tagName !== "INPUT"
-        ){
+ if(bossHP<=0){
+  endBattle("🏆 CHIẾN THẮNG");
+ }
 
-            event.preventDefault();
+ if(playerHP<=0&&allyHP<=0){
+  endBattle("💀 THẤT BẠI");
+ }
+}
 
-            document
-                .getElementById("address")
-                .focus();
-        }
+function endBattle(text){
 
-        if(
-            event.key === "Escape"
-        ){
+ game.running=false;
 
-            document
-                .getElementById("home")
-                .style.display = "block";
+ document.getElementById("resultText").textContent=text;
+ document.getElementById("result").style.display="flex";
+}
 
-            document
-                .getElementById("webPage")
-                .style.display = "none";
-        }
+/* =========================
+   VÒNG LẶP GAME
+========================= */
 
-    }
-);
+function gameLoop(time){
 
+ if(!game.running)return;
+
+ const dt=Math.min(32,time-lastTime);
+ lastTime=time;
+
+ updatePlayer();
+ updateAllyAI();
+ updateBossAI();
+ updateUI();
+ checkResult();
+
+ drawBackground();
+ drawCharacters();
+
+ requestAnimationFrame(gameLoop);
+}
+
+/* =========================
+   JOYSTICK
+========================= */
+
+const base=document.getElementById("stickBase");
+const stick=document.getElementById("stick");
+
+let joystickActive=false;
+
+function joystickMove(x){
+
+ const rect=base.getBoundingClientRect();
+ const cx=rect.left+rect.width/2;
+ const dx=x-cx;
+
+ if(dx<-15){
+  keys.left=true;
+  keys.right=false;
+ }
+ else if(dx>15){
+  keys.right=true;
+  keys.left=false;
+ }
+ else{
+  keys.left=false;
+  keys.right=false;
+ }
+
+ const limited=Math.max(-35,Math.min(35,dx));
+ stick.style.transform=`translateX(${limited}px)`;
+}
+
+base.addEventListener("touchstart",e=>{
+ joystickActive=true;
+ joystickMove(e.touches[0].clientX);
+},{passive:true});
+
+base.addEventListener("touchmove",e=>{
+ if(joystickActive)joystickMove(e.touches[0].clientX);
+},{passive:true});
+
+base.addEventListener("touchend",()=>{
+ joystickActive=false;
+ keys.left=false;
+ keys.right=false;
+ stick.style.transform="translateX(0)";
+});
+
+function backMenu(){
+ document.getElementById("result").style.display="none";
+ document.getElementById("battle").style.display="none";
+ document.getElementById("menu").style.display="flex";
+}
+
+/* =========================
+   CHỌN SLOT
+========================= */
+
+game.selectMode="player";
 </script>
-
 </body>
 </html>
