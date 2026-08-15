@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>DDTH Đám Mây</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:Arial;color:#fff}
+#phone{width:100vw;height:100vh;position:relative;overflow:hidden;background:linear-gradient(145deg,#182640,#070b12)}
+#status{height:34px;padding:0 15px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+#home{height:calc(100% - 102px);overflow:auto;padding:20px}
+h1{text-align:center;font-size:27px;margin:10px 0 4px}
+.sub{text-align:center;color:#aab6c9;font-size:12px;margin-bottom:30px}
+.apps{display:grid;grid-template-columns:repeat(4,1fr);gap:25px 10px}
+.app{text-align:center}
+.icon{
+ width:64px;height:64px;margin:auto;border-radius:18px;
+ display:flex;align-items:center;justify-content:center;
+ background:#25334a;font-size:29px;box-shadow:0 8px 18px #0007
+}
+.app:active .icon{transform:scale(.9)}
+.app span{display:block;font-size:12px;margin-top:7px}
+#nav{
+ position:absolute;bottom:0;left:0;right:0;height:68px;
+ display:flex;align-items:center;justify-content:center;
+ background:#101722eF
+}
+.homebtn{width:43px;height:43px;border:2px solid #aaa;border-radius:50%;background:none}
+#game{
+ display:none;position:absolute;inset:0;background:#07101d;z-index:20
+}
+#game.active{display:block}
+#gameTop{
+ height:58px;background:#141d2b;display:flex;
+ align-items:center;gap:12px;padding:8px 12px
+}
+.back{width:42px;height:42px;border:0;border-radius:50%;background:none;color:#fff;font-size:30px}
+#gameArea{height:calc(100% - 58px);position:relative;overflow:hidden}
+#canvas{position:absolute;inset:0;width:100%;height:100%}
+#start{
+ position:absolute;inset:0;display:flex;align-items:center;
+ justify-content:center;background:#07101dcc
+}
+#start button{
+ padding:16px 35px;border:0;border-radius:14px;
+ background:#4285f4;color:#fff;font-size:19px
+}
+#controls{
+ position:absolute;bottom:18px;left:0;right:0;
+ display:flex;justify-content:space-between;padding:0 20px
+}
+.control{
+ width:65px;height:65px;border:1px solid #fff4;
+ border-radius:50%;background:#ffffff22;color:#fff;font-size:25px
+}
+.group{display:flex;gap:10px}
+</style>
+</head>
+
+<body>
+<div id="phone">
+
+<div id="status">
+<span id="clock"></span>
+<span>☁ 100%　▰</span>
+</div>
+
+<div id="home">
+<h1>☁ DDTH Đám Mây</h1>
+<div class="sub">Điện thoại mô phỏng</div>
+
+<div class="apps">
+
+<div class="app" onclick="openGame()">
+<div class="icon">🎮</div>
+<span>Game</span>
+</div>
+
+<div class="app"><div class="icon">🔎</div><span>Google</span></div>
+<div class="app"><div class="icon">🌐</div><span>Trình duyệt</span></div>
+<div class="app"><div class="icon">📁</div><span>Tệp</span></div>
+<div class="app"><div class="icon">🧮</div><span>Máy tính</span></div>
+<div class="app"><div class="icon">📝</div><span>Ghi chú</span></div>
+<div class="app"><div class="icon">🛍️</div><span>Cửa hàng</span></div>
+<div class="app"><div class="icon">⚙️</div><span>Cài đặt</span></div>
+
+</div>
+</div>
+
+<div id="nav">
+<button class="homebtn" onclick="closeGame()"></button>
+</div>
+
+<div id="game">
+
+<div id="gameTop">
+<button class="back" onclick="closeGame()">‹</button>
+<b>🎮 Game DDTH</b>
+</div>
+
+<div id="gameArea">
+<canvas id="canvas"></canvas>
+
+<div id="start">
+<button onclick="startGame()">Bắt đầu</button>
+</div>
+
+<div id="controls">
+<div class="group">
+<button class="control" id="left">←</button>
+<button class="control" id="right">→</button>
+</div>
+
+<div class="group">
+<button class="control" id="jump">↑</button>
+<button class="control" id="hit">⚔</button>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+
+<script>
+function updateClock(){
+ const d=new Date();
+ document.getElementById("clock").textContent=
+ d.toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
+}
+setInterval(updateClock,1000);
+updateClock();
+
+function openGame(){
+ document.getElementById("game").classList.add("active");
+ resize();
+}
+
+function closeGame(){
+ document.getElementById("game").classList.remove("active");
+}
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+let W,H,running=false,last=0;
+const p={x:100,y:0,w:45,h:58,vy:0,vx:0};
+const e={x:500,y:0,w:50,h:62,hp:100};
+const key={l:false,r:false};
+
+function resize(){
+ W=canvas.width=innerWidth;
+ H=canvas.height=innerHeight-58;
+ p.y=H-100;
+ e.y=H-100;
+ e.x=Math.min(W-80,500);
+}
+addEventListener("resize",resize);
+
+function startGame(){
+ document.getElementById("start").style.display="none";
+ running=true;
+ last=performance.now();
+ requestAnimationFrame(loop);
+}
+
+function hold(id,down,up){
+ const b=document.getElementById(id);
+ b.addEventListener("pointerdown",e=>{
+  e.preventDefault();down();
+ });
+ b.addEventListener("pointerup",up);
+ b.addEventListener("pointercancel",up);
+}
+
+hold("left",()=>key.l=true,()=>key.l=false);
+hold("right",()=>key.r=true,()=>key.r=false);
+
+document.getElementById("jump").onclick=()=>{
+ if(p.y>=H-100)p.vy=-600;
+};
+
+document.getElementById("hit").onclick=()=>{
+ if(Math.abs(p.x-e.x)<110){
+  e.hp-=25;
+  if(e.hp<=0){
+   e.hp=100;
+   e.x=100+Math.random()*Math.max(100,W-180);
+  }
+ }
+};
+
+function update(dt){
+ const ground=H-100;
+
+ if(key.l)p.vx=-250;
+ else if(key.r)p.vx=250;
+ else p.vx*=.8;
+
+ p.x+=p.vx*dt;
+ p.vy+=1400*dt;
+ p.y+=p.vy*dt;
+
+ if(p.y>ground){
+  p.y=ground;
+  p.vy=0;
+ }
+
+ p.x=Math.max(10,Math.min(W-p.w-10,p.x));
+
+ if(Math.abs(p.x-e.x)>70)
+  e.x+=Math.sign(p.x-e.x)*90*dt;
+
+ e.x=Math.max(10,Math.min(W-e.w-10,e.x));
+}
+
+function draw(){
+ ctx.clearRect(0,0,W,H);
+
+ const g=ctx.createLinearGradient(0,0,0,H);
+ g.addColorStop(0,"#142a48");
+ g.addColorStop(1,"#070c14");
+ ctx.fillStyle=g;
+ ctx.fillRect(0,0,W,H);
+
+ ctx.fillStyle="#263448";
+ ctx.fillRect(0,H-40,W,40);
+
+ ctx.fillStyle="#42a5ff";
+ ctx.fillRect(p.x,p.y,p.w,p.h);
+
+ ctx.fillStyle="#fff";
+ ctx.fillRect(p.x+27,p.y+12,7,7);
+
+ ctx.fillStyle="#ef5350";
+ ctx.fillRect(e.x,e.y,e.w,e.h);
+
+ ctx.fillStyle="#333";
+ ctx.fillRect(e.x,e.y-14,60,7);
+
+ ctx.fillStyle="#4ade80";
+ ctx.fillRect(e.x,e.y-14,60*e.hp/100,7);
+
+ ctx.fillStyle="#fff";
+ ctx.font="bold 17px Arial";
+ ctx.fillText("DDTH GAME",15,30);
+}
+
+function loop(t){
+ if(!running)return;
+ const dt=Math.min((t-last)/1000,.033);
+ last=t;
+ update(dt);
+ draw();
+ requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
