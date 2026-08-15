@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>DDTH Đám Mây - Tìm web</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+ margin:0;background:#070b12;color:#fff;
+ font-family:Arial,sans-serif;overflow:hidden
+}
+#app{
+ width:100vw;height:100vh;position:relative;
+ background:linear-gradient(145deg,#101a2b,#070b12)
+}
+#bar{
+ height:62px;padding:8px;display:flex;gap:7px;
+ align-items:center;background:#151d2b
+}
+button{
+ border:0;color:white;background:#263247;
+ border-radius:18px
+}
+#back{width:42px;height:42px;font-size:28px}
+#address{
+ flex:1;height:44px;border:0;outline:0;
+ border-radius:22px;background:#263142;color:white;
+ padding:0 16px;font-size:15px
+}
+#go{
+ height:44px;padding:0 15px;
+ background:#4285f4;border-radius:22px
+}
+#main{height:calc(100% - 62px);overflow:auto;padding:22px}
+.logo{
+ text-align:center;font-size:42px;font-weight:bold;
+ margin:28px 0
+}
+.search{
+ display:flex;height:50px;background:#20242b;
+ border:1px solid #555;border-radius:26px;padding:4px
+}
+#query{
+ flex:1;background:transparent;border:0;outline:0;
+ color:white;padding:0 15px;font-size:16px
+}
+#searchBtn{
+ width:75px;background:#4285f4;border-radius:23px
+}
+.result{
+ margin-top:16px;padding:16px;background:#19202c;
+ border-radius:14px
+}
+.result .site{font-size:12px;color:#aeb8c8}
+.result h3{
+ color:#8ab4f8;margin:8px 0;font-size:18px
+}
+.result p{color:#c8ced8;margin:5px 0 12px}
+.open{
+ background:#4285f4;padding:9px 13px;
+ border-radius:9px
+}
+#browser{
+ display:none;position:absolute;inset:0;
+ background:#080c12;z-index:20
+}
+#browserBar{
+ height:62px;background:#151d2b;
+ display:flex;gap:7px;align-items:center;padding:8px
+}
+#browserBack{
+ width:42px;height:42px;font-size:27px
+}
+#browserAddress{
+ flex:1;height:44px;border:0;outline:0;
+ border-radius:22px;background:#263142;color:#fff;padding:0 15px
+}
+#external{
+ height:44px;padding:0 12px;background:#4285f4;
+ border-radius:22px
+}
+iframe{
+ display:block;width:100%;height:calc(100% - 62px);
+ border:0;background:#fff
+}
+#blocked{
+ display:none;position:absolute;left:15px;right:15px;
+ top:90px;padding:18px;background:#202936;
+ border-radius:14px;z-index:30
+}
+#blocked button{
+ margin-top:12px;background:#4285f4;padding:11px 15px
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<div id="bar">
+<button id="back" onclick="veDDTH()">‹</button>
+<input id="address"
+       placeholder="Nhập địa chỉ web hoặc từ khóa"
+       onkeydown="if(event.key==='Enter')goAddress()">
+<button id="go" onclick="goAddress()">Đi</button>
+</div>
+
+<div id="main">
+
+<div class="logo">Google</div>
+
+<div class="search">
+<input id="query"
+       placeholder="Tìm kiếm trên Google"
+       onkeydown="if(event.key==='Enter')timKiem()">
+<button id="searchBtn" onclick="timKiem()">Tìm</button>
+</div>
+
+<div id="results"></div>
+
+</div>
+
+<div id="browser">
+
+<div id="browserBar">
+<button id="browserBack" onclick="dongTrinhDuyet()">‹</button>
+
+<input id="browserAddress"
+       onkeydown="if(event.key==='Enter')moDiaChi()">
+
+<button id="external" onclick="moNgoai()">↗</button>
+</div>
+
+<iframe id="webFrame"
+        sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts allow-downloads">
+</iframe>
+
+<div id="blocked">
+<b>Website không cho phép hiển thị trong khung.</b>
+<br>
+<button onclick="moNgoai()">Mở bằng trình duyệt thiết bị</button>
+</div>
+
+</div>
+
+</div>
+
+<script>
+const frame=document.getElementById("webFrame");
+const blocked=document.getElementById("blocked");
+let currentURL="";
+
+/* Tìm kiếm thật trên Google */
+function timKiem(){
+ const q=document.getElementById("query").value.trim();
+ if(!q)return;
+
+ const googleURL=
+ "https://www.google.com/search?q="+encodeURIComponent(q);
+
+ document.getElementById("results").innerHTML=`
+ <div class="result">
+   <div class="site">Google Tìm kiếm</div>
+   <h3>Kết quả tìm kiếm cho "${escapeHTML(q)}"</h3>
+   <p>Chạm vào nút để mở kết quả Google thật.</p>
+   <button class="open"
+     onclick="moWebsite('${googleURL}')">
+     Mở kết quả
+   </button>
+ </div>
+ `;
+
+ document.getElementById("address").value=googleURL;
+}
+
+/* Nhập địa chỉ hoặc từ khóa */
+function goAddress(){
+ const value=document.getElementById("address").value.trim();
+ if(!value)return;
+
+ let url=value;
+
+ if(!/^https?:\/\//i.test(url)){
+   if(url.includes(".") && !url.includes(" ")){
+     url="https://"+url;
+   }else{
+     url="https://www.google.com/search?q="+
+         encodeURIComponent(url);
+   }
+ }
+
+ moWebsite(url);
+}
+
+/* Mở website */
+function moWebsite(url){
+ currentURL=url;
+
+ document.getElementById("browserAddress").value=url;
+ document.getElementById("browser").style.display="block";
+ blocked.style.display="none";
+
+ frame.src=url;
+
+ /*
+  Một số website không cho phép iframe.
+  Khi đó trình duyệt không thể vượt chính sách
+  bảo mật của website.
+ */
+ setTimeout(()=>{
+   try{
+     if(frame.contentDocument &&
+        frame.contentDocument.body &&
+        frame.contentDocument.body.innerHTML===""){
+       blocked.style.display="block";
+     }
+   }catch(e){}
+ },2500);
+}
+
+/* Nhập địa chỉ trong trình duyệt */
+function moDiaChi(){
+ let url=document.getElementById("browserAddress").value.trim();
+ if(!url)return;
+
+ if(!/^https?:\/\//i.test(url))
+   url="https://"+url;
+
+ currentURL=url;
+ frame.src=url;
+ blocked.style.display="none";
+}
+
+/* Mở bằng trình duyệt của thiết bị */
+function moNgoai(){
+ if(currentURL)
+   window.open(currentURL,"_blank");
+}
+
+/* Đóng trình duyệt */
+function dongTrinhDuyet(){
+ document.getElementById("browser").style.display="none";
+}
+
+/* Về DDTH */
+function veDDTH(){
+ window.history.back();
+}
+
+/* Chống chèn HTML từ từ khóa */
+function escapeHTML(text){
+ return text.replace(/[&<>"']/g,char=>({
+   "&":"&amp;",
+   "<":"&lt;",
+   ">":"&gt;",
+   '"':"&quot;",
+   "'":"&#039;"
+ }[char]));
+}
+</script>
+
+</body>
+</html>
